@@ -1,9 +1,7 @@
-use dotenv::dotenv;
 use serenity::{
-    async_trait,
     framework::standard::{
         macros::{command, group},
-        CommandResult, StandardFramework,
+        CommandResult,
     },
     model::prelude::{command, Message, Ready},
     prelude::*,
@@ -11,14 +9,20 @@ use serenity::{
     Client,
 };
 
+use crate::bot::Bot;
+
 #[group]
 #[commands(att)]
 pub struct General;
 
 #[command]
-async fn att(ctx: &Context, msg: &Message) -> CommandResult{
+async fn att(ctx: &Context, msg: &Message) -> CommandResult {
     // if self.bot.eh_plebe(ctx.author){
-        msg.reply(ctx, "Seu pau é infelizmente muito pequeno para utilizar este comando").await?;
+    msg.reply(
+        ctx,
+        "Seu pau é infelizmente muito pequeno para utilizar este comando",
+    )
+    .await?;
     // }
 
     // mensagem = " ".join(msg)
@@ -26,4 +30,3 @@ async fn att(ctx: &Context, msg: &Message) -> CommandResult{
     //     grupo.text_channels[0].send(mensagem)
     Ok(())
 }
-
