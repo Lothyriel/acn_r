@@ -1,11 +1,12 @@
 use dotenv::dotenv;
-use serenity::{framework::standard::StandardFramework, prelude::GatewayIntents, Client};
+use serenity::{
+    framework::standard::StandardFramework, prelude::GatewayIntents, Client,
+};
 use std::env;
 
-#[path = "./commands/general.rs"]
-mod general;
-
-mod bot;
+#[path ="config/registerGroups.rs"]
+mod frameworkExtensions;
+use frameworkExtensions::FrameworkExtensions;
 
 #[tokio::main]
 async fn main() {
@@ -13,14 +14,12 @@ async fn main() {
     let token = env::var("TOKEN_BOT").expect("Discord Token não encontrado vei...");
 
     let framework = StandardFramework::new()
-        .configure(|c| c.prefix(";"))
-        .group(&general::GENERAL_GROUP);
+        .configure(|c| c.prefix(";").with_whitespace(true))
+        .registerGroups();
 
-    let intents = GatewayIntents::all();
-
-    let mut client = Client::builder(&token, intents)
-        .event_handler(bot::Bot::default())
+    let mut client = Client::builder(&token, GatewayIntents::all())
         .framework(framework)
+        .event_handler(misc::Misc::default())
         .await
         .expect("Erro fatal");
 

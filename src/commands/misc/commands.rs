@@ -9,15 +9,11 @@ use serenity::{
     Client,
 };
 
-use crate::bot::Bot;
-
-#[group]
-#[commands(att)]
-pub struct General;
-
 #[command]
 async fn att(ctx: &Context, msg: &Message) -> CommandResult {
     // if self.bot.eh_plebe(ctx.author){
+
+    
     msg.reply(
         ctx,
         "Seu pau é infelizmente muito pequeno para utilizar este comando",
