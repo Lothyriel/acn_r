@@ -6,7 +6,10 @@ mod commands;
 mod config;
 mod data;
 mod utils;
-use crate::config::{event_handler, group_registry::FrameworkExtensions};
+use crate::{
+    config::{event_handler, group_registry::FrameworkExtensions},
+    data::utils::eh_mito,
+};
 
 #[tokio::main]
 async fn main() {
@@ -15,7 +18,11 @@ async fn main() {
 
     let framework = StandardFramework::new()
         .configure(|c| c.prefix(";").with_whitespace(true))
-        .register_groups();
+        .register_groups()
+        .bucket("pirocudo", |b| {
+            b.check(|_, m| Box::pin(async { eh_mito(&m.author) }))
+        })
+        .await;
 
     let mut client = Client::builder(&token, GatewayIntents::all())
         .framework(framework)

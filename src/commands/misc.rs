@@ -12,15 +12,11 @@ use serenity::{
 struct Misc;
 
 #[command]
-async fn att(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
+#[bucket = "pirocudo"]
+async fn att(ctx: &Context, msg: &Message, _args: Args) -> CommandResult {
     let text = "Seu pau é infelizmente muito pequeno para utilizar este comando";
 
-    // if eh_plebe(&msg.author) {
-    //     msg.reply(ctx, text).await?;
-    // }
-    // let mensagem = args.trimmed();
-    // for grupo in self.bot.guilds:
-    //     await grupo.text_channels[0].send(mensagem)
+    msg.reply(ctx, text).await?;
 
     Ok(())
 }
