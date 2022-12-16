@@ -3,7 +3,7 @@ use serenity::{
         macros::{command, group},
         CommandResult, Args,
     },
-    model::{prelude::Message, user::User},
+    model::{prelude::Message},
     prelude::Context,
 };
 
@@ -15,9 +15,9 @@ struct Misc;
 async fn att(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     let text = "Seu pau é infelizmente muito pequeno para utilizar este comando";
 
-    if eh_plebe(&msg.author) {
-        msg.reply(ctx, text).await?;
-    }
+    // if eh_plebe(&msg.author) {
+    //     msg.reply(ctx, text).await?;
+    // }
     // let mensagem = args.trimmed();
     // for grupo in self.bot.guilds:
     //     await grupo.text_channels[0].send(mensagem)
