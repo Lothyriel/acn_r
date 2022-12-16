@@ -1,9 +1,9 @@
 use serenity::{
     framework::standard::{
         macros::{command, group},
-        CommandResult, Args,
+        Args, CommandResult,
     },
-    model::{prelude::Message},
+    model::prelude::Message,
     prelude::Context,
 };
 
@@ -24,7 +24,6 @@ async fn att(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
 
     Ok(())
 }
-
 
 // @commands.command(help="Mandar <msg> para todos os grupos")
 // async def att(self, ctx, *msg):

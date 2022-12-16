@@ -1,10 +1,6 @@
 use serenity::framework::StandardFramework;
 
-#[path = "../commands/misc/misc.rs"]
-mod misc;
-
-#[path = "../data/utils.rs"]
-mod utils;
+use crate::commands::misc;
 
 pub trait FrameworkExtensions {
     fn register_groups(self) -> StandardFramework;

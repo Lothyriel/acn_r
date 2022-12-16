@@ -8,6 +8,8 @@ use serenity::{
     prelude::{Context, EventHandler, Mentionable},
     Error,
 };
+
+use crate::utils::log::LogErrors;
 pub struct AcnHandler;
 
 #[async_trait]
@@ -33,12 +35,23 @@ impl EventHandler for AcnHandler {
     }
 
     async fn presence_update(&self, ctx: Context, new_data: Presence) {
-        println!("{} {:?}", new_data.user.avatar.unwrap(), new_data.activities);
-
-        let dm = new_data.user.id.create_dm_channel(&ctx.http).await.unwrap();
-
-        dm.say(&ctx.http, "Vai tomar no cu").await.unwrap();
+        handle_presence_update(ctx, new_data).await.log();
     }
+}
+
+async fn handle_presence_update(ctx: Context, new_data: Presence) -> Result<(), Error> {
+    let user = new_data
+        .user
+        .avatar
+        .ok_or_else(|| Error::Other("Não encontrei o usuário"))?;
+
+    println!("{} {:?}", user, new_data.activities);
+
+    let dm = new_data.user.id.create_dm_channel(&ctx.http).await.unwrap();
+
+    dm.say(&ctx.http, "Vai tomar no cu").await.unwrap();
+
+    Ok(())
 }
 
 async fn handle_typing_start(ctx: Context, event: TypingStartEvent) -> Result<(), Error> {
@@ -68,7 +81,11 @@ async fn handle_voice_state_update(ctx: Context, state: VoiceState) -> Result<()
         .member
         .ok_or_else(|| Error::Other("Não encontrei o membro"))?;
 
-    let action = if state.self_mute { "mutado" } else { "desmutado" };
+    let action = if state.self_mute {
+        "mutado"
+    } else {
+        "desmutado"
+    };
 
     let guild_id = state
         .guild_id
@@ -100,17 +117,4 @@ async fn handle_guild_member_addition(ctx: Context, new_member: Member) -> Resul
     text_channel.say(&ctx.http, response).await?;
 
     Ok(())
-}
-
-trait LogErrors {
-    fn log(self);
-}
-
-impl LogErrors for Result<(), Error> {
-    fn log(self) {
-        match self {
-            Ok(_) => return,
-            Err(error) => println!("{}", error),
-        }
-    }
 }

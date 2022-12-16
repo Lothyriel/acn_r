@@ -2,12 +2,11 @@ use dotenv::dotenv;
 use serenity::{framework::standard::StandardFramework, prelude::GatewayIntents, Client};
 use std::env;
 
-#[path = "config/group_registry.rs"]
-mod group_registry;
-use group_registry::FrameworkExtensions;
-
-#[path = "config/event_handler.rs"]
-mod event_handler;
+mod commands;
+mod config;
+mod data;
+mod utils;
+use crate::config::{event_handler, group_registry::FrameworkExtensions};
 
 #[tokio::main]
 async fn main() {
