@@ -68,7 +68,7 @@ async fn handle_voice_state_update(ctx: Context, state: VoiceState) -> Result<()
         .member
         .ok_or_else(|| Error::Other("Não encontrei o membro"))?;
 
-    let action = if state.self_mute { "Mutou" } else { "Desmutou" };
+    let action = if state.self_mute { "mutado" } else { "desmutado" };
 
     let guild_id = state
         .guild_id
@@ -82,7 +82,7 @@ async fn handle_voice_state_update(ctx: Context, state: VoiceState) -> Result<()
         .min_by(|a, b| a.position.cmp(&b.position))
         .ok_or_else(|| Error::Other("Não achei um canal"))?;
 
-    let response = format!("{} {}", member.mention(), action);
+    let response = format!("{} está {}", member.mention(), action);
     text_channel.say(&ctx.http, response).await?;
 
     Ok(())
