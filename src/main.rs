@@ -3,8 +3,8 @@ use serenity::{framework::standard::StandardFramework, prelude::GatewayIntents, 
 use std::env;
 
 #[path = "config/group_registry.rs"]
-mod framework_extensions;
-use framework_extensions::FrameworkExtensions;
+mod group_registry;
+use group_registry::FrameworkExtensions;
 
 #[path = "config/event_handler.rs"]
 mod event_handler;
