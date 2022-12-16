@@ -1,11 +1,14 @@
 use serenity::framework::StandardFramework;
 
+#[path = "../commands/misc/misc.rs"]
+mod misc;
+
 pub trait FrameworkExtensions {
-    fn RegisterGroups(self) -> StandardFramework;
+    fn register_groups(self) -> StandardFramework;
 }
 
 impl FrameworkExtensions for StandardFramework {
-    fn RegisterGroups(self) -> StandardFramework {
+    fn register_groups(self) -> StandardFramework {
         self.group(&misc::MISC_GROUP)
     }
 }

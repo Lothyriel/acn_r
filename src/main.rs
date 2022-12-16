@@ -1,12 +1,13 @@
 use dotenv::dotenv;
-use serenity::{
-    framework::standard::StandardFramework, prelude::GatewayIntents, Client,
-};
+use serenity::{framework::standard::StandardFramework, prelude::GatewayIntents, Client};
 use std::env;
 
-#[path ="config/registerGroups.rs"]
-mod frameworkExtensions;
-use frameworkExtensions::FrameworkExtensions;
+#[path = "config/group_registry.rs"]
+mod framework_extensions;
+use framework_extensions::FrameworkExtensions;
+
+#[path = "config/event_handler.rs"]
+mod event_handler;
 
 #[tokio::main]
 async fn main() {
@@ -15,11 +16,11 @@ async fn main() {
 
     let framework = StandardFramework::new()
         .configure(|c| c.prefix(";").with_whitespace(true))
-        .registerGroups();
+        .register_groups();
 
     let mut client = Client::builder(&token, GatewayIntents::all())
         .framework(framework)
-        .event_handler(misc::Misc::default())
+        .event_handler(event_handler::AcnHandler)
         .await
         .expect("Erro fatal");
 
