@@ -1,4 +1,3 @@
-use std::time::SystemTime;
 use serenity::Error;
 use chrono::Utc;
 
