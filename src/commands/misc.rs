@@ -14,7 +14,7 @@ struct Misc;
 #[command]
 #[bucket = "pirocudo"]
 async fn att(ctx: &Context, msg: &Message, _args: Args) -> CommandResult {
-    let text = "Seu pau é infelizmente muito pequeno para utilizar este comando";
+    let text = "Comando de teste vei";
 
     msg.reply(ctx, text).await?;
 

@@ -19,9 +19,7 @@ async fn main() {
     let framework = StandardFramework::new()
         .configure(|c| c.prefix(";").with_whitespace(true))
         .register_groups()
-        .bucket("pirocudo", |b| {
-            b.check(|_, m| Box::pin(async { eh_mito(&m.author) }))
-        })
+        .bucket("pirocudo", |b| b.check(|_, m| Box::pin(eh_mito(&m.author))))
         .await;
 
     let mut client = Client::builder(&token, GatewayIntents::all())
