@@ -8,13 +8,13 @@ use serenity::{
     Error,
 };
 
-use crate::utils::log::LogErrors;
+use crate::utils::log::log;
 pub struct AcnHandler;
 
 #[async_trait]
 impl EventHandler for AcnHandler {
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
-        handle_guild_member_addition(ctx, new_member).await.log();
+        log(handle_guild_member_addition(ctx, new_member));
     }
 
     async fn invite_create(&self, ctx: Context, event: InviteCreateEvent) {
