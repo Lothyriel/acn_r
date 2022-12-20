@@ -3,9 +3,11 @@ use serenity::{
         macros::{command, group},
         Args, CommandResult,
     },
-    model::prelude::Message,
+    http::GuildPagination,
+    model::prelude::{GuildId, Message},
     prelude::Context,
 };
+use crate::utils::http_ext::HttpExt;
 
 #[group]
 #[commands(att)]
@@ -13,19 +15,20 @@ struct Misc;
 
 #[command]
 #[bucket = "pirocudo"]
-async fn att(ctx: &Context, msg: &Message, _args: Args) -> CommandResult {
-    let text = "Comando de teste vei";
+async fn att(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
+    let message = args.rest();
 
-    msg.reply(ctx, text).await?;
+    // let guild_id = GuildId(244922266050232321);
+
+    // let guilds = ctx.http.get_channels(guild_id).await?;
+
+    let guilds = ctx.http.get_all_guilds();
+
+    msg.reply(ctx, message).await?;
+
+    let cu: Vec<String> = guilds.into_iter().map(|x| x.name).collect();
+
+    msg.reply(ctx, format!("{:?}", cu)).await?;
 
     Ok(())
 }
-
-// @commands.command(help="Mandar <msg> para todos os grupos")
-// async def att(self, ctx, *msg):
-//     if self.bot.eh_plebe(ctx.author):
-//         return await ctx.send("Seu pau é infelizmente muito pequeno para utilizar este comando")
-
-//     mensagem = " ".join(msg)
-//     for grupo in self.bot.guilds:
-//         await grupo.text_channels[0].send(mensagem)

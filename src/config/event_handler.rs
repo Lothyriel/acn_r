@@ -14,11 +14,11 @@ pub struct AcnHandler;
 #[async_trait]
 impl EventHandler for AcnHandler {
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
-        log(handle_guild_member_addition(ctx, new_member));
+        log(handle_guild_member_addition(ctx, new_member)).await;
     }
 
     async fn invite_create(&self, ctx: Context, event: InviteCreateEvent) {
-        handle_invite_create(ctx, event).await.log();
+        log(handle_invite_create(ctx, event)).await;
     }
 
     async fn ready(&self, _: Context, ready: Ready) {

@@ -1,5 +1,5 @@
 use chrono::Utc;
-use serenity::Error;
+use serenity::{async_trait, Error};
 use std::future::Future;
 
 pub async fn log<F>(function: F)
@@ -17,14 +17,26 @@ where
     }
 }
 
-type Sexo = Sized + (impl Cu);
-type Cu = dyn (Future<Output = Result<(), Error>>);
-trait Log<T> {
-    fn log(function: Cu);
-}
+// type Sexo = Sized + (impl Cu);
 
-impl Log<Result<(), Error>> for Cu {
-    fn log(function: Cu) {
-        todo!()
-    }
-}
+// type Cu = impl (Future<Output = Result<(), Error>>);
+
+// #[async_trait(?Send)]
+// trait Log {
+//     async fn log(&self);
+// }
+
+// #[async_trait(?Send)]
+// impl Log for dyn Future<Output = Result<(), Error>> {
+//     async fn log(&self) {
+//         match self.await {
+//             Ok(_) => return,
+//             Err(error) => eprintln!(
+//                 "Handler: {} Error: {} {:?}",
+//                 std::any::type_name::<F>(),
+//                 error,
+//                 Utc::now()
+//             ),
+//         }
+//     }
+// }
