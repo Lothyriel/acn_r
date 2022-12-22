@@ -2,14 +2,15 @@ use dotenv::dotenv;
 use serenity::{framework::standard::StandardFramework, prelude::GatewayIntents, Client};
 use std::env;
 
-mod commands;
-mod config;
-mod data;
-mod utils;
 use crate::{
     config::{event_handler, group_registry::FrameworkExtensions},
     data::utils::eh_mito,
 };
+
+mod commands;
+mod config;
+mod data;
+mod utils;
 
 #[tokio::main]
 async fn main() {

@@ -1,5 +1,4 @@
-use serenity::async_trait;
-use serenity::framework::StandardFramework;
+use serenity::{async_trait, framework::StandardFramework};
 
 use crate::commands::misc;
 
