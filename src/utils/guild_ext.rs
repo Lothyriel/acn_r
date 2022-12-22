@@ -12,7 +12,7 @@ impl GuildExt for GuildId {
         let channels = self.channels(&http).await?;
 
         let channel = channels
-            .into_values()
+            .values()
             .filter(|c| c.is_text_based())
             .min_by(|a, b| a.position.cmp(&b.position))
             .ok_or_else(|| Error::Other("Não achei um canal"))?;
