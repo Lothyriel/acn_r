@@ -8,7 +8,7 @@ use serenity::{
     Error,
 };
 
-use crate::utils::log::log;
+use crate::utils::{guild_ext::GuildExt, log::log};
 pub struct AcnHandler;
 
 #[async_trait]
@@ -39,15 +39,12 @@ async fn handle_invite_create(ctx: Context, event: InviteCreateEvent) -> Result<
 }
 
 async fn handle_guild_member_addition(ctx: Context, new_member: Member) -> Result<(), Error> {
-    let channels = new_member.guild_id.channels(&ctx.http).await?;
-
-    let text_channel = channels
-        .values()
-        .min_by(|a, b| a.position.cmp(&b.position))
-        .ok_or_else(|| Error::Other("Não achei um canal"))?;
-
     let response = format!("Novo random detectado: {}", new_member.mention());
-    text_channel.say(&ctx.http, response).await?;
+
+    new_member
+        .guild_id
+        .say_on_main_text_channel(&ctx.http, &response)
+        .await?;
 
     Ok(())
 }

@@ -1,5 +1,5 @@
 use chrono::Utc;
-use serenity::{async_trait, Error};
+use serenity::{Error};
 use std::future::Future;
 
 pub async fn log<F>(function: F)

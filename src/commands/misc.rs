@@ -3,11 +3,12 @@ use serenity::{
         macros::{command, group},
         Args, CommandResult,
     },
-    http::GuildPagination,
-    model::prelude::{GuildId, Message},
+    futures::future::join_all,
+    model::prelude::Message,
     prelude::Context,
 };
-use crate::utils::http_ext::HttpExt;
+
+use crate::utils::guild_ext::GuildExt;
 
 #[group]
 #[commands(att)]
@@ -15,20 +16,19 @@ struct Misc;
 
 #[command]
 #[bucket = "pirocudo"]
-async fn att(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
+async fn att(ctx: &Context, _msg: &Message, args: Args) -> CommandResult {
     let message = args.rest();
 
-    // let guild_id = GuildId(244922266050232321);
+    let guilds = ctx.http.get_guilds(None, None).await?;
 
-    // let guilds = ctx.http.get_channels(guild_id).await?;
+    let futures: Vec<_> = guilds
+        .iter()
+        .map(|x| {
+            x.id.say_on_main_text_channel(&ctx.http, message)
+        })
+        .collect();
 
-    let guilds = ctx.http.get_all_guilds();
-
-    msg.reply(ctx, message).await?;
-
-    let cu: Vec<String> = guilds.into_iter().map(|x| x.name).collect();
-
-    msg.reply(ctx, format!("{:?}", cu)).await?;
+    join_all(futures).await;
 
     Ok(())
 }
