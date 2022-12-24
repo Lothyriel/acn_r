@@ -1,4 +1,5 @@
-use serenity::{async_trait, http::Http, model::prelude::GuildId, Error};
+use anyhow::Error;
+use serenity::{async_trait, http::Http, model::prelude::GuildId};
 use std::sync::Arc;
 
 #[async_trait]
@@ -15,7 +16,7 @@ impl GuildExt for GuildId {
             .values()
             .filter(|c| c.is_text_based())
             .min_by(|a, b| a.position.cmp(&b.position))
-            .ok_or_else(|| Error::Other("Não achei um canal"))?;
+            .ok_or_else(|| std::error::Error{});
 
         channel.say(http, msg).await?;
 
