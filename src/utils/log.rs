@@ -1,6 +1,40 @@
-use chrono::Utc;
-use serenity::{Error};
-use std::future::Future;
+use log::error;
+use serenity::{async_trait, Error};
+use std::{future::Future};
+
+pub trait LogExt {
+    fn log(self);
+}
+
+impl LogExt for Vec<Result<(), Error>> {
+    fn log(self) {
+        let errors: Vec<_> = self.into_iter().filter_map(|f| f.err()).collect();
+
+        for err in errors {
+            error!("{:?}", err);
+        }
+    }
+}
+
+#[async_trait]
+pub trait FutureExt {
+    async fn log<F>(self)
+    where
+        F: Future<Output = Result<(), Error>>;
+}
+
+// #[async_trait]
+// impl FutureExt for Box<dyn Future<Output = u32>> {
+//     async fn log<F>(self)
+//     where
+//         F: Future<Output = Result<(), Error>>,
+//     {
+//         match self.await {
+//             Ok(_) => return,
+//             Err(error) => error!("Handler: {} Error: {}", std::any::type_name::<F>(), error),
+//         }
+//     }
+// }
 
 pub async fn log<F>(function: F)
 where
@@ -8,35 +42,6 @@ where
 {
     match function.await {
         Ok(_) => return,
-        Err(error) => eprintln!(
-            "Handler: {} Error: {} {:?}",
-            std::any::type_name::<F>(),
-            error,
-            Utc::now()
-        ),
+        Err(error) => error!("Handler: {} Error: {}", std::any::type_name::<F>(), error),
     }
 }
-
-// type Sexo = Sized + (impl Cu);
-
-// type Cu = impl (Future<Output = Result<(), Error>>);
-
-// #[async_trait(?Send)]
-// trait Log {
-//     async fn log(&self);
-// }
-
-// #[async_trait(?Send)]
-// impl Log for dyn Future<Output = Result<(), Error>> {
-//     async fn log(&self) {
-//         match self.await {
-//             Ok(_) => return,
-//             Err(error) => eprintln!(
-//                 "Handler: {} Error: {} {:?}",
-//                 std::any::type_name::<F>(),
-//                 error,
-//                 Utc::now()
-//             ),
-//         }
-//     }
-// }
