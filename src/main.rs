@@ -15,6 +15,7 @@ mod utils;
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    env_logger::init();
     let token = env::var("TOKEN_BOT").expect("Discord Token não encontrado vei...");
 
     let framework = StandardFramework::new()
