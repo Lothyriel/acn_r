@@ -5,5 +5,6 @@ const ID_MITO: u64 = 892942296566358066;
 
 pub async fn eh_mito(user: &User) -> bool {
     let id = user.id;
+    print!("log teste");
     id == ID_MITO || id == ID_PIROCUDO
 }
