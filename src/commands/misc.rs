@@ -16,7 +16,7 @@ struct Misc;
 
 #[command]
 #[bucket = "pirocudo"]
-async fn att(ctx: &Context, _msg: &Message, args: Args) -> CommandResult {    
+async fn att(ctx: &Context, _msg: &Message, args: Args) -> CommandResult {
     let message = args.rest();
 
     let guilds = ctx.http.get_guilds(None, None).await?;

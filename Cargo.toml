@@ -7,7 +7,13 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.23", features = ["macros", "rt-multi-thread"] }
-serenity = { default-features = false, features = ["client", "gateway", "model", "rustls_backend", "standard_framework"], version = "0.11.5"}
+serenity = { default-features = false, features = [
+    "client",
+    "gateway",
+    "model",
+    "rustls_backend",
+    "standard_framework",
+], version = "0.11.5" }
 dotenv = "0.15.0"
 chrono = "0.4.23"
 log = "0.4.17"
