@@ -8,7 +8,7 @@ RUN cargo build --release
 
 # Prod stage
 FROM gcr.io/distroless/cc
-COPY --from=builder /app/target/release/acn_r /
+COPY --from=builder /target/release/acn_r /
 COPY .env ./
 COPY appsettings.json ./
 
