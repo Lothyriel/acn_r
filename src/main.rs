@@ -35,6 +35,6 @@ async fn main() {
     client.register_dependencies().await;
 
     if let Err(error) = client.start().await {
-        println!("Client error: {:?}", error);
+        error!("Client error: {:?}", error);
     }
 }
