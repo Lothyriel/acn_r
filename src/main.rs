@@ -13,7 +13,7 @@ mod features;
 #[tokio::main]
 async fn main() {
     match dotenv() {
-        Ok(_) => return,
+        Ok(_) => (),
         Err(e) => error!("Não consegui carregar o .env: {}", e),
     };
 
