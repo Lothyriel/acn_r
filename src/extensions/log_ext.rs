@@ -15,7 +15,7 @@ impl LogExt for Vec<Result<(), Error>> {
     }
 }
 
-impl LogExt for Result<(), Error> {
+impl<T> LogExt for Result<T, Error> {
     fn log(self) {
         match self {
             Ok(_) => return,

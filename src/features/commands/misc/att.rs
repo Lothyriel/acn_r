@@ -1,18 +1,6 @@
-use serenity::{
-    framework::standard::{
-        macros::{command, group},
-        Args, CommandResult,
-    },
-    futures::future::join_all,
-    model::prelude::Message,
-    prelude::Context,
-};
+use serenity::{framework::standard::{macros::command, CommandResult, Args}, prelude::Context, model::prelude::Message, futures::future::join_all};
 
-use crate::utils::{guild_ext::GuildExt, log::LogExt};
-
-#[group]
-#[commands(att)]
-struct Misc;
+use crate::extensions::{guild_ext::GuildExt, log_ext::LogExt};
 
 #[command]
 #[bucket = "pirocudo"]
