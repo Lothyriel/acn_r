@@ -21,7 +21,7 @@ impl Dependencies for Context {
             .read()
             .await
             .get::<T>()
-            .map(|value| value.clone())
+            .cloned()
             .ok_or_else(|| anyhow!("Não tem {} cadastrado vei...", std::any::type_name::<T>()))
     }
 }
