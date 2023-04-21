@@ -1,3 +1,4 @@
+use log::info;
 use serenity::{model::prelude::Message, prelude::Context};
 
 use crate::{
@@ -11,6 +12,6 @@ pub async fn eh_mito(context: &Context, message: &Message) -> bool {
         .await
         .expect("Impossível exception");
 
-    print!("O mano: {} tentou usar um método", user_id);
+    info!("O mano: {} tentou usar um método", user_id);
     allowed_ids.into_iter().any(|x| x == user_id)
 }
