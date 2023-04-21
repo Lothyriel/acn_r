@@ -1,13 +1,16 @@
 use anyhow::{anyhow, Error};
+use application::services::appsettings::load_appsettings;
 use dotenv::dotenv;
-use serenity::{framework::standard::StandardFramework, prelude::GatewayIntents, Client};
+use serenity::{
+    framework::standard::StandardFramework, model::prelude::UserId, prelude::GatewayIntents, Client,
+};
 use std::env;
 
 use extensions::{
     group_registry::{DependenciesExtensions, FrameworkExtensions},
     log_ext::LogExt,
 };
-use features::{events::invoker::Handler};
+use features::{commands::help::HELP, events::invoker::Handler};
 
 mod application;
 mod extensions;
@@ -24,16 +27,20 @@ async fn start_application() -> Result<(), Error> {
     env_logger::init();
     let token = get_token_bot()?;
 
+    let settings = load_appsettings()?;
+    let owners = settings.allowed_ids.iter().map(|i| UserId(*i)).collect();
+
     let framework = StandardFramework::new()
-        .configure(|c| c.prefix("!").with_whitespace(true))
-        .register_groups();
+        .configure(|c| c.prefix("!").with_whitespace(true).owners(owners))
+        .register_groups()
+        .help(&HELP);
 
     let mut client = Client::builder(&token, GatewayIntents::all())
         .framework(framework)
         .event_handler(Handler)
         .await?;
 
-    client.register_dependencies().await?;
+    client.register_dependencies(settings).await?;
 
     client.start().await?;
 

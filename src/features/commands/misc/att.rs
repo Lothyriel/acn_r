@@ -8,7 +8,7 @@ use serenity::{
 use crate::extensions::{guild_ext::GuildExt, log_ext::LogExt};
 
 #[command]
-#[bucket = "pirocudo"]
+#[owners_only]
 async fn att(ctx: &Context, _msg: &Message, args: Args) -> CommandResult {
     let message = args.rest();
 
