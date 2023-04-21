@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Error};
 use dotenv::dotenv;
-use log::error;
 use serenity::{framework::standard::StandardFramework, prelude::GatewayIntents, Client};
 use std::env;
 
@@ -36,7 +35,7 @@ async fn start_application() -> Result<(), Error> {
         .event_handler(Handler)
         .await?;
 
-    client.register_dependencies().await;
+    client.register_dependencies().await?;
     
     client.start().await?;
 
