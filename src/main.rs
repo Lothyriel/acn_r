@@ -7,7 +7,7 @@ use extensions::{
     group_registry::{DependenciesExtensions, FrameworkExtensions},
     log_ext::LogExt,
 };
-use features::{buckets::eh_mito, events::invoker::Handler};
+use features::{events::invoker::Handler};
 
 mod application;
 mod extensions;
@@ -26,9 +26,7 @@ async fn start_application() -> Result<(), Error> {
 
     let framework = StandardFramework::new()
         .configure(|c| c.prefix("!").with_whitespace(true))
-        .register_groups()
-        .bucket("pirocudo", |b| b.check(|c, m| Box::pin(eh_mito(c, m))))
-        .await;
+        .register_groups();
 
     let mut client = Client::builder(&token, GatewayIntents::all())
         .framework(framework)
@@ -36,7 +34,7 @@ async fn start_application() -> Result<(), Error> {
         .await?;
 
     client.register_dependencies().await?;
-    
+
     client.start().await?;
 
     Ok(())
