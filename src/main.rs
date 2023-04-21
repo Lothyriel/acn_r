@@ -23,8 +23,7 @@ async fn start_application() -> Result<(), Error> {
     dotenv().map_err(|e| anyhow!("Não consegui carregar o .env: {}", e))?;
 
     env_logger::init();
-    let token = env::var("TOKEN_BOT")
-        .map_err(|_| anyhow!("TOKEN_BOT não definido nas variáveis de ambiente"))?;
+    let token = get_token_bot()?;
 
     let framework = StandardFramework::new()
         .configure(|c| c.prefix("!").with_whitespace(true))
@@ -38,7 +37,12 @@ async fn start_application() -> Result<(), Error> {
         .await?;
 
     client.register_dependencies().await;
-    client.start();
+    
+    client.start().await?;
 
     Ok(())
+}
+
+pub fn get_token_bot() -> Result<String, Error> {
+    env::var("TOKEN_BOT").map_err(|_| anyhow!("TOKEN_BOT não definido nas variáveis de ambiente"))
 }
