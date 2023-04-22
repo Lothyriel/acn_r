@@ -27,9 +27,9 @@ pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
         guild_id: user.guild_id.0,
-        nickname,
         guild_name: guild.name,
-        activity: activity,
+        nickname,
+        activity,
         date: now,
     };
     user_services.update_user_activity(dto).await?;
