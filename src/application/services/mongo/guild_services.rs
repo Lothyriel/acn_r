@@ -31,10 +31,7 @@ impl GuildServices {
         }
 
         let guild = Guild { id };
-        self.guilds
-            .insert_one(guild, None)
-            .await
-            .map_err(|e| anyhow!(e))?;
+        self.guilds.insert_one(guild, None).await?;
 
         Ok(())
     }
@@ -48,11 +45,7 @@ impl GuildServices {
 
     async fn get_guild(&self, guild_id: u64) -> Result<Option<Guild>, Error> {
         let doc = doc! {"id": guild_id as i64};
-
-        self.guilds
-            .find_one(doc, None)
-            .await
-            .map_err(|e| anyhow!(e))
+        Ok(self.guilds.find_one(doc, None).await?)
     }
 
     async fn update_name(&self, id: u64, name: String, date: DateTime<Utc>) -> Result<(), Error> {

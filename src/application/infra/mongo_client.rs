@@ -1,5 +1,5 @@
 use crate::application::{infra::env_var, models::appsettings::AppSettings};
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use mongodb::{options::ClientOptions, Client};
 use serenity::prelude::TypeMapKey;
 
@@ -14,7 +14,7 @@ pub async fn create_mongo_client(appsettings: &AppSettings) -> Result<Client, Er
         .replace("{CLUSTER_URL}", &appsettings.mongo_cluster_url);
 
     let options = ClientOptions::parse(connection_string).await?;
-    Client::with_options(options).map_err(|e| anyhow!(e))
+    Ok(Client::with_options(options)?)
 }
 
 pub struct MongoClient;
