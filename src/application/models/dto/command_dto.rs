@@ -1,11 +1,12 @@
 use chrono::{DateTime, Utc};
 
+use crate::application::models::dto::user_services::GuildInfo;
+
 pub struct CommandUseDto {
     pub user_id: u64,
-    pub guild_id: Option<u64>,
+    pub guild_info: Option<GuildInfo>,
     pub user_nickname: String,
-    pub guild_name: String,
     pub date: DateTime<Utc>,
     pub command: String,
-    pub args: String
+    pub args: String,
 }
