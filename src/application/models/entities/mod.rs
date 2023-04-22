@@ -3,4 +3,4 @@ pub mod nickname;
 pub mod guild;
 pub mod guild_name;
 pub mod user_activity;
-mod command_use;
+pub mod command_use;
