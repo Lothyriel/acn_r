@@ -12,7 +12,8 @@ use serenity::{
 use crate::{
     extensions::log_ext::LogExt,
     features::events::handlers::{
-        guild_updated, invite_created, member_added, member_removed, ready, voice_updated,
+        guild_updated, invite_created, member_added, member_removed, member_updated, ready,
+        voice_updated,
     },
 };
 
@@ -38,6 +39,10 @@ impl EventHandler for Handler {
 
     async fn guild_update(&self, ctx: Context, _old: Option<Guild>, new: PartialGuild) {
         guild_updated::handler(ctx, new).await.log()
+    }
+
+    async fn guild_member_update(&self, ctx: Context, _old: Option<Member>, new: Member) {
+        member_updated::handler(ctx, new).await.log()
     }
 
     async fn guild_member_removal(
