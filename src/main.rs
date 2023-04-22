@@ -9,7 +9,10 @@ use extensions::{
     group_registry::{DependenciesExtensions, FrameworkExtensions},
     log_ext::LogExt,
 };
-use features::{commands::help::HELP, events::invoker::Handler};
+use features::{
+    commands::help,
+    events::{after, invoker},
+};
 
 mod application;
 mod extensions;
@@ -32,11 +35,12 @@ async fn start_application() -> Result<(), Error> {
     let framework = StandardFramework::new()
         .configure(|c| c.prefix("!").with_whitespace(true).owners(owners))
         .register_groups()
-        .help(&HELP);
+        .help(&help::HELP)
+        .after(after::handler);
 
     let mut client = Client::builder(&token, GatewayIntents::all())
         .framework(framework)
-        .event_handler(Handler)
+        .event_handler(invoker::Handler)
         .await?;
 
     client.register_dependencies(settings).await?;
