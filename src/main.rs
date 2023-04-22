@@ -23,9 +23,9 @@ async fn main() {
 }
 
 async fn start_application() -> Result<(), Error> {
-    dotenv::dotenv().map_err(|e| anyhow!("Não consegui carregar o .env: {}", e))?;
-
     env_logger::init();
+    dotenv::dotenv().ok();
+
     let token = env_var::get("TOKEN_BOT")?;
 
     let settings = appsettings::load()?;
