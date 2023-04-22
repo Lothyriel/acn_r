@@ -10,7 +10,7 @@ use crate::{
 pub async fn handler(ctx: Context, ready: Ready) -> Result<(), Error> {
     let permitidos = ctx.get_dependency::<AllowedIds>().await?;
     let message = format!("Estamos totalmente dentro! {}", ready.user.name);
-    info!("{}", message);
+    info!("{message}");
 
     let tasks: Vec<_> = permitidos
         .into_iter()
