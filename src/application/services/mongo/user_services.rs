@@ -57,10 +57,15 @@ impl UserServices {
             date: add_user_dto.date,
         };
 
+        let user_id = update_dto.user_id;
         self.update_nickname(update_dto).await?;
 
+        if self.user_exists(user_id).await? {
+            return Ok(())
+        }
+
         let user = User {
-            id: add_user_dto.user_id,
+            id: user_id,
         };
 
         self.users.insert_one(user, None).await?;
@@ -71,7 +76,7 @@ impl UserServices {
         match self.get_last_name(update_dto.user_id).await? {
             Some(last_name) => {
                 if last_name == update_dto.new_nickname {
-                    return Ok(());
+                    return Ok(())
                 }
             }
             None => (),
@@ -87,6 +92,18 @@ impl UserServices {
         self.nickname_changes.insert_one(nick, None).await?;
 
         Ok(())
+    }
+
+    async fn user_exists(&self, guild_id: u64) -> Result<bool, Error> {
+        match self.get_user(guild_id).await? {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        }
+    }
+
+    async fn get_user(&self, id: u64) -> Result<Option<User>, Error> {
+        let doc = doc! {"id": id as i64};
+        Ok(self.users.find_one(doc, None).await?)
     }
 
     async fn get_last_name(&self, user_id: u64) -> Result<Option<String>, Error> {
