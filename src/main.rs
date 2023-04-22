@@ -35,7 +35,7 @@ async fn start_application() -> Result<(), Error> {
         .configure(|c| c.prefix("!").with_whitespace(true).owners(owners))
         .register_groups()
         .help(&help::HELP)
-        .after(after::handler);
+        .after(after::after);
 
     let mut client = Client::builder(&token, GatewayIntents::all())
         .framework(framework)
