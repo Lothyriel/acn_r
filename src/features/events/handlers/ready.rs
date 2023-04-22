@@ -1,5 +1,6 @@
 use anyhow::Error;
-use serenity::{model::prelude::Ready, prelude::Context};
+use log::info;
+use serenity::{futures::future::join_all, model::prelude::Ready, prelude::Context};
 
 use crate::{
     application::models::allowed_ids::AllowedIds,
@@ -9,11 +10,14 @@ use crate::{
 pub async fn handler(ctx: Context, ready: Ready) -> Result<(), Error> {
     let permitidos = ctx.get_dependency::<AllowedIds>().await?;
     let message = format!("Estamos totalmente dentro! {}", ready.user.name);
-    println!("{}", message);
+    info!("{message}");
 
-    for id in permitidos {
-        send_greetings(&ctx, id, &message).await.log();
-    }
+    let tasks: Vec<_> = permitidos
+        .into_iter()
+        .map(|p| send_greetings(&ctx, p, &message))
+        .collect();
+
+    join_all(tasks).await.log();
 
     Ok(())
 }

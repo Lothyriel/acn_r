@@ -1,7 +1,9 @@
+use anyhow::Error;
 use serenity::{async_trait, framework::StandardFramework, Client};
 
-use crate::application::services::{
-    appsettings::load_appsettings, dependency_configuration::register_dependencies,
+use crate::application::{
+    infra::mongo_client::create_mongo_client, models::appsettings::AppSettings,
+    services::dependency_configuration::register_dependencies,
 };
 
 pub trait FrameworkExtensions {
@@ -10,12 +12,16 @@ pub trait FrameworkExtensions {
 
 #[async_trait]
 pub trait DependenciesExtensions {
-    async fn register_dependencies(&mut self);
+    async fn register_dependencies(&mut self, settings: AppSettings) -> Result<(), Error>;
 }
 
 #[async_trait]
 impl DependenciesExtensions for Client {
-    async fn register_dependencies(&mut self) {
-        register_dependencies(self.data.write().await, load_appsettings())
+    async fn register_dependencies(&mut self, settings: AppSettings) -> Result<(), Error> {
+        let mongo_database = create_mongo_client(&settings).await?.database("acn_r");
+
+        register_dependencies(self.data.write().await, settings, mongo_database);
+
+        Ok(())
     }
 }
