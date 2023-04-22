@@ -36,7 +36,7 @@ async fn handler<'a>(
         .unwrap_or_else(|| msg.author.name.to_string());
 
     let command_with_prefix = format!("!{name}");
-    let args = msg.content.replace(&command_with_prefix.trim(), "");
+    let args = msg.content.replace(&command_with_prefix, "").trim();
 
     let dto = CommandUseDto {
         date: now,
@@ -48,9 +48,11 @@ async fn handler<'a>(
     };
 
     if let Err(e) = result {
-        command_services.add_command_error(&dto, format!("{e}")).await?
+        command_services
+            .add_command_error(&dto, format!("{e}"))
+            .await?
     }
-    
+
     command_services.add_command_use(dto).await?;
 
     Ok(())
