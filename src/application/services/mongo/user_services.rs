@@ -72,7 +72,7 @@ impl UserServices {
         Ok(())
     }
 
-    async fn update_nickname(&self, update_dto: UpdateNickDto) -> Result<(), Error> {
+    pub async fn update_nickname(&self, update_dto: UpdateNickDto) -> Result<(), Error> {
         match self.get_last_name(update_dto.user_id).await? {
             Some(last_name) => {
                 if last_name == update_dto.new_nickname {

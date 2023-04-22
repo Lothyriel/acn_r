@@ -2,7 +2,8 @@ use serenity::{
     async_trait,
     model::{
         gateway::Ready,
-        prelude::{InviteCreateEvent, Member},
+        prelude::{Guild, GuildId, InviteCreateEvent, Member, PartialGuild},
+        user::User,
         voice::VoiceState,
     },
     prelude::{Context, EventHandler},
@@ -10,7 +11,10 @@ use serenity::{
 
 use crate::{
     extensions::log_ext::LogExt,
-    features::events::handlers::{invite_created, member_added, ready, voice_updated},
+    features::events::handlers::{
+        guild_updated, invite_created, member_added, member_removed, member_updated, ready,
+        voice_updated,
+    },
 };
 
 pub struct Handler;
@@ -31,5 +35,23 @@ impl EventHandler for Handler {
 
     async fn voice_state_update(&self, ctx: Context, old: Option<VoiceState>, new: VoiceState) {
         voice_updated::handler(ctx, old, new).await.log()
+    }
+
+    async fn guild_update(&self, ctx: Context, _old: Option<Guild>, new: PartialGuild) {
+        guild_updated::handler(ctx, new).await.log()
+    }
+
+    async fn guild_member_update(&self, ctx: Context, _old: Option<Member>, new: Member) {
+        member_updated::handler(ctx, new).await.log()
+    }
+
+    async fn guild_member_removal(
+        &self,
+        ctx: Context,
+        id: GuildId,
+        user: User,
+        member: Option<Member>,
+    ) {
+        member_removed::handler(ctx, id, user, member).await.log()
     }
 }
