@@ -40,7 +40,12 @@ pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> 
 fn get_activity(old: &VoiceState, new: &VoiceState) -> Activity {
     if old.channel_id != new.channel_id {
         match new.channel_id {
-            Some(_) => return Activity::Connected,
+            Some(new_id) => if let Some(old_id) = old.channel_id {
+                if new_id != old_id {
+                    return Activity::Moved
+                }
+                return Activity::Connected
+            },
             None => return Activity::Disconnected,
         }
     }
