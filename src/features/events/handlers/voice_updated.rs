@@ -8,6 +8,7 @@ use crate::{
 
 pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> Result<(), Error> {
     let now = chrono::Utc::now();
+
     let activity = match old {
         Some(old_activity) => get_activity(&old_activity, &new),
         None => Activity::Connected,
@@ -20,6 +21,7 @@ pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> 
         .ok_or_else(|| anyhow!("VoiceStateUpdate não contem membro"))?;
 
     let guild = ctx.http.get_guild(user.guild_id.0).await?;
+    
     let nickname = user.display_name().into_owned();
 
     let dto = UpdateActivityDto {

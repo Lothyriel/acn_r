@@ -39,18 +39,20 @@ impl UserServices {
         Ok(())
     }
 
-    async fn add_user(&self, add_user_dto: AddUserDto) -> Result<(), Error> {
-        self.guild_services
-            .add_guild(
-                add_user_dto.guild_id,
-                add_user_dto.guild_name,
-                add_user_dto.date,
-            )
-            .await?;
+    pub async fn add_user(&self, add_user_dto: AddUserDto) -> Result<(), Error> {
+        if let Some(guild_info) = &add_user_dto.guild_info {
+            self.guild_services
+                .add_guild(
+                    guild_info.guild_id,
+                    guild_info.guild_name.to_string(),
+                    add_user_dto.date,
+                )
+                .await?;
+        }
 
         let update_dto = UpdateNickDto {
             user_id: add_user_dto.user_id,
-            guild_id: add_user_dto.guild_id,
+            guild_id: add_user_dto.guild_info.map(|g| g.guild_id),
             new_nickname: add_user_dto.nickname,
             date: add_user_dto.date,
         };
