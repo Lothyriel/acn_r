@@ -1,18 +1,20 @@
-use anyhow::{anyhow, Error};
+use crate::application::{infra::env_var, models::appsettings::AppSettings};
+use anyhow::Error;
 use mongodb::{options::ClientOptions, Client};
 use serenity::prelude::TypeMapKey;
-use crate::{application::models::appsettings::AppSettings, get_token_bot};
+
+const CLUSTER_URL: &str =
+    "mongodb+srv://{USER}:{PASSWORD}@{CLUSTER_URL}/?retryWrites=true&w=majority";
 
 pub async fn create_mongo_client(appsettings: &AppSettings) -> Result<Client, Error> {
-    let password = get_token_bot()?;
-    let connection_string =
-        "mongodb+srv://{USER}:{PASSWORD}@{CLUSTER_URL}/?retryWrites=true&w=majority"
-            .replace("{USER}", &appsettings.mongo_user)
-            .replace("{PASSWORD}", &password)
-            .replace("{CLUSTER_URL}", &appsettings.mongo_cluster_url);
+    let password = env_var::get("MONGO_PASSWORD")?;
+    let connection_string = CLUSTER_URL
+        .replace("{USER}", &appsettings.mongo_user)
+        .replace("{PASSWORD}", &password)
+        .replace("{CLUSTER_URL}", &appsettings.mongo_cluster_url);
 
     let options = ClientOptions::parse(connection_string).await?;
-    Client::with_options(options).map_err(|e| anyhow!(e))
+    Ok(Client::with_options(options)?)
 }
 
 pub struct MongoClient;

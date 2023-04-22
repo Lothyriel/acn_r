@@ -18,9 +18,9 @@ pub trait DependenciesExtensions {
 #[async_trait]
 impl DependenciesExtensions for Client {
     async fn register_dependencies(&mut self, settings: AppSettings) -> Result<(), Error> {
-        let mongo_client = create_mongo_client(&settings).await?;
+        let mongo_database = create_mongo_client(&settings).await?.database("acn_r");
 
-        register_dependencies(self.data.write().await, settings, mongo_client);
+        register_dependencies(self.data.write().await, settings, mongo_database);
 
         Ok(())
     }

@@ -1,4 +1,4 @@
-# fly.toml file generated for acn-r on 2023-04-21T07:41:05-03:00
+# fly.toml file generated for acn-r on 2023-04-22T14:01:09-03:00
 
 app = "acn-r"
 kill_signal = "SIGINT"
