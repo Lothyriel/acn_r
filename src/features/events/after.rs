@@ -36,7 +36,7 @@ async fn handler<'a>(
         .unwrap_or_else(|| msg.author.name.to_string());
 
     let command_with_prefix = format!("!{name}");
-    let args = msg.content.replace(&command_with_prefix, "");
+    let args = msg.content.replace(&command_with_prefix.trim(), "");
 
     let dto = CommandUseDto {
         date: now,
