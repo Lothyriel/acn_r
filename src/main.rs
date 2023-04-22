@@ -1,11 +1,10 @@
 use anyhow::{anyhow, Error};
-use application::services::appsettings::load_appsettings;
-use dotenv::dotenv;
 use serenity::{
     framework::standard::StandardFramework, model::prelude::UserId, prelude::GatewayIntents, Client,
 };
 use std::env;
 
+use application::services::appsettings;
 use extensions::{
     group_registry::{DependenciesExtensions, FrameworkExtensions},
     log_ext::LogExt,
@@ -22,12 +21,12 @@ async fn main() {
 }
 
 async fn start_application() -> Result<(), Error> {
-    dotenv().map_err(|e| anyhow!("Não consegui carregar o .env: {}", e))?;
+    dotenv::dotenv().map_err(|e| anyhow!("Não consegui carregar o .env: {}", e))?;
 
     env_logger::init();
     let token = get_token_bot()?;
 
-    let settings = load_appsettings()?;
+    let settings = appsettings::load()?;
     let owners = settings.allowed_ids.iter().map(|i| UserId(*i)).collect();
 
     let framework = StandardFramework::new()
