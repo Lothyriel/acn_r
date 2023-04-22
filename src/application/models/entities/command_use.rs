@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct CommandUse {
-    pub guild_id: u64,
+    pub guild_id: Option<u64>,
     pub user_id: u64,
     pub date: DateTime<Utc>,
     pub name: String,
