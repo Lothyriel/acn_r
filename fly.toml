@@ -8,5 +8,3 @@ processes = []
 
 [experimental]
   auto_rollback = true
-
-[services]
