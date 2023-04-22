@@ -27,7 +27,7 @@ impl GuildServices {
         self.update_name(id, name, date).await?;
 
         if self.guild_exists(id).await? {
-            return Ok(());
+            return Ok(())
         }
 
         let guild = Guild { id };
@@ -52,7 +52,7 @@ impl GuildServices {
         match self.get_last_name(id).await? {
             Some(last_name) => {
                 if last_name == name {
-                    return Ok(());
+                    return Ok(())
                 }
             }
             None => (),
