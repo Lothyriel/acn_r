@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use chrono::{DateTime, Utc};
 use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 use serenity::prelude::TypeMapKey;

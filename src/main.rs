@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use serenity::{
     framework::standard::StandardFramework, model::prelude::UserId, prelude::GatewayIntents, Client,
 };

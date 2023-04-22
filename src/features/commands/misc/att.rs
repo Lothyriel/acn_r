@@ -9,6 +9,7 @@ use crate::extensions::{guild_ext::GuildExt, log_ext::LogExt};
 
 #[command]
 #[owners_only]
+#[description("Manda uma mensagem em todos os grupos onde esse bot está presente")]
 async fn att(ctx: &Context, _msg: &Message, args: Args) -> CommandResult {
     let message = args.rest();
 
