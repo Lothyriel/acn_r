@@ -93,10 +93,7 @@ impl UserServices {
     }
 
     async fn user_exists(&self, guild_id: u64) -> Result<bool, Error> {
-        match self.get_user(guild_id).await? {
-            Some(_) => Ok(true),
-            None => Ok(false),
-        }
+        Ok(self.get_user(guild_id).await?.is_some())
     }
 
     async fn get_user(&self, id: u64) -> Result<Option<User>, Error> {
