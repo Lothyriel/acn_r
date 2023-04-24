@@ -7,7 +7,7 @@ use crate::application::{
         dto::{command_dto::CommandUseDto, user_services::AddUserDto},
         entities::command::{CommandUse, CommandError},
     },
-    services::mongo::user_services::UserServices,
+    services::user_services::UserServices,
 };
 
 impl TypeMapKey for CommandServices {
