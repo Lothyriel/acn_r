@@ -8,7 +8,7 @@ use serenity::{
 use crate::{
     application::{
         models::dto::{command_dto::CommandUseDto, user_services::GuildInfo},
-        services::mongo::command_services::CommandServices,
+        services::command_services::CommandServices,
     },
     extensions::{dependency_ext::Dependencies, log_ext::LogExt},
 };

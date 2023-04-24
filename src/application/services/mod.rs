@@ -1,3 +1,5 @@
 pub mod appsettings;
 pub mod dependency_configuration;
-pub mod mongo;
+pub mod user_services;
+pub mod guild_services;
+pub mod command_services;

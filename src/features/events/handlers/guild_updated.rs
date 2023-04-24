@@ -2,7 +2,7 @@ use anyhow::Error;
 use serenity::{model::prelude::PartialGuild, prelude::Context};
 
 use crate::{
-    application::services::mongo::guild_services::GuildServices,
+    application::services::guild_services::GuildServices,
     extensions::dependency_ext::Dependencies,
 };
 

@@ -2,7 +2,10 @@ use anyhow::{anyhow, Error};
 use serenity::{model::voice::VoiceState, prelude::Context};
 
 use crate::{
-    application::{models::{entities::user::Activity, dto::user_services::UpdateActivityDto}, services::mongo::user_services::UserServices},
+    application::{
+        models::{dto::user_services::UpdateActivityDto, entities::user::Activity},
+        services::user_services::UserServices,
+    },
     extensions::dependency_ext::Dependencies,
 };
 
@@ -21,7 +24,7 @@ pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> 
         .ok_or_else(|| anyhow!("VoiceStateUpdate não contem membro"))?;
 
     let guild = ctx.http.get_guild(user.guild_id.0).await?;
-    
+
     let nickname = user.display_name().into_owned();
 
     let dto = UpdateActivityDto {
@@ -40,12 +43,14 @@ pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> 
 fn get_activity(old: &VoiceState, new: &VoiceState) -> Activity {
     if old.channel_id != new.channel_id {
         match new.channel_id {
-            Some(new_id) => if let Some(old_id) = old.channel_id {
-                if new_id != old_id {
-                    return Activity::Moved
+            Some(new_id) => {
+                if let Some(old_id) = old.channel_id {
+                    if new_id != old_id {
+                        return Activity::Moved;
+                    }
+                    return Activity::Connected;
                 }
-                return Activity::Connected
-            },
+            }
             None => return Activity::Disconnected,
         }
     }
