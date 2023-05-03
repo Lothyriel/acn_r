@@ -8,7 +8,10 @@ use serenity::{
 
 use crate::{
     application::{
-        models::dto::{command_dto::CommandUseDto, user_services::GuildInfo},
+        models::{
+            appsettings::AppConfigurations,
+            dto::{command_dto::CommandUseDto, user_services::GuildInfo},
+        },
         services::command_services::CommandServices,
     },
     extensions::{dependency_ext::Dependencies, log_ext::LogExt},
@@ -53,13 +56,23 @@ async fn handler<'a>(
     };
 
     if let Err(error) = result {
-        error!("{error}");
-        command_services
-            .add_command_error(&dto, format!("{error}"))
-            .await?;
+        let message = format!("{}: {}", msg.id, error);
+        error!("{message}");
+        discord_debug(ctx, msg, &message).await?;
+        command_services.add_command_error(&dto, message).await?;
     }
 
     command_services.add_command_use(dto).await?;
+
+    Ok(())
+}
+
+async fn discord_debug(ctx: &Context, msg: &Message, error: &str) -> Result<(), Error> {
+    let configuration = ctx.get_dependency::<AppConfigurations>().await?;
+
+    if configuration.debug {
+        msg.reply(&ctx.http, error).await?;
+    }
 
     Ok(())
 }
