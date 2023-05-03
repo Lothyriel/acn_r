@@ -4,7 +4,7 @@ use serenity::{futures::future::join_all, model::prelude::Ready, prelude::Contex
 
 use crate::{
     application::models::allowed_ids::AllowedIds,
-    extensions::{dependency_ext::Dependencies, log_ext::LogExt},
+    extensions::{dependency_ext::Dependencies, log_ext::LogErrorsExt},
 };
 
 pub async fn handler(ctx: Context, ready: Ready) -> Result<(), Error> {
@@ -17,7 +17,7 @@ pub async fn handler(ctx: Context, ready: Ready) -> Result<(), Error> {
         .map(|p| send_greetings(&ctx, p, &message))
         .collect();
 
-    join_all(tasks).await.log();
+    join_all(tasks).await.log_errors();
 
     Ok(())
 }
