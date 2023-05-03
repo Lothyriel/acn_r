@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use anyhow::anyhow;
 use serenity::{
     framework::standard::{macros::command, Args, CommandResult},
