@@ -1,4 +1,5 @@
 use anyhow::Error;
+use log::error;
 use serenity::{
     framework::standard::{macros::hook, CommandResult},
     model::prelude::Message,
@@ -51,10 +52,11 @@ async fn handler<'a>(
         args,
     };
 
-    if let Err(e) = result {
+    if let Err(error) = result {
+        error!("{error}");
         command_services
-            .add_command_error(&dto, format!("{e}"))
-            .await?
+            .add_command_error(&dto, format!("{error}"))
+            .await?;
     }
 
     command_services.add_command_use(dto).await?;
