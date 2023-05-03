@@ -5,13 +5,21 @@ pub trait LogExt {
     fn log(self);
 }
 
-impl LogExt for Vec<Result<(), Error>> {
-    fn log(self) {
-        let errors: Vec<_> = self.into_iter().filter_map(|f| f.err()).collect();
+pub trait LogErrorsExt<T> {
+    fn log_errors(self) -> Vec<T>;
+}
+
+impl<T> LogErrorsExt<T> for Vec<Result<T, Error>> {
+    fn log_errors(self) -> Vec<T> {
+        let (values, errors): (Vec<_>, Vec<_>) = self.into_iter().partition(|r| r.is_ok());
+
+        let errors: Vec<_> = errors.into_iter().filter_map(|e| e.err()).collect();
 
         for err in errors {
             error!("{:?}", err);
         }
+
+        values.into_iter().filter_map(|r| r.ok()).collect()
     }
 }
 

@@ -5,7 +5,7 @@ use serenity::{
     prelude::Context,
 };
 
-use crate::extensions::{guild_ext::GuildExt, log_ext::LogExt};
+use crate::extensions::{guild_ext::GuildExt, log_ext::LogErrorsExt};
 
 #[command]
 #[owners_only]
@@ -20,7 +20,7 @@ async fn att(ctx: &Context, _msg: &Message, args: Args) -> CommandResult {
         .map(|x| x.id.say_on_main_text_channel(&ctx.http, message))
         .collect();
 
-    join_all(tasks).await.log();
+    join_all(tasks).await.log_errors();
 
     Ok(())
 }

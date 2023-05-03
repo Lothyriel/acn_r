@@ -4,10 +4,12 @@ use tokio::sync::RwLockWriteGuard;
 
 use crate::application::{
     models::{allowed_ids::AllowedIds, appsettings::AppSettings},
-    services::mongo::{guild_services::GuildServices, user_services::UserServices},
+    services::{
+        command_services::CommandServices, guild_services::GuildServices,
+        user_services::UserServices,
+        stats_services::StatsServices
+    },
 };
-
-use super::mongo::command_services::CommandServices;
 
 pub fn register_dependencies(
     mut data: RwLockWriteGuard<TypeMap>,
@@ -17,9 +19,11 @@ pub fn register_dependencies(
     let guild_services = GuildServices::new(&mongo_database);
     let user_services = UserServices::new(&mongo_database, guild_services.to_owned());
     let command_services = CommandServices::new(&mongo_database, user_services.to_owned());
+    let stats_services = StatsServices::new(&mongo_database);
 
     data.insert::<AllowedIds>(settings.allowed_ids);
     data.insert::<UserServices>(user_services);
     data.insert::<GuildServices>(guild_services);
     data.insert::<CommandServices>(command_services);
+    data.insert::<StatsServices>(stats_services);
 }

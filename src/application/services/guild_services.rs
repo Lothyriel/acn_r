@@ -27,7 +27,7 @@ impl GuildServices {
         self.update_name(id, name, date).await?;
 
         if self.guild_exists(id).await? {
-            return Ok(())
+            return Ok(());
         }
 
         let guild = Guild { id };
@@ -37,22 +37,19 @@ impl GuildServices {
     }
 
     async fn guild_exists(&self, guild_id: u64) -> Result<bool, Error> {
-        match self.get_guild(guild_id).await? {
-            Some(_) => Ok(true),
-            None => Ok(false),
-        }
+        Ok(self.get_guild(guild_id).await?.is_some())
     }
 
     async fn get_guild(&self, guild_id: u64) -> Result<Option<Guild>, Error> {
-        let doc = doc! {"id": guild_id as i64};
-        Ok(self.guilds.find_one(doc, None).await?)
+        let filter = doc! {"id": guild_id as i64};
+        Ok(self.guilds.find_one(filter, None).await?)
     }
 
     async fn update_name(&self, id: u64, name: String, date: DateTime<Utc>) -> Result<(), Error> {
         match self.get_last_name(id).await? {
             Some(last_name) => {
                 if last_name == name {
-                    return Ok(())
+                    return Ok(());
                 }
             }
             None => (),

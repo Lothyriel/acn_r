@@ -5,9 +5,9 @@ use serenity::prelude::TypeMapKey;
 use crate::application::{
     models::{
         dto::{command_dto::CommandUseDto, user_services::AddUserDto},
-        entities::command::{CommandUse, CommandError},
+        entities::command::{CommandError, CommandUse},
     },
-    services::mongo::user_services::UserServices,
+    services::user_services::UserServices,
 };
 
 impl TypeMapKey for CommandServices {
@@ -60,7 +60,7 @@ impl CommandServices {
             date: dto.date,
             name: dto.command.to_string(),
             args: dto.args.to_string(),
-            error
+            error,
         };
 
         self.commands_errors.insert_one(command_error, None).await?;

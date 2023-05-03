@@ -7,7 +7,7 @@ use crate::application::{
         dto::user_services::{AddUserDto, UpdateActivityDto, UpdateNickDto},
         entities::{nickname::NicknameChange, user::User, user_activity::UserActivity},
     },
-    services::mongo::guild_services::GuildServices,
+    services::guild_services::GuildServices,
 };
 
 impl TypeMapKey for UserServices {
@@ -61,12 +61,10 @@ impl UserServices {
         self.update_nickname(update_dto).await?;
 
         if self.user_exists(user_id).await? {
-            return Ok(())
+            return Ok(());
         }
 
-        let user = User {
-            id: user_id,
-        };
+        let user = User { id: user_id };
 
         self.users.insert_one(user, None).await?;
         Ok(())
@@ -76,7 +74,7 @@ impl UserServices {
         match self.get_last_name(update_dto.user_id).await? {
             Some(last_name) => {
                 if last_name == update_dto.new_nickname {
-                    return Ok(())
+                    return Ok(());
                 }
             }
             None => (),
@@ -95,10 +93,7 @@ impl UserServices {
     }
 
     async fn user_exists(&self, guild_id: u64) -> Result<bool, Error> {
-        match self.get_user(guild_id).await? {
-            Some(_) => Ok(true),
-            None => Ok(false),
-        }
+        Ok(self.get_user(guild_id).await?.is_some())
     }
 
     async fn get_user(&self, id: u64) -> Result<Option<User>, Error> {
