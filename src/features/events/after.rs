@@ -57,7 +57,7 @@ async fn handler<'a>(
 
     if let Err(error) = result {
         let message = format!("{}: {}", msg.id, error);
-        error!("{message}");
+        println!("{message}");
         discord_debug(ctx, msg, &message).await?;
         command_services.add_command_error(&dto, message).await?;
     }

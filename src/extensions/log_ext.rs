@@ -16,7 +16,7 @@ impl<T> LogErrorsExt<T> for Vec<Result<T, Error>> {
         let errors: Vec<_> = errors.into_iter().filter_map(|e| e.err()).collect();
 
         for err in errors {
-            error!("{:?}", err);
+            println!("{:?}", err);
         }
 
         values.into_iter().filter_map(|r| r.ok()).collect()
@@ -27,7 +27,7 @@ impl<T> LogExt for Result<T, Error> {
     fn log(self) {
         match self {
             Ok(_) => (),
-            Err(error) => error!("{error}"),
+            Err(error) => println!("{error}"),
         }
     }
 }
