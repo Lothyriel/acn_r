@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use anyhow::Error;
-use chrono::Duration;
 use futures::TryStreamExt;
 use mongodb::{bson::doc, Collection, Database};
 use serenity::prelude::TypeMapKey;
@@ -24,7 +23,7 @@ impl StatsServices {
         }
     }
 
-    pub async fn get_stats_of_guild(&self, guild_id: u64) -> Result<Vec<(u64, Duration)>, Error> {
+    pub async fn get_stats_of_guild(&self, guild_id: u64) -> Result<Vec<(u64, i64)>, Error> {
         let filter = doc! {"$and": [
             {"guild_id": guild_id as i64},
             {"activity_type": {"$in": [Activity::Connected.to_string(), Activity::Disconnected.to_string()]}}
@@ -51,7 +50,7 @@ impl StatsServices {
     }
 }
 
-fn get_online_time(user_id: u64, activities: Vec<UserActivity>) -> (u64, Duration) {
+fn get_online_time(user_id: u64, activities: Vec<UserActivity>) -> (u64, i64) {
     let connects: Vec<_> = activities
         .iter()
         .filter(|e| e.activity_type == Activity::Connected)
@@ -78,5 +77,5 @@ fn get_online_time(user_id: u64, activities: Vec<UserActivity>) -> (u64, Duratio
 
     let total_seconds_connected = connected_seconds.into_iter().sum();
 
-    (user_id, Duration::seconds(total_seconds_connected))
+    (user_id, total_seconds_connected)
 }
