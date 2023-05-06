@@ -1,5 +1,4 @@
 use anyhow::Error;
-use log::error;
 use serenity::{
     framework::standard::{macros::hook, CommandResult},
     model::prelude::Message,
