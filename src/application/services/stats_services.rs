@@ -48,7 +48,7 @@ impl StatsServices {
         let first_activity = guild_activity
             .iter()
             .min_by(|a1, a2| a1.date.cmp(&a2.date))
-            .ok_or_else(|| anyhow!("Não contém um primeiro dado"))?;
+            .ok_or_else(|| anyhow!("Não contém dados"))?;
 
         let stats_by_user = guild_activity.iter().fold(HashMap::new(), |mut map, e| {
             map.entry(e.user_id).or_insert(Vec::new()).push(e);
