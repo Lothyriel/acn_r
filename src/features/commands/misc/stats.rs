@@ -17,9 +17,12 @@ use crate::{
 #[only_in(guilds)]
 #[description("Mostra os stats dos membros deste server")]
 async fn stats(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    let target = args.single::<u64>().ok();
+    println!("args: {}", args.rest());
+
     args.restore();
-    println!("{:?}", args.current());
+    let target = args.single::<u64>().ok();
+    println!("{}", target.unwrap_or(0));
+
     let service = ctx.get_dependency::<StatsServices>().await?;
 
     let guild_id = msg
