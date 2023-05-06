@@ -31,6 +31,7 @@ mod tests {
     }
 
     async fn get_database() -> Result<Database, Error> {
+        dotenv::dotenv().ok();
         let settings = appsettings_service::load()?;
         Ok(create_mongo_client(&settings).await?.database("acn_r"))
     }
