@@ -3,7 +3,7 @@ use futures::future::join_all;
 use serenity::{
     framework::standard::{macros::command, Args, CommandResult},
     model::prelude::Message,
-    prelude::Context,
+    prelude::{Context, Mentionable},
     utils::MessageBuilder,
 };
 
@@ -30,7 +30,7 @@ async fn stats(ctx: &Context, msg: &Message, _args: Args) -> CommandResult {
         .map(|f| async move {
             let user = guild_id.member(&ctx.http, f.0).await?;
 
-            Ok(format!("{} spent {} online", user.display_name(), f.1))
+            Ok(format!("- {} ficou {} segundos online ({} horas)", user.mention(), f.1, f.1 / 60 / 60))
         })
         .collect();
 
@@ -39,7 +39,7 @@ async fn stats(ctx: &Context, msg: &Message, _args: Args) -> CommandResult {
     let mut message_builder = MessageBuilder::new();
 
     for line in lines {
-        message_builder.push(line);
+        message_builder.push_line(line);
     }
 
     msg.reply(&ctx.http, message_builder.build()).await?;
