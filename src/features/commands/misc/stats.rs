@@ -19,7 +19,7 @@ use crate::{
 async fn stats(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let target = args.single::<u64>().ok();
     args.restore();
-    print!("{:?}", args.current());
+    println!("{:?}", args.current());
     let service = ctx.get_dependency::<StatsServices>().await?;
 
     let guild_id = msg
