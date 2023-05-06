@@ -4,15 +4,13 @@ use serenity::{
     prelude::Context,
 };
 
-use crate::extensions::dependency_ext::Dependencies;
-
 #[command]
-async fn random(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
-    let now = chrono::Utc::now();
+async fn random(_ctx: &Context, _msg: &Message, _args: Args) -> CommandResult {
+    let _now = chrono::Utc::now();
 
     //let r34_services = ctx.get_dependency::<>().await?;
 
-    let _message = args.rest();
+    let _message = _args.rest();
 
     Ok(())
 }
