@@ -1,5 +1,7 @@
 use anyhow::Error;
+use chrono::Duration;
 use futures::TryStreamExt;
+use itertools::Itertools;
 use mongodb::{bson::doc, Collection, Database};
 use serenity::prelude::TypeMapKey;
 
@@ -21,13 +23,52 @@ impl StatsServices {
         }
     }
 
-    pub async fn get_stats_by_guild(&self, guild_id: u64) -> Result<Vec<UserActivity>, Error> {
+    pub async fn get_stats_of_guild(&self, guild_id: u64) -> Result<Vec<(u64, Duration)>, Error> {
         let filter = doc! {"$and": [
             {"guild_id": guild_id as i64},
             {"activity_type": {"$in": [Activity::Connected.to_string(), Activity::Disconnected.to_string()]}}
         ]};
 
         let cursor = self.user_activity.find(filter, None).await?;
-        Ok(cursor.try_collect().await?)
+        let guild_activity: Vec<_> = cursor.try_collect().await?;
+
+        let stats_by_user = guild_activity.into_iter().group_by(|e| e.user_id);
+
+        let time_by_user = stats_by_user
+            .into_iter()
+            .map(|e| get_online_time(e.0, e.1.collect_vec()))
+            .collect();
+
+        Ok(time_by_user)
     }
+}
+
+fn get_online_time(user_id: u64, activities: Vec<UserActivity>) -> (u64, Duration) {
+    let connects: Vec<_> = activities
+        .iter()
+        .filter(|e| e.activity_type == Activity::Connected)
+        .collect();
+
+    let disconnects: Vec<_> = activities
+        .iter()
+        .filter(|e| e.activity_type == Activity::Disconnected)
+        .collect();
+
+    let zip = connects.into_iter().zip(disconnects);
+
+    let connected_seconds: Vec<_> = zip
+        .into_iter()
+        .map(|e| {
+            let connected = e.0.date;
+            let disconnected = e.1.date;
+
+            let time = connected - disconnected;
+
+            time.num_seconds()
+        })
+        .collect();
+
+    let total_seconds_connected = connected_seconds.into_iter().sum();
+
+    (user_id, Duration::seconds(total_seconds_connected))
 }
