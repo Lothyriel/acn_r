@@ -1,8 +1,6 @@
-use std::fmt::format;
-
 use anyhow::anyhow;
 use serenity::{
-    framework::standard::{macros::command, Args, CommandError, CommandResult},
+    framework::standard::{macros::command, Args, CommandResult},
     futures::future::join_all,
     model::prelude::Message,
     prelude::Context,
