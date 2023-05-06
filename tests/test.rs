@@ -14,16 +14,17 @@ mod tests {
         const LA_PALOMBA_ID: u64 = 244922266050232321;
         const LOTHYRIEL_ID: u64 = 244922703667003392;
 
-        let guild_stats = services.get_stats_of_guild(LA_PALOMBA_ID).await?;
+        let guild_stats = services.get_stats_of_guild(LA_PALOMBA_ID, Some(LOTHYRIEL_ID)).await?;
 
         let lothyriel_data = guild_stats
-            .into_iter()
-            .find(|e| e.0 == LOTHYRIEL_ID)
+            .stats
+            .iter()
+            .find(|e| e.user_id == LOTHYRIEL_ID)
             .ok_or_else(|| anyhow!("Não encontrado"))?;
 
-        let had_some_time = lothyriel_data.1 > 1000;
-        assert!(had_some_time);
-        assert_eq!(lothyriel_data.0, LOTHYRIEL_ID);
+        let spent_some_time = lothyriel_data.seconds_online > 1000;
+        assert!(spent_some_time);
+        assert_eq!(lothyriel_data.user_id, LOTHYRIEL_ID);
 
         Ok(())
     }
