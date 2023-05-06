@@ -40,10 +40,12 @@ impl StatsServices {
                 map
             });
 
-        let time_by_user = stats_by_user
+        let mut time_by_user: Vec<_> = stats_by_user
             .into_iter()
             .map(|e| get_online_time(e.0, e.1))
             .collect();
+
+        time_by_user.sort_by(|e1, e2| e2.1.cmp(&e1.1));
 
         Ok(time_by_user)
     }
