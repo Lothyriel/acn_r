@@ -1,7 +1,8 @@
+use std::collections::HashMap;
+
 use anyhow::Error;
 use chrono::Duration;
 use futures::TryStreamExt;
-use itertools::Itertools;
 use mongodb::{bson::doc, Collection, Database};
 use serenity::prelude::TypeMapKey;
 
@@ -32,11 +33,16 @@ impl StatsServices {
         let cursor = self.user_activity.find(filter, None).await?;
         let guild_activity: Vec<_> = cursor.try_collect().await?;
 
-        let stats_by_user = guild_activity.into_iter().group_by(|e| e.user_id);
+        let stats_by_user = guild_activity
+            .into_iter()
+            .fold(HashMap::new(), |mut map, e| {
+                map.entry(e.user_id).or_insert(Vec::new()).push(e);
+                map
+            });
 
         let time_by_user = stats_by_user
             .into_iter()
-            .map(|e| get_online_time(e.0, e.1.collect_vec()))
+            .map(|e| get_online_time(e.0, e.1))
             .collect();
 
         Ok(time_by_user)
@@ -62,7 +68,7 @@ fn get_online_time(user_id: u64, activities: Vec<UserActivity>) -> (u64, Duratio
             let connected = e.0.date;
             let disconnected = e.1.date;
 
-            let time = connected - disconnected;
+            let time = disconnected - connected;
 
             time.num_seconds()
         })
