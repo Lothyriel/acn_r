@@ -9,7 +9,7 @@ mod tests {
     use mongodb::Database;
 
     #[tokio::test]
-    async fn get_stats() -> Result<(), Error> {
+    async fn should_get_stats() -> Result<(), Error> {
         let db = get_database().await?;
         let services = StatsServices::new(&db);
         const LA_PALOMBA_ID: u64 = 244922266050232321;
@@ -23,7 +23,6 @@ mod tests {
             .ok_or_else(|| anyhow!("Não encontrado"))?;
 
         let test = lothyriel_data.1 > Duration::seconds(1000);
-
         assert_eq!(lothyriel_data.0, LOTHYRIEL_ID);
         assert!(test);
 
