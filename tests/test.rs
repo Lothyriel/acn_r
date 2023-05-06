@@ -5,7 +5,6 @@ mod tests {
         services::{appsettings_service, stats_services::StatsServices},
     };
     use anyhow::{anyhow, Error};
-    use chrono::Duration;
     use mongodb::Database;
 
     #[tokio::test]
@@ -22,7 +21,7 @@ mod tests {
             .find(|e| e.0 == LOTHYRIEL_ID)
             .ok_or_else(|| anyhow!("Não encontrado"))?;
 
-        let had_some_time = lothyriel_data.1 > Duration::seconds(1000);
+        let had_some_time = lothyriel_data.1 > 1000;
         assert!(had_some_time);
         assert_eq!(lothyriel_data.0, LOTHYRIEL_ID);
 
