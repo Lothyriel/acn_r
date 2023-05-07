@@ -16,12 +16,8 @@ use crate::{
 #[owners_only]
 #[only_in(guilds)]
 #[description("Mostra os stats dos membros deste server")]
-async fn stats(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    println!("args: {}", args.rest());
-
-    args.restore();
-    let target = args.single::<u64>().ok();
-    println!("{}", target.unwrap_or(0));
+async fn stats(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
+    let target = get_target(args);
 
     let service = ctx.get_dependency::<StatsServices>().await?;
 
@@ -51,7 +47,10 @@ async fn stats(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let lines = join_all(build_message_lines_tasks).await.log_errors();
 
     let mut message_builder = MessageBuilder::new();
-    message_builder.push_line(format!("Dados coletados desde: {}", guild_stats.initial_date));
+    message_builder.push_line(format!(
+        "Dados coletados desde: {}",
+        guild_stats.initial_date
+    ));
 
     for line in lines {
         message_builder.push_line(line);
@@ -60,4 +59,11 @@ async fn stats(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     msg.reply(&ctx.http, message_builder.build()).await?;
 
     Ok(())
+}
+
+fn get_target(mut args: Args) -> Option<u64> {
+    let mention = args.single::<String>().ok();
+    let without_prefix = mention.and_then(|s| s.strip_prefix("<@").map(|e| e.to_owned()));
+    let without_suffix = without_prefix.and_then(|s| s.strip_suffix(">").map(|e| e.to_owned()));
+    without_suffix.and_then(|s| s.parse().ok())
 }
