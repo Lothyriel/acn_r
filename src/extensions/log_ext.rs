@@ -1,6 +1,4 @@
 use anyhow::Error;
-use log::error;
-
 pub trait LogExt {
     fn log(self);
 }
