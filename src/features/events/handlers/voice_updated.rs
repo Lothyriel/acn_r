@@ -1,12 +1,18 @@
 use anyhow::{anyhow, Error};
-use serenity::{model::voice::VoiceState, prelude::Context};
+use serenity::{
+    model::{
+        prelude::{ChannelId, GuildId, Member},
+        voice::VoiceState,
+    },
+    prelude::Context,
+};
 
 use crate::{
     application::{
         models::{dto::user_services::UpdateActivityDto, entities::user::Activity},
         services::user_services::UserServices,
     },
-    extensions::dependency_ext::Dependencies,
+    extensions::{dependency_ext::Dependencies, log_ext::LogExt},
 };
 
 pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> Result<(), Error> {
@@ -23,6 +29,10 @@ pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> 
         .member
         .ok_or_else(|| anyhow!("VoiceStateUpdate não contem membro"))?;
 
+    disconnect_afk(new.guild_id, new.channel_id, &ctx, &user)
+        .await
+        .log();
+
     let guild = ctx.http.get_guild(user.guild_id.0).await?;
 
     let nickname = user.display_name().into_owned();
@@ -36,6 +46,23 @@ pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> 
         date: now,
     };
     user_services.update_user_activity(dto).await?;
+
+    Ok(())
+}
+
+async fn disconnect_afk(
+    guild_id: Option<GuildId>,
+    channel_id: Option<ChannelId>,
+    ctx: &Context,
+    user: &Member,
+) -> Result<(), Error> {
+    if let Some(id) = guild_id {
+        let guild = ctx.http.get_guild(id.0).await?;
+        if guild.afk_channel_id == channel_id {
+            user.disconnect_from_voice(&ctx.http).await?;
+            return Ok(());
+        }
+    }
 
     Ok(())
 }
