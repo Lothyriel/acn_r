@@ -1,37 +1,37 @@
 use anyhow::anyhow;
 use futures::future::join_all;
-use serenity::{
-    framework::standard::{macros::command, Args, CommandResult},
-    model::prelude::Message,
-    prelude::{Context, Mentionable},
-    utils::MessageBuilder,
+use poise::{command, serenity_prelude::User};
+use serenity::{prelude::Mentionable, utils::MessageBuilder};
+
+use crate::extensions::{
+    log_ext::LogErrorsExt,
+    serenity_ext::{CommandResult, Context},
 };
 
-use crate::{
-    application::services::stats_services::StatsServices,
-    extensions::{dependency_ext::Dependencies, log_ext::LogErrorsExt},
-};
+#[command(prefix_command, slash_command)]
+async fn stats(
+    ctx: Context<'_>,
+    #[description = "Prompt to search for"] target: Option<User>,
+) -> CommandResult {
+    let service = &ctx.data().stats_services;
 
-#[command]
-#[owners_only]
-#[only_in(guilds)]
-#[description("Mostra os stats dos membros deste server")]
-async fn stats(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
-    let target = get_target(args);
-
-    let service = ctx.get_dependency::<StatsServices>().await?;
-
-    let guild_id = msg
-        .guild_id
+    let guild_id = ctx
+        .guild_id()
         .ok_or_else(|| anyhow!("Mensagem não foi enviada de uma guilda (Não deveria ocorrer)"))?;
 
-    let guild_stats = service.get_stats_of_guild(guild_id.0, target).await?;
+    let guild_stats = service
+        .get_stats_of_guild(guild_id.0, target.map(|f| f.id.0))
+        .await?;
+
+    let guild = ctx
+        .guild_id()
+        .ok_or_else(|| anyhow!("Comando não usado em guilda"))?;
 
     let build_message_lines_tasks: Vec<_> = guild_stats
         .stats
         .into_iter()
         .map(|f| async move {
-            let user = guild_id.member(&ctx.http, f.user_id).await?;
+            let user = guild.member(ctx, f.user_id).await?;
             let seconds_online = f.seconds_online;
             let hours_online = seconds_online / 60 / 60;
 
@@ -56,14 +56,7 @@ async fn stats(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
         message_builder.push_line(line);
     }
 
-    msg.reply(&ctx.http, message_builder.build()).await?;
+    ctx.say(message_builder.build()).await?;
 
     Ok(())
-}
-
-fn get_target(mut args: Args) -> Option<u64> {
-    let mention = args.single::<String>().ok();
-    let without_prefix = mention.and_then(|s| s.strip_prefix("<@").map(|e| e.to_owned()));
-    let without_suffix = without_prefix.and_then(|s| s.strip_suffix(">").map(|e| e.to_owned()));
-    without_suffix.and_then(|s| s.parse().ok())
 }
