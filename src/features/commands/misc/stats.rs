@@ -8,6 +8,8 @@ use crate::extensions::{
     serenity_ext::{CommandResult, Context},
 };
 
+const SECONDS_IN_HOUR: i64 = 60 * 60;
+
 #[command(prefix_command, slash_command, category = "Misc")]
 pub async fn stats(
     ctx: Context<'_>,
@@ -33,7 +35,7 @@ pub async fn stats(
         .map(|f| async move {
             let user = guild.member(ctx, f.user_id).await?;
             let seconds_online = f.seconds_online;
-            let hours_online = seconds_online / 60 / 60;
+            let hours_online = seconds_online / SECONDS_IN_HOUR;
 
             Ok(format!(
                 "- {} ficou {} segundos online ({} horas)",
