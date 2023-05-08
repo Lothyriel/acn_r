@@ -42,7 +42,7 @@ pub async fn handler(
 
     let guild = ctx.http().get_guild(user.guild_id.0).await?;
 
-    let nickname = user.display_name().into_owned();
+    let nickname = user.display_name().to_string();
 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
