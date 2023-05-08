@@ -3,10 +3,10 @@ use serenity::{futures::future::join_all, http::CacheHttp};
 
 use crate::extensions::{
     log_ext::LogErrorsExt,
-    serenity_ext::{CommandResult, Context, GuildExt},
+    serenity_ext::{CommandResult, Context, GuildExt, OWNERS_ONLY},
 };
 
-#[command(prefix_command, slash_command, category = "Misc")]
+#[command(prefix_command, slash_command, category = "Misc", custom_data = "OWNERS_ONLY")]
 pub async fn att(
     ctx: Context<'_>,
     #[description = "Prompt to search for"] message: String,
