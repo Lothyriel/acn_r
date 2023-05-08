@@ -2,6 +2,8 @@ use anyhow::{anyhow, Error};
 use serenity::{async_trait, http::Http, model::prelude::GuildId};
 use std::sync::Arc;
 
+use crate::application::services::dependency_configuration::DependencyContainer;
+
 #[async_trait]
 pub trait GuildExt {
     async fn say_on_main_text_channel(self, http: &Arc<Http>, msg: &str) -> Result<(), Error>;
@@ -23,3 +25,8 @@ impl GuildExt for GuildId {
         Ok(())
     }
 }
+
+pub type Command = poise::Command<DependencyContainer, Error>;
+pub type Context<'a> = poise::Context<'a, DependencyContainer, Error>;
+pub type FrameworkContext<'a> = poise::FrameworkContext<'a, DependencyContainer, Error>;
+pub type CommandResult = Result<(), Error>;
