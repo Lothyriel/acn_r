@@ -1,57 +1,39 @@
-use serenity::{
-    async_trait,
-    model::{
-        gateway::Ready,
-        prelude::{Guild, GuildId, InviteCreateEvent, Member, PartialGuild},
-        user::User,
-        voice::VoiceState,
-    },
-    prelude::{Context, EventHandler},
-};
+use anyhow::Error;
+use poise::{serenity_prelude::Context, Event};
 
 use crate::{
-    extensions::log_ext::LogExt,
+    application::services::dependency_configuration::DependencyContainer,
+    extensions::serenity_ext::FrameworkContext,
     features::events::handlers::{
         guild_updated, invite_created, member_added, member_removed, member_updated, ready,
         voice_updated,
     },
 };
 
-pub struct Handler;
-
-#[async_trait]
-impl EventHandler for Handler {
-    async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
-        member_added::handler(ctx, new_member).await.log()
-    }
-
-    async fn invite_create(&self, ctx: Context, event: InviteCreateEvent) {
-        invite_created::handler(ctx, event).await.log()
-    }
-
-    async fn ready(&self, ctx: Context, ready: Ready) {
-        ready::handler(ctx, ready).await.log()
-    }
-
-    async fn voice_state_update(&self, ctx: Context, old: Option<VoiceState>, new: VoiceState) {
-        voice_updated::handler(ctx, old, new).await.log()
-    }
-
-    async fn guild_update(&self, ctx: Context, _old: Option<Guild>, new: PartialGuild) {
-        guild_updated::handler(ctx, new).await.log()
-    }
-
-    async fn guild_member_update(&self, ctx: Context, _old: Option<Member>, new: Member) {
-        member_updated::handler(ctx, new).await.log()
-    }
-
-    async fn guild_member_removal(
-        &self,
-        ctx: Context,
-        id: GuildId,
-        user: User,
-        member: Option<Member>,
-    ) {
-        member_removed::handler(ctx, id, user, member).await.log()
+pub async fn handler(
+    ctx: &Context,
+    event: &Event<'_>,
+    _framework: FrameworkContext<'_>,
+    data: &DependencyContainer,
+) -> Result<(), Error> {
+    match event {
+        Event::Ready { data_about_bot } => ready::handler(ctx, data, data_about_bot).await,
+        Event::InviteCreate { data } => invite_created::handler(ctx, data).await,
+        Event::VoiceStateUpdate { old, new } => voice_updated::handler(ctx, old, new, data).await,
+        Event::GuildMemberAddition { new_member } => member_added::handler(ctx, new_member).await,
+        Event::GuildMemberRemoval {
+            guild_id,
+            user,
+            member_data_if_available,
+        } => member_removed::handler(ctx, guild_id, user, member_data_if_available).await,
+        Event::GuildMemberUpdate {
+            old_if_available: _,
+            new,
+        } => member_updated::handler(new, data).await,
+        Event::GuildUpdate {
+            old_data_if_available: _,
+            new_but_incomplete,
+        } => guild_updated::handler(new_but_incomplete, data).await,
+        _ => Ok(()),
     }
 }
