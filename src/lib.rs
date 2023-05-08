@@ -23,7 +23,7 @@ pub async fn start_application() -> Result<(), Error> {
     let token = env_var::get("TOKEN_BOT")?;
 
     let settings = appsettings_service::load()?;
-    let _owners: HashSet<_> = settings.allowed_ids.iter().map(|i| UserId(*i)).collect();
+    let prefix = settings.prefix.to_string();
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -34,7 +34,7 @@ pub async fn start_application() -> Result<(), Error> {
             on_error: |error| Box::pin(error::handler(error)),
             post_command: |ctx| Box::pin(after::handler(ctx)),
             prefix_options: poise::PrefixFrameworkOptions {
-                prefix: Some(settings.prefix.to_string()),
+                prefix: Some(prefix),
                 mention_as_prefix: true,
                 ..Default::default()
             },
