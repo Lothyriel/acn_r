@@ -9,6 +9,7 @@ use crate::application::{
     services::guild_services::GuildServices,
 };
 
+#[derive(Clone)]
 pub struct UserServices {
     users: Collection<User>,
     user_activity: Collection<UserActivity>,
@@ -27,8 +28,9 @@ impl UserServices {
     }
 
     pub async fn update_user_activity(&self, update_dto: UpdateActivityDto) -> Result<(), Error> {
-        self.add_activity(&update_dto).await?;
-        self.add_user(update_dto.into()).await?;
+        let ptr = &update_dto;
+        self.add_user(ptr.into()).await?;
+        self.add_activity(update_dto).await?;
 
         Ok(())
     }
@@ -104,7 +106,7 @@ impl UserServices {
         Ok(possible_last_change.map(|n| n.nickname))
     }
 
-    async fn add_activity(&self, update_dto: &UpdateActivityDto) -> Result<(), Error> {
+    async fn add_activity(&self, update_dto: UpdateActivityDto) -> Result<(), Error> {
         let activity = UserActivity {
             guild_id: update_dto.guild_id,
             user_id: update_dto.user_id,
