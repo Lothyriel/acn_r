@@ -10,7 +10,7 @@ pub async fn help(
 ) -> Result<(), Error> {
     let config = poise::builtins::HelpConfiguration {
         extra_text_at_bottom:
-            "Se quiser saber algo sobre um comando em específico, passeo o nome dele como argumento",
+            "Se quiser saber algo sobre um comando em específico, passe o nome dele como argumento",
         ..Default::default()
     };
 
