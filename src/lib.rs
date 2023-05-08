@@ -34,7 +34,7 @@ pub async fn start_application() -> Result<(), Error> {
             on_error: |error| Box::pin(error::handler(error)),
             post_command: |ctx| Box::pin(after::handler(ctx)),
             prefix_options: poise::PrefixFrameworkOptions {
-                prefix: Some(String::from("!")),
+                prefix: Some(settings.prefix.to_string()),
                 mention_as_prefix: true,
                 ..Default::default()
             },

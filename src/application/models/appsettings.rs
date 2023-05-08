@@ -6,6 +6,7 @@ pub struct AppSettings {
     pub mongo_user: String,
     pub mongo_connection_string: String,
     pub mongo_url: String,
+    pub prefix: String,
 }
 
 pub struct AppConfigurations {
