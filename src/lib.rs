@@ -5,7 +5,7 @@ use std::collections::HashSet;
 
 use application::{
     infra::env_var,
-    services::{appsettings_service, dependency_configuration},
+    services::{appsettings_service, dependency_configuration::DependencyContainer},
 };
 use features::{
     commands::groups_configuration,
@@ -45,7 +45,7 @@ pub async fn start_application() -> Result<(), Error> {
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(dependency_configuration::build(settings).await?)
+                Ok(DependencyContainer::build(settings).await?)
             })
         });
 
