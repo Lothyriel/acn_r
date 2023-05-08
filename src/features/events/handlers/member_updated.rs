@@ -1,16 +1,14 @@
 use anyhow::Error;
-use serenity::{model::prelude::Member, prelude::Context};
+use serenity::model::prelude::Member;
 
-use crate::{
-    application::{
-        models::dto::user_services::UpdateNickDto, services::user_services::UserServices,
-    },
-    extensions::dependency_ext::Dependencies,
+use crate::application::{
+    models::dto::user_services::UpdateNickDto,
+    services::dependency_configuration::DependencyContainer,
 };
 
-pub async fn handler(ctx: Context, new: Member) -> Result<(), Error> {
+pub async fn handler(new: &Member, data: &DependencyContainer) -> Result<(), Error> {
     let now = chrono::Utc::now();
-    let user_services = ctx.get_dependency::<UserServices>().await?;
+    let user_services = &data.user_services;
 
     let dto = UpdateNickDto {
         user_id: new.user.id.0,

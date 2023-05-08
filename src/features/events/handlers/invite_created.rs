@@ -1,17 +1,15 @@
 use anyhow::{anyhow, Error};
-use serenity::{
-    model::prelude::InviteCreateEvent,
-    prelude::{Context, Mentionable},
-};
+use poise::serenity_prelude::Context;
+use serenity::{model::prelude::InviteCreateEvent, prelude::Mentionable};
 
-pub async fn handler(ctx: Context, event: InviteCreateEvent) -> Result<(), Error> {
-    let channel = event.channel_id;
+pub async fn handler(ctx: &Context, event: &InviteCreateEvent) -> Result<(), Error> {
     let inviter = event
         .inviter
+        .as_ref()
         .ok_or_else(|| anyhow!("Este convite não contém criador"))?;
 
     let response = format!("{} Está chamando randoms....", inviter.mention());
-    channel.say(&ctx.http, response).await?;
+    event.channel_id.say(ctx, response).await?;
 
     Ok(())
 }

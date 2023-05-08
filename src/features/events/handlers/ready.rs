@@ -1,20 +1,23 @@
+use crate::{
+    application::services::dependency_configuration::DependencyContainer,
+    extensions::log_ext::LogErrorsExt,
+};
 use anyhow::Error;
 use log::info;
-use serenity::{futures::future::join_all, model::prelude::Ready, prelude::Context};
+use poise::serenity_prelude::Context;
+use serenity::futures::future::join_all;
 
-use crate::{
-    application::models::allowed_ids::AllowedIds,
-    extensions::{dependency_ext::Dependencies, log_ext::LogErrorsExt},
-};
-
-pub async fn handler(ctx: Context, ready: Ready) -> Result<(), Error> {
-    let permitidos = ctx.get_dependency::<AllowedIds>().await?;
+pub async fn handler(
+    ctx: &Context,
+    container: &DependencyContainer,
+    ready: &poise::serenity_prelude::Ready,
+) -> Result<(), Error> {
+    let permitidos = &container.allowed_ids;
     let message = format!("Estamos totalmente dentro! {}", ready.user.name);
     info!("{message}");
-
     let tasks: Vec<_> = permitidos
         .into_iter()
-        .map(|p| send_greetings(&ctx, p, &message))
+        .map(|p| send_greetings(ctx, *p, &message))
         .collect();
 
     join_all(tasks).await.log_errors();

@@ -1,21 +1,27 @@
 use anyhow::{anyhow, Error};
+use poise::serenity_prelude::Context;
 use serenity::{
+    http::CacheHttp,
     model::{
         prelude::{ChannelId, GuildId, Member},
         voice::VoiceState,
     },
-    prelude::Context,
 };
 
 use crate::{
     application::{
         models::{dto::user_services::UpdateActivityDto, entities::user::Activity},
-        services::user_services::UserServices,
+        services::dependency_configuration::DependencyContainer,
     },
-    extensions::{dependency_ext::Dependencies, log_ext::LogExt},
+    extensions::log_ext::LogExt,
 };
 
-pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> Result<(), Error> {
+pub async fn handler(
+    ctx: &Context,
+    old: &Option<VoiceState>,
+    new: &VoiceState,
+    data: &DependencyContainer,
+) -> Result<(), Error> {
     let now = chrono::Utc::now();
 
     let activity = match old {
@@ -23,17 +29,18 @@ pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> 
         None => Activity::Connected,
     };
 
-    let user_services = ctx.get_dependency::<UserServices>().await?;
+    let user_services = &data.user_services;
 
     let user = new
         .member
+        .as_ref()
         .ok_or_else(|| anyhow!("VoiceStateUpdate não contem membro"))?;
 
-    disconnect_afk(new.guild_id, new.channel_id, &ctx, &user)
+    disconnect_afk(new.guild_id, new.channel_id, ctx, user)
         .await
         .log();
 
-    let guild = ctx.http.get_guild(user.guild_id.0).await?;
+    let guild = ctx.http().get_guild(user.guild_id.0).await?;
 
     let nickname = user.display_name().into_owned();
 
@@ -55,16 +62,16 @@ async fn disconnect_afk(
     channel_id: Option<ChannelId>,
     ctx: &Context,
     user: &Member,
-) -> Result<(), Error> {
+) -> Result<bool, Error> {
     if let Some(id) = guild_id {
-        let guild = ctx.http.get_guild(id.0).await?;
+        let guild = ctx.http().get_guild(id.0).await?;
         if guild.afk_channel_id == channel_id {
-            user.disconnect_from_voice(&ctx.http).await?;
-            return Ok(());
+            user.disconnect_from_voice(ctx.http()).await?;
+            return Ok(true);
         }
     }
 
-    Ok(())
+    Ok(false)
 }
 
 fn get_activity(old: &VoiceState, new: &VoiceState) -> Activity {
