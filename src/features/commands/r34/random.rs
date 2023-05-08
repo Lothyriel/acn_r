@@ -1,16 +1,13 @@
-use serenity::{
-    framework::standard::{macros::command, Args, CommandResult},
-    model::prelude::Message,
-    prelude::Context,
-};
+use poise::command;
 
-#[command]
-async fn random(_ctx: &Context, _msg: &Message, _args: Args) -> CommandResult {
+use crate::extensions::serenity_ext::{CommandResult, Context};
+
+#[command(prefix_command, slash_command)]
+pub async fn random(
+    _ctx: Context<'_>,
+    #[description = "Prompt to search for"] search: Option<String>,
+) -> CommandResult {
     let _now = chrono::Utc::now();
-
-    //let r34_services = ctx.get_dependency::<>().await?;
-
-    let _message = _args.rest();
 
     Ok(())
 }
