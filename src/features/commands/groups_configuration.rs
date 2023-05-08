@@ -1,12 +1,16 @@
-use serenity::framework::StandardFramework;
-
 use crate::{
-    extensions::group_registry::FrameworkExtensions,
-    features::commands::{misc::misc_group::MISC_GROUP, r34::r34_group::R34_GROUP},
+    extensions::serenity_ext::Command,
+    features::commands::{misc::misc_group::misc_group, r34::r34_group::r34_group},
 };
 
-impl FrameworkExtensions for StandardFramework {
-    fn register_groups(self) -> StandardFramework {
-        self.group(&MISC_GROUP).group(&R34_GROUP)
+fn register_groups() -> Vec<Vec<Command>> {
+    vec![r34_group()]
+}
+
+pub fn register_commands() -> Vec<Command> {
+    let mut commands = Vec::new();
+    for mut command in register_groups() {
+        commands.append(command.as_mut());
     }
+    commands
 }
