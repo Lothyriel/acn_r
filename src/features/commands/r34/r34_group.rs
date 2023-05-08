@@ -1,8 +1,5 @@
-use crate::features::commands::r34::random::RANDOM_COMMAND;
-use serenity::framework::standard::macros::group;
+use crate::{extensions::serenity_ext::Command, features::commands::r34::random::random};
 
-#[group]
-#[commands(random)]
-#[summary = "Rule 34"]
-#[description = "Comandos usando a api do rule 34"]
-pub struct R34;
+pub fn r34_group() -> Vec<Command> {
+    vec![random()]
+}
