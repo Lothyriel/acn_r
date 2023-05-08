@@ -63,7 +63,18 @@ impl ContextExt for Context<'_> {
     }
 
     async fn get_command_args(self) -> String {
-        todo!()
+        match self {
+            poise::Context::Application(ctx) => {
+                let args: Vec<_> = ctx
+                    .args
+                    .into_iter()
+                    .flat_map(|a| a.value.to_owned().map(|v| v.to_string()))
+                    .collect();
+
+                args.join(" ")
+            }
+            poise::Context::Prefix(ctx) => ctx.args.to_string(),
+        }
     }
 
     fn get_guild_info(self) -> Option<GuildInfo> {
