@@ -97,6 +97,7 @@ impl ContextExt for Context<'_> {
     }
 }
 
+pub const OWNERS_ONLY: bool = true;
 pub type Context<'a> = poise::Context<'a, DependencyContainer, Error>;
 pub type Command = poise::Command<DependencyContainer, Error>;
 pub type CommandResult = Result<(), Error>;
