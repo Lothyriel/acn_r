@@ -6,7 +6,7 @@ use crate::extensions::{
     serenity_ext::{CommandResult, Context, GuildExt},
 };
 
-#[command(prefix_command, slash_command)]
+#[command(prefix_command, slash_command, category = "Misc")]
 pub async fn att(
     ctx: Context<'_>,
     #[description = "Prompt to search for"] message: String,

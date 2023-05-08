@@ -8,8 +8,8 @@ use crate::extensions::{
     serenity_ext::{CommandResult, Context},
 };
 
-#[command(prefix_command, slash_command)]
-async fn stats(
+#[command(prefix_command, slash_command, category = "Misc")]
+pub async fn stats(
     ctx: Context<'_>,
     #[description = "Prompt to search for"] target: Option<User>,
 ) -> CommandResult {
