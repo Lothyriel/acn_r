@@ -9,6 +9,8 @@ use crate::application::{
     services::user_services::UserServices,
 };
 
+
+#[derive(Clone)]
 pub struct CommandServices {
     commands_use: Collection<CommandUse>,
     commands_errors: Collection<CommandError>,
@@ -25,17 +27,8 @@ impl CommandServices {
     }
 
     pub async fn add_command_use(&self, command_use_dto: CommandUseDto) -> Result<(), Error> {
-        let add = AddUserDto {
-            guild_info: (&command_use_dto.guild_info).to_owned(),
-            user_id: command_use_dto.user_id,
-            nickname: command_use_dto.user_nickname,
-            date: command_use_dto.date,
-        };
-
-        self.user_services.add_user(add).await?;
-
         let command_use = CommandUse {
-            guild_id: command_use_dto.guild_info.map(|g| g.guild_id),
+            guild_id: command_use_dto.guild_info.as_ref().map(|g| g.guild_id),
             user_id: command_use_dto.user_id,
             date: command_use_dto.date,
             name: command_use_dto.command,
@@ -44,16 +37,26 @@ impl CommandServices {
 
         self.commands_use.insert_one(command_use, None).await?;
 
+        let add = AddUserDto {
+            guild_info: command_use_dto.guild_info,
+            user_id: command_use_dto.user_id,
+            nickname: command_use_dto.user_nickname,
+            date: command_use_dto.date,
+        };
+
+        self.user_services.add_user(add).await?;
+
+
         Ok(())
     }
 
-    pub async fn add_command_error(&self, dto: &CommandUseDto, error: String) -> Result<(), Error> {
+    pub async fn add_command_error(&self, dto: CommandUseDto, error: String) -> Result<(), Error> {
         let command_error = CommandError {
-            guild_id: dto.guild_info.to_owned().map(|g| g.guild_id),
+            guild_id: dto.guild_info.map(|g| g.guild_id),
             user_id: dto.user_id,
             date: dto.date,
-            name: dto.command.to_string(),
-            args: dto.args.to_string(),
+            name: dto.command,
+            args: dto.args,
             error,
         };
 
