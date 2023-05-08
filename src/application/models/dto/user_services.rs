@@ -18,7 +18,6 @@ pub struct AddUserDto {
     pub date: DateTime<Utc>,
 }
 
-#[derive(Clone)]
 pub struct GuildInfo {
     pub guild_id: u64,
     pub guild_name: String,

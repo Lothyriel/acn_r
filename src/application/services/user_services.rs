@@ -1,6 +1,5 @@
 use anyhow::Error;
 use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
-use serenity::prelude::TypeMapKey;
 
 use crate::application::{
     models::{
@@ -10,11 +9,6 @@ use crate::application::{
     services::guild_services::GuildServices,
 };
 
-impl TypeMapKey for UserServices {
-    type Value = UserServices;
-}
-
-#[derive(Clone)]
 pub struct UserServices {
     users: Collection<User>,
     user_activity: Collection<UserActivity>,

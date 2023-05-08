@@ -7,7 +7,7 @@ use crate::extensions::{
 };
 
 #[command(prefix_command, slash_command)]
-async fn att(
+pub async fn att(
     ctx: Context<'_>,
     #[description = "Prompt to search for"] message: String,
 ) -> CommandResult {

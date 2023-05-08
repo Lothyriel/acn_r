@@ -3,18 +3,12 @@ use std::collections::HashMap;
 use anyhow::{anyhow, Error};
 use futures::TryStreamExt;
 use mongodb::{bson::doc, Collection, Database};
-use serenity::prelude::TypeMapKey;
 
 use crate::application::models::{
     dto::stats_dto::{StatsDto, UserStats},
     entities::{user::Activity, user_activity::UserActivity},
 };
 
-impl TypeMapKey for StatsServices {
-    type Value = StatsServices;
-}
-
-#[derive(Clone)]
 pub struct StatsServices {
     user_activity: Collection<UserActivity>,
 }

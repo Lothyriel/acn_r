@@ -1,6 +1,5 @@
 use anyhow::Error;
 use mongodb::{Collection, Database};
-use serenity::prelude::TypeMapKey;
 
 use crate::application::{
     models::{
@@ -10,11 +9,6 @@ use crate::application::{
     services::user_services::UserServices,
 };
 
-impl TypeMapKey for CommandServices {
-    type Value = CommandServices;
-}
-
-#[derive(Clone)]
 pub struct CommandServices {
     commands_use: Collection<CommandUse>,
     commands_errors: Collection<CommandError>,

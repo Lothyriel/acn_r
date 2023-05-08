@@ -1,7 +1,6 @@
 use crate::application::{infra::env_var, models::appsettings::AppSettings};
 use anyhow::Error;
 use mongodb::{options::ClientOptions, Client};
-use serenity::prelude::TypeMapKey;
 
 const CLUSTER_URL: &str =
     "mongodb+srv://{USER}:{PASSWORD}@{CLUSTER_URL}/?retryWrites=true&w=majority";
@@ -18,7 +17,3 @@ pub async fn create_mongo_client(appsettings: &AppSettings) -> Result<Client, Er
 }
 
 pub struct MongoClient;
-
-impl TypeMapKey for MongoClient {
-    type Value = Client;
-}
