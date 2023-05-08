@@ -1,6 +1,6 @@
 use anyhow::Error;
 use mongodb::Database;
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 use crate::application::{
     infra::mongo_client::create_mongo_client,
@@ -13,11 +13,11 @@ use crate::application::{
 
 pub struct DependencyContainer {
     pub allowed_ids: Vec<u64>,
+    pub app_configurations: RwLock<AppConfigurations>,
     pub user_services: UserServices,
-    pub guild_services: GuildServices,
     pub command_services: CommandServices,
+    pub guild_services: GuildServices,
     pub stats_services: StatsServices,
-    pub app_configurations: Mutex<AppConfigurations>,
 }
 
 impl DependencyContainer {
@@ -29,12 +29,12 @@ impl DependencyContainer {
         let app_configurations = AppConfigurations::new();
 
         Self {
+            app_configurations: RwLock::new(app_configurations),
             allowed_ids: settings.allowed_ids,
-            user_services,
-            guild_services,
-            command_services,
-            stats_services,
-            app_configurations: Mutex::new(app_configurations),
+            user_services: user_services,
+            guild_services: guild_services,
+            command_services: command_services,
+            stats_services: stats_services,
         }
     }
 
