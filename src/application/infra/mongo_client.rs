@@ -8,7 +8,7 @@ pub async fn create_mongo_client(appsettings: &AppSettings) -> Result<Client, Er
         .mongo_connection_string
         .replace("{USER}", &appsettings.mongo_user)
         .replace("{PASSWORD}", &password)
-        .replace("{CLUSTER_URL}", &appsettings.mongo_cluster_url);
+        .replace("{URL}", &appsettings.mongo_url);
 
     let options = ClientOptions::parse(connection_string).await?;
     Ok(Client::with_options(options)?)
