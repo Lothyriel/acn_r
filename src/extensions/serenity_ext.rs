@@ -68,7 +68,11 @@ impl ContextExt for Context<'_> {
                 let args: Vec<_> = ctx
                     .args
                     .into_iter()
-                    .flat_map(|a| a.value.to_owned().map(|v| v.to_string()))
+                    .flat_map(|a| {
+                        a.value
+                            .to_owned()
+                            .map(|v| format!("{v}").trim_matches('"').to_string())
+                    })
                     .collect();
 
                 args.join(" ")
