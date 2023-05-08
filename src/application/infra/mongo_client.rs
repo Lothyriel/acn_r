@@ -15,5 +15,3 @@ pub async fn create_mongo_client(appsettings: &AppSettings) -> Result<Client, Er
     let options = ClientOptions::parse(connection_string).await?;
     Ok(Client::with_options(options)?)
 }
-
-pub struct MongoClient;
