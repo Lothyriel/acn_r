@@ -1,16 +1,14 @@
-use std::sync::Mutex;
-
 use anyhow::Error;
 use mongodb::Database;
+use std::sync::Mutex;
 
 use crate::application::{
-    models::{
-        appsettings::{AppConfigurations, AppSettings},
-    },
+    infra::mongo_client::create_mongo_client,
+    models::appsettings::{AppConfigurations, AppSettings},
     services::{
         command_services::CommandServices, guild_services::GuildServices,
         stats_services::StatsServices, user_services::UserServices,
-    }, infra::mongo_client::create_mongo_client,
+    },
 };
 
 pub struct DependencyContainer {
