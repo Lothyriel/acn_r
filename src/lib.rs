@@ -1,7 +1,6 @@
 use anyhow::Error;
 use env_logger::Target;
-use serenity::{model::prelude::UserId, prelude::GatewayIntents};
-use std::collections::HashSet;
+use serenity::prelude::GatewayIntents;
 
 use application::{
     infra::env_var,
@@ -9,7 +8,7 @@ use application::{
 };
 use features::{
     commands::groups_configuration,
-    events::{after, error, invoker},
+    events::{after, check, error, invoker},
 };
 
 pub mod application;
@@ -21,7 +20,6 @@ pub async fn start_application() -> Result<(), Error> {
     dotenv::dotenv().ok();
 
     let token = env_var::get("TOKEN_BOT")?;
-
     let settings = appsettings_service::load()?;
     let prefix = settings.prefix.to_string();
 
@@ -38,6 +36,7 @@ pub async fn start_application() -> Result<(), Error> {
                 mention_as_prefix: true,
                 ..Default::default()
             },
+            command_check: Some(|ctx| Box::pin(check::handler(ctx))),
             ..Default::default()
         })
         .token(token)
