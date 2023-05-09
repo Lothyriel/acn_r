@@ -76,7 +76,8 @@ impl GithubServices {
     }
 
     async fn start_deploy(&self) -> Result<(), Error> {
-        info!("(TODO!) Should call Github API and trigger the action deploy");
+        info!("Calling Github API and triggering action deploy");
+        info!("(TODO!)");
         Ok(())
     }
 }

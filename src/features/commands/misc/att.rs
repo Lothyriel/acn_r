@@ -9,7 +9,7 @@ use crate::extensions::{
 #[command(prefix_command, slash_command, category = "Misc", custom_data = "OWNERS_ONLY")]
 pub async fn att(
     ctx: Context<'_>,
-    #[description = "Prompt to search for"] message: String,
+    #[description = "Mensagem que será enviada as guildas"] message: String,
 ) -> CommandResult {
     let guilds = ctx.http().get_guilds(None, None).await?;
 
