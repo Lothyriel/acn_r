@@ -26,8 +26,8 @@ pub async fn start_application() -> Result<(), Error> {
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: groups_configuration::register_commands(),
-            event_handler: |ctx, event, frame, user_data| {
-                Box::pin(invoker::handler(ctx, event, frame, user_data))
+            event_handler: |ctx, event, _, user_data| {
+                Box::pin(invoker::handler(ctx, event, user_data))
             },
             on_error: |error| Box::pin(error::handler(error)),
             post_command: |ctx| Box::pin(after::handler(ctx)),
@@ -41,7 +41,7 @@ pub async fn start_application() -> Result<(), Error> {
         })
         .token(token)
         .intents(GatewayIntents::all())
-        .setup(|ctx, _ready, framework| {
+        .setup(|ctx, _, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(DependencyContainer::build(settings).await?)

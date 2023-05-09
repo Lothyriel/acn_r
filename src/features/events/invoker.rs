@@ -3,7 +3,6 @@ use poise::{serenity_prelude::Context, Event};
 
 use crate::{
     application::services::dependency_configuration::DependencyContainer,
-    extensions::serenity_ext::FrameworkContext,
     features::events::handlers::{
         guild_updated, invite_created, member_added, member_removed, member_updated, ready,
         voice_updated,
@@ -13,7 +12,6 @@ use crate::{
 pub async fn handler(
     ctx: &Context,
     event: &Event<'_>,
-    _framework: FrameworkContext<'_>,
     data: &DependencyContainer,
 ) -> Result<(), Error> {
     match event {
