@@ -30,8 +30,8 @@ impl StatsServices {
             doc! {"activity_type": {"$in": [Activity::Connected.to_string(), Activity::Disconnected.to_string()]}},
         ];
 
-        if let Some(user) = target {
-            filters.push(doc! {"user_id": user as i64});
+        if let Some(user_id) = target {
+            filters.push(doc! {"user_id": user_id as i64});
         }
 
         let cursor = self
