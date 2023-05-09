@@ -6,8 +6,8 @@ use crate::application::{
     infra::mongo_client::create_mongo_client,
     models::appsettings::{AppConfigurations, AppSettings},
     services::{
-        command_services::CommandServices, guild_services::GuildServices,
-        stats_services::StatsServices, user_services::UserServices,
+        command_services::CommandServices, github_services::GithubServices,
+        guild_services::GuildServices, stats_services::StatsServices, user_services::UserServices,
     },
 };
 
@@ -18,6 +18,7 @@ pub struct DependencyContainer {
     pub command_services: CommandServices,
     pub guild_services: GuildServices,
     pub stats_services: StatsServices,
+    pub github_services: GithubServices,
 }
 
 impl DependencyContainer {
@@ -27,14 +28,12 @@ impl DependencyContainer {
         let command_services = CommandServices::new(&db, user_services.to_owned());
         let stats_services = StatsServices::new(&db);
         let app_configurations = AppConfigurations::new();
+        let github_services = GithubServices::new(&db);
 
         Self {
             app_configurations: RwLock::new(app_configurations),
             allowed_ids: settings.allowed_ids,
-            user_services: user_services,
-            guild_services: guild_services,
-            command_services: command_services,
-            stats_services: stats_services,
+            github_services,
         }
     }
 
