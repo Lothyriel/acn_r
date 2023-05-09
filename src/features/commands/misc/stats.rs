@@ -33,13 +33,13 @@ pub async fn stats(
         .stats
         .into_iter()
         .map(|f| async move {
-            let user = guild.member(ctx, f.user_id).await?;
+            let member = guild.member(ctx, f.user_id).await?;
             let seconds_online = f.seconds_online;
             let hours_online = seconds_online / SECONDS_IN_HOUR;
 
             Ok(format!(
                 "- {} ficou {} segundos online ({} horas)",
-                user.mention(),
+                member.mention(),
                 seconds_online,
                 hours_online
             ))

@@ -33,18 +33,18 @@ pub async fn handler(
 
     let user_services = &data.user_services;
 
-    let user = new
+    let member = new
         .member
         .as_ref()
         .ok_or_else(|| anyhow!("VoiceStateUpdate não contem membro"))?;
 
-    let guild_id = user.guild_id.0;
+    let guild_id = member.guild_id.0;
 
-    dispatch_disconnect(guild_id, new, ctx, user);
+    dispatch_disconnect(guild_id, new, ctx, member);
 
     let guild = ctx.http().get_guild(guild_id).await?;
 
-    let nickname = user.display_name().to_string();
+    let nickname = member.display_name().to_string();
 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
@@ -59,12 +59,12 @@ pub async fn handler(
     Ok(())
 }
 
-fn dispatch_disconnect(guild_id: u64, new: &VoiceState, ctx: &Context, user: &Member) {
+fn dispatch_disconnect(guild_id: u64, new: &VoiceState, ctx: &Context, member: &Member) {
     let data = Arc::new(DisconnectData {
         guild_id,
         channel_id: new.channel_id,
         http: ctx.http.clone(),
-        member: user.deref().clone(),
+        member: member.deref().clone(),
     });
 
     tokio::spawn(async {
