@@ -59,7 +59,7 @@ impl ContextExt for Context<'_> {
         self.author_member()
             .await
             .map(|a| a.display_name().to_string())
-            .unwrap_or_else(|| self.author().name.to_string())
+            .unwrap_or_else(|| self.author().name.to_owned())
     }
 
     async fn get_command_args(self) -> String {
@@ -71,13 +71,13 @@ impl ContextExt for Context<'_> {
                     .flat_map(|a| {
                         a.value
                             .to_owned()
-                            .map(|v| format!("{v}").trim_matches('"').to_string())
+                            .map(|v| format!("{v}").trim_matches('"').to_owned())
                     })
                     .collect();
 
                 args.join(" ")
             }
-            poise::Context::Prefix(ctx) => ctx.args.to_string(),
+            poise::Context::Prefix(ctx) => ctx.args.to_owned(),
         }
     }
 

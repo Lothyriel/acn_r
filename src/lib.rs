@@ -21,7 +21,7 @@ pub async fn start_application() -> Result<(), Error> {
 
     let token = env_var::get("TOKEN_BOT")?;
     let settings = appsettings_service::load()?;
-    let prefix = settings.prefix.to_string();
+    let prefix = settings.prefix.to_owned();
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {

@@ -15,7 +15,7 @@ async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
         poise::FrameworkError::Command { error, ctx } => {
             let dto = CommandUseDto {
                 date: now,
-                command: ctx.command().name.to_string(),
+                command: ctx.command().name.to_owned(),
                 user_id: ctx.author().id.0,
                 guild_info: ctx.get_guild_info(),
                 user_nickname: ctx.get_author_name().await,
@@ -25,12 +25,9 @@ async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
             let command_services = &ctx.data().command_services;
             let message = format!("{}: {}", ctx.id(), error);
             ctx.discord_debug(&message).await?;
+            command_services.add_command_error(dto, message.to_owned()).await?;
 
-            command_services
-                .add_command_error(dto, message.to_string())
-                .await?;
-
-            Err(anyhow!("{message}"))
+            Err(anyhow!("{}", message))
         }
         poise::FrameworkError::EventHandler { error, event, .. } => Err(anyhow!(
             "EventHandler returned error during {:?} event: {:?}",

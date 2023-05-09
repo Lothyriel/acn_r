@@ -10,7 +10,7 @@ pub async fn handler(
     let now = chrono::Utc::now();
     let guild_services = &data.guild_services;
 
-    guild_services.add_guild(new.id.0, new.name.to_string(), now).await?;
+    guild_services.add_guild(new.id.0, new.name.to_owned(), now).await?;
 
     Ok(())
 }

@@ -18,7 +18,7 @@ pub async fn handler(
     let name = member
         .as_ref()
         .map(|m| m.display_name().to_string())
-        .unwrap_or_else(|| user.name.to_string());
+        .unwrap_or_else(|| user.name.to_owned());
 
     let msg = format!("Eis que o mano '{}' foi de base", name);
     id.say_on_main_text_channel(&ctx.http, &msg).await?;

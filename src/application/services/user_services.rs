@@ -40,7 +40,7 @@ impl UserServices {
             self.guild_services
                 .add_guild(
                     guild_info.guild_id,
-                    guild_info.guild_name.to_string(),
+                    guild_info.guild_name.to_owned(),
                     add_user_dto.date,
                 )
                 .await?;

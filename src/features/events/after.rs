@@ -17,7 +17,7 @@ async fn after(ctx: Context<'_>) -> Result<(), Error> {
 
     let nickname = ctx.get_author_name().await;
 
-    let command_name = ctx.command().name.to_string();
+    let command_name = ctx.command().name.to_owned();
 
     let dto = CommandUseDto {
         date: now,

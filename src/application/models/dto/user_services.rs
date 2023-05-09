@@ -35,10 +35,10 @@ impl From<&UpdateActivityDto> for AddUserDto {
         Self {
             guild_info: Some(GuildInfo {
                 guild_id: d.guild_id,
-                guild_name: d.guild_name.to_string(),
+                guild_name: d.guild_name.to_owned(),
             }),
             user_id: d.user_id,
-            nickname: d.nickname.to_string(),
+            nickname: d.nickname.to_owned(),
             date: d.date,
         }
     }
