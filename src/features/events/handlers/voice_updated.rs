@@ -1,9 +1,11 @@
+use std::{ops::Deref, sync::Arc};
+
 use anyhow::{anyhow, Error};
 use poise::serenity_prelude::Context;
 use serenity::{
-    http::CacheHttp,
+    http::{CacheHttp, Http},
     model::{
-        prelude::{ChannelId, GuildId, Member},
+        prelude::{ChannelId, Member},
         voice::VoiceState,
     },
 };
@@ -36,17 +38,17 @@ pub async fn handler(
         .as_ref()
         .ok_or_else(|| anyhow!("VoiceStateUpdate não contem membro"))?;
 
-    disconnect_afk(new.guild_id, new.channel_id, ctx, user)
-        .await
-        .log();
+    let guild_id = user.guild_id.0;
 
-    let guild = ctx.http().get_guild(user.guild_id.0).await?;
+    dispatch_disconnect(guild_id, new, ctx, user);
+
+    let guild = ctx.http().get_guild(guild_id).await?;
 
     let nickname = user.display_name().to_string();
 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
-        guild_id: user.guild_id.0,
+        guild_id: guild_id,
         guild_name: guild.name,
         nickname,
         activity,
@@ -57,18 +59,31 @@ pub async fn handler(
     Ok(())
 }
 
-async fn disconnect_afk(
-    guild_id: Option<GuildId>,
+fn dispatch_disconnect(guild_id: u64, new: &VoiceState, ctx: &Context, user: &Member) {
+    let data = Arc::new(DisconnectData {
+        guild_id,
+        channel_id: new.channel_id,
+        http: ctx.http.clone(),
+        member: user.deref().clone(),
+    });
+
+    tokio::spawn(async {
+        disconnect_afk(data).await.log();
+    });
+}
+
+struct DisconnectData {
+    guild_id: u64,
     channel_id: Option<ChannelId>,
-    ctx: &Context,
-    user: &Member,
-) -> Result<bool, Error> {
-    if let Some(id) = guild_id {
-        let guild = ctx.http().get_guild(id.0).await?;
-        if guild.afk_channel_id == channel_id {
-            user.disconnect_from_voice(ctx.http()).await?;
-            return Ok(true);
-        }
+    http: Arc<Http>,
+    member: Member,
+}
+
+async fn disconnect_afk(data: Arc<DisconnectData>) -> Result<bool, Error> {
+    let guild = data.http.get_guild(data.guild_id).await?;
+    if guild.afk_channel_id == data.channel_id {
+        data.member.disconnect_from_voice(&data.http).await?;
+        return Ok(true);
     }
 
     Ok(false)
