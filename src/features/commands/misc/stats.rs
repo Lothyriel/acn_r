@@ -19,21 +19,17 @@ pub async fn stats(
 
     let guild_id = ctx
         .guild_id()
-        .ok_or_else(|| anyhow!("Mensagem não foi enviada de uma guilda (Não deveria ocorrer)"))?;
+        .ok_or_else(|| anyhow!("Context doesn't include an Guild"))?;
 
     let guild_stats = service
         .get_stats_of_guild(guild_id.0, target.map(|f| f.id.0))
         .await?;
 
-    let guild = ctx
-        .guild_id()
-        .ok_or_else(|| anyhow!("Comando não usado em guilda"))?;
-
     let build_message_lines_tasks: Vec<_> = guild_stats
         .stats
         .into_iter()
         .map(|f| async move {
-            let member = guild.member(ctx, f.user_id).await?;
+            let member = guild_id.member(ctx, f.user_id).await?;
             let seconds_online = f.seconds_online;
             let hours_online = seconds_online / SECONDS_IN_HOUR;
 

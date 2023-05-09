@@ -20,7 +20,7 @@ mod tests {
             .stats
             .iter()
             .find(|e| e.user_id == LOTHYRIEL_ID)
-            .ok_or_else(|| anyhow!("Não encontrado"))?;
+            .ok_or_else(|| anyhow!("Couldn't find this user's data"))?;
 
         let spent_some_time = lothyriel_data.seconds_online > 1000;
         assert!(spent_some_time);
