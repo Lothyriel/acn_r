@@ -54,6 +54,7 @@ pub async fn handler(
         activity,
         date: now,
     };
+
     user_services.update_user_activity(dto).await?;
 
     Ok(())
@@ -63,8 +64,8 @@ fn dispatch_disconnect(guild_id: u64, new: &VoiceState, ctx: &Context, member: &
     let data = Arc::new(DisconnectData {
         guild_id,
         channel_id: new.channel_id,
-        http: ctx.http.clone(),
-        member: member.deref().clone(),
+        http: ctx.http.to_owned(),
+        member: member.deref().to_owned(),
     });
 
     tokio::spawn(async {
