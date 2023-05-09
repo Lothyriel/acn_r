@@ -23,16 +23,25 @@ impl GithubServices {
         }
     }
 
-    pub async fn try_deploy(&self, http: Arc<Http>) -> Result<bool, Error> {
+    pub async fn try_deploy(&self, http: Arc<Http>) -> Result<(), Error> {
+        let permit_result = self.deploy_semaphor.acquire().await;
+
+        match permit_result {
+            Ok(_) => self.poll_deploy(http).await,
+            Err(_) => Ok(()),
+        }
+    }
+
+    async fn poll_deploy(&self, http: Arc<Http>) -> Result<(), Error> {
         match self.is_someone_online(http.to_owned()).await? {
-            true => Ok(false),
+            true => Ok(()),
             false => {
                 sleep(Duration::from_secs(SECONDS_IN_5_MINUTES)).await;
                 match self.is_someone_online(http).await? {
-                    true => Ok(false),
+                    true => Ok(()),
                     false => {
                         self.start_deploy().await?;
-                        Ok(true)
+                        Ok(())
                     }
                 }
             }
