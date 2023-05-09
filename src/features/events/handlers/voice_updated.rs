@@ -1,6 +1,8 @@
 use std::{ops::Deref, sync::Arc};
 
 use anyhow::{anyhow, Error};
+use chrono::Duration;
+use futures::future::join_all;
 use poise::serenity_prelude::Context;
 use serenity::{
     http::{CacheHttp, Http},
@@ -9,13 +11,16 @@ use serenity::{
         voice::VoiceState,
     },
 };
+use tokio::time::sleep;
 
 use crate::{
     application::{
         models::{dto::user_services::UpdateActivityDto, entities::user::Activity},
-        services::dependency_configuration::DependencyContainer,
+        services::{
+            dependency_configuration::DependencyContainer, github_services::GithubServices,
+        },
     },
-    extensions::log_ext::LogExt,
+    extensions::{log_ext::LogExt, std_ext::VecResultErrorExt},
 };
 
 pub async fn handler(
@@ -32,6 +37,8 @@ pub async fn handler(
     };
 
     let user_services = &data.user_services;
+
+    dispatch_deploy(ctx, data);
 
     let member = new
         .member
@@ -58,6 +65,58 @@ pub async fn handler(
     user_services.update_user_activity(dto).await?;
 
     Ok(())
+}
+
+fn dispatch_deploy(ctx: &Context, data: &DependencyContainer) {
+    let http = ctx.http.to_owned();
+    let services = data.github_services.to_owned();
+
+    tokio::spawn(async {
+        try_deploy(http, services).await.log();
+    });
+}
+
+async fn try_deploy(http: Arc<Http>, services: GithubServices) -> Result<bool, Error> {
+    match is_someone_online(http.to_owned()).await? {
+        true => Ok(false),
+        false => {
+            sleep(Duration::minutes(5).to_std()?).await;
+            match is_someone_online(http).await? {
+                true => Ok(false),
+                false => {
+                    services.start_deploy().await?;
+                    Ok(true)
+                }
+            }
+        }
+    }
+}
+
+async fn is_someone_online(http: Arc<Http>) -> Result<bool, Error> {
+    let guilds_info = http.get_guilds(None, None).await?;
+    let tasks_get_guild: Vec<_> = guilds_info
+        .into_iter()
+        .map(|g| http.get_guild(g.id.0))
+        .collect();
+
+    let get_guild_results: Vec<_> = join_all(tasks_get_guild)
+        .await
+        .into_iter()
+        .map(|t| t.map_err(|e| anyhow!(e)))
+        .collect();
+
+    let guilds = get_guild_results.all_successes()?;
+
+    let presence_count_results: Vec<_> = guilds
+        .into_iter()
+        .map(|g| {
+            g.approximate_presence_count
+                .ok_or_else(|| anyhow!("Error getting presence count of: {}", g.id))
+        })
+        .collect();
+
+    let presence_counts = presence_count_results.all_successes()?;
+    Ok(presence_counts.iter().any(|p| p > &u64::MIN))
 }
 
 fn dispatch_disconnect(guild_id: u64, new: &VoiceState, ctx: &Context, member: &Member) {
