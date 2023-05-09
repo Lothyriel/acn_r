@@ -33,6 +33,10 @@ impl DependencyContainer {
         Self {
             app_configurations: RwLock::new(app_configurations),
             allowed_ids: settings.allowed_ids,
+            user_services,
+            guild_services,
+            command_services,
+            stats_services,
             github_services,
         }
     }
