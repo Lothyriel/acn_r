@@ -1,5 +1,5 @@
 use anyhow::Error;
-use log::info;
+use log::warn;
 use poise::serenity_prelude::Context;
 use serenity::futures::future::join_all;
 
@@ -14,7 +14,7 @@ pub async fn handler(
 ) -> Result<(), Error> {
     let permitidos = &container.allowed_ids;
     let message = format!("Estamos totalmente dentro! {}", ready.user.name);
-    info!("{message}");
+    warn!("{message}");
     let tasks = permitidos
         .into_iter()
         .map(|p| send_greetings(ctx, *p, &message));

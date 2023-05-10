@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::{anyhow, Error};
-use log::info;
+use log::warn;
 use mongodb::Database;
 use poise::serenity_prelude::Guild;
 use serenity::{client::Cache, http::Http};
@@ -63,14 +63,14 @@ impl GithubServices {
             .filter(|p| p.channel_id.is_some())
             .count();
 
-        info!("Users online: {}", online_count);
+        warn!("Users online: {}", online_count);
 
         Ok(online_count > usize::MIN)
     }
 
     async fn start_deploy(&self) -> Result<(), Error> {
-        info!("Calling Github API and triggering action deploy");
-        info!("(TODO!)");
+        warn!("Calling Github API and triggering action deploy");
+        warn!("(TODO!)");
         Ok(())
     }
 }

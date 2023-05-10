@@ -11,7 +11,7 @@ pub fn init() -> Result<(), Error> {
     dotenv::dotenv().ok();
 
     env_logger::builder()
-        .filter_level(LevelFilter::Info)
+        .filter_level(LevelFilter::Warn)
         .target(Target::Stdout)
         .try_init()?;
 
