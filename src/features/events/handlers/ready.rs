@@ -15,10 +15,9 @@ pub async fn handler(
     let permitidos = &container.allowed_ids;
     let message = format!("Estamos totalmente dentro! {}", ready.user.name);
     info!("{message}");
-    let tasks: Vec<_> = permitidos
+    let tasks = permitidos
         .into_iter()
-        .map(|p| send_greetings(ctx, *p, &message))
-        .collect();
+        .map(|p| send_greetings(ctx, *p, &message));
 
     join_all(tasks).await.log_errors();
 

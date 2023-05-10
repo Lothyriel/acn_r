@@ -25,22 +25,18 @@ pub async fn stats(
         .get_stats_of_guild(guild_id.0, target.map(|f| f.id.0))
         .await?;
 
-    let build_message_lines_tasks: Vec<_> = guild_stats
-        .stats
-        .into_iter()
-        .map(|f| async move {
-            let member = guild_id.member(ctx, f.user_id).await?;
-            let seconds_online = f.seconds_online;
-            let hours_online = seconds_online / SECONDS_IN_HOUR;
+    let build_message_lines_tasks = guild_stats.stats.into_iter().map(|f| async move {
+        let member = guild_id.member(ctx, f.user_id).await?;
+        let seconds_online = f.seconds_online;
+        let hours_online = seconds_online / SECONDS_IN_HOUR;
 
-            Ok(format!(
-                "- {} ficou {} segundos online ({} horas)",
-                member.mention(),
-                seconds_online,
-                hours_online
-            ))
-        })
-        .collect();
+        Ok(format!(
+            "- {} ficou {} segundos online ({} horas)",
+            member.mention(),
+            seconds_online,
+            hours_online
+        ))
+    });
 
     let lines = join_all(build_message_lines_tasks).await.log_errors();
 
