@@ -1,6 +1,6 @@
+use crate::application::models::entities::user::Activity;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use crate::application::models::entities::user::Activity;
 
 #[derive(Serialize, Deserialize)]
 pub struct UserActivity {

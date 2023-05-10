@@ -17,7 +17,7 @@ pub enum Activity {
     ClosedStream,
     OpenedCamera,
     ClosedCamera,
-    Moved
+    Moved,
 }
 
 impl Display for Activity {

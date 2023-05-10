@@ -1,4 +1,4 @@
-use crate::application::{infra::env};
+use crate::application::infra::env;
 use anyhow::Error;
 use mongodb::{options::ClientOptions, Client};
 

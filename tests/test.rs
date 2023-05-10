@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
     use acn_r::application::{
-        infra::{mongo_client::create_mongo_client, env, appsettings},
-        services::{stats_services::StatsServices},
+        infra::{appsettings, env, mongo_client::create_mongo_client},
+        services::stats_services::StatsServices,
     };
     use anyhow::{anyhow, Error};
     use mongodb::Database;
@@ -14,7 +14,9 @@ mod tests {
         const LA_PALOMBA_ID: u64 = 244922266050232321;
         const LOTHYRIEL_ID: u64 = 244922703667003392;
 
-        let guild_stats = services.get_stats_of_guild(LA_PALOMBA_ID, Some(LOTHYRIEL_ID)).await?;
+        let guild_stats = services
+            .get_stats_of_guild(LA_PALOMBA_ID, Some(LOTHYRIEL_ID))
+            .await?;
 
         let lothyriel_data = guild_stats
             .stats

@@ -2,7 +2,8 @@ use anyhow::Error;
 use serenity::prelude::GatewayIntents;
 
 use application::{
-    infra::{env, appsettings}, dependency_configuration::DependencyContainer,
+    dependency_configuration::DependencyContainer,
+    infra::{appsettings, env},
 };
 use features::{
     commands::groups_configuration,

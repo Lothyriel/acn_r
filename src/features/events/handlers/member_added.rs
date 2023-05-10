@@ -1,6 +1,6 @@
 use anyhow::Error;
-use serenity::{model::prelude::Member, prelude::Mentionable};
 use poise::serenity_prelude::Context;
+use serenity::{model::prelude::Member, prelude::Mentionable};
 
 use crate::extensions::serenity_ext::GuildExt;
 

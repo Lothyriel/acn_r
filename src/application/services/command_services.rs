@@ -9,7 +9,6 @@ use crate::application::{
     services::user_services::UserServices,
 };
 
-
 #[derive(Clone)]
 pub struct CommandServices {
     commands_use: Collection<CommandUse>,
@@ -45,7 +44,6 @@ impl CommandServices {
         };
 
         self.user_services.add_user(add).await?;
-
 
         Ok(())
     }

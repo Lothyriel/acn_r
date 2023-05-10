@@ -2,7 +2,7 @@ use anyhow::Error;
 use serenity::model::prelude::Member;
 
 use crate::application::{
-    models::dto::user::UpdateNickDto, dependency_configuration::DependencyContainer,
+    dependency_configuration::DependencyContainer, models::dto::user::UpdateNickDto,
 };
 
 pub async fn handler(new: &Member, data: &DependencyContainer) -> Result<(), Error> {
