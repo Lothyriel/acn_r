@@ -1,10 +1,9 @@
 use anyhow::Error;
-use env_logger::Target;
 use serenity::prelude::GatewayIntents;
 
 use application::{
-    infra::env_var,
-    services::{appsettings_service, dependency_configuration::DependencyContainer},
+    infra::env,
+    services::{appsettings, dependency_configuration::DependencyContainer},
 };
 use features::{
     commands::groups_configuration,
@@ -16,11 +15,10 @@ pub mod extensions;
 pub mod features;
 
 pub async fn start_application() -> Result<(), Error> {
-    env_logger::builder().target(Target::Stdout).try_init()?;
-    dotenv::dotenv().ok();
+    env:init();
 
-    let token = env_var::get("TOKEN_BOT")?;
-    let settings = appsettings_service::load()?;
+    let token = env::get("TOKEN_BOT")?;
+    let settings = appsettings::load()?;
     let prefix = settings.prefix.to_owned();
 
     let framework = poise::Framework::builder()

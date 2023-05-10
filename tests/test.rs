@@ -2,7 +2,7 @@
 mod tests {
     use acn_r::application::{
         infra::mongo_client::create_mongo_client,
-        services::{appsettings_service, stats_services::StatsServices},
+        services::{appsettings, stats_services::StatsServices},
     };
     use anyhow::{anyhow, Error};
     use mongodb::Database;
@@ -31,7 +31,7 @@ mod tests {
 
     async fn get_database() -> Result<Database, Error> {
         dotenv::dotenv().ok();
-        let settings = appsettings_service::load()?;
+        let settings = appsettings::load()?;
         Ok(create_mongo_client(&settings).await?.database("acn_r"))
     }
 }
