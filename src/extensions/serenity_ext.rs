@@ -1,7 +1,5 @@
-use std::pin::Pin;
-
 use anyhow::{anyhow, Error};
-use futures::{future::join_all, Future, FutureExt, SinkExt};
+use futures::{future::join_all, Future};
 use serenity::{async_trait, http::Http, model::prelude::GuildId};
 
 use crate::application::{
