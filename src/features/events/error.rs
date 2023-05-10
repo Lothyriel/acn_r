@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Error};
-use chrono::{DateTime, Utc};
 
 use crate::{
     application::models::dto::command_use::CommandUseDto,
@@ -10,12 +9,8 @@ use crate::{
 };
 
 async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
-    let now = chrono::Utc::now();
-
     match err {
-        poise::FrameworkError::Command { error, ctx } => {
-            handle_command_error(now, ctx, error).await
-        }
+        poise::FrameworkError::Command { error, ctx } => handle_command_error(ctx, error).await,
         poise::FrameworkError::EventHandler { error, event, .. } => Err(anyhow!(
             "EventHandler returned error during {:?} event: {:?}",
             event.name(),
@@ -31,13 +26,9 @@ async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
     }
 }
 
-async fn handle_command_error(
-    now: DateTime<Utc>,
-    ctx: Context<'_>,
-    error: Error,
-) -> Result<(), Error> {
+async fn handle_command_error(ctx: Context<'_>, error: Error) -> Result<(), Error> {
     let dto = CommandUseDto {
-        date: now,
+        date: chrono::Utc::now(),
         command: ctx.command().name.to_owned(),
         user_id: ctx.author().id.0,
         guild_info: ctx.get_guild_info(),
