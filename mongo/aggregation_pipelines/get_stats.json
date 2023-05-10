@@ -75,7 +75,7 @@
                                                 "$toDate": {
                                                     "$arrayElemAt": [
                                                         "$$this",
-                                                        0
+                                                        1
                                                     ]
                                                 }
                                             },
@@ -83,7 +83,7 @@
                                                 "$toDate": {
                                                     "$arrayElemAt": [
                                                         "$$this",
-                                                        1
+                                                        0
                                                     ]
                                                 }
                                             }
@@ -100,7 +100,7 @@
     },
     {
         "$sort": {
-            "time_spent_online": -1,
-        },
-    },
+            "time_spent_online": -1
+        }
+    }
 ]
