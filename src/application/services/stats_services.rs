@@ -2,11 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Error};
 use futures::TryStreamExt;
-use mongodb::{
-    bson::doc,
-    options::{FindOneOptions, FindOptions},
-    Collection, Database,
-};
+use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
 use crate::application::models::{
     dto::stats::{StatsDto, UserStats},
