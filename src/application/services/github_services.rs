@@ -12,7 +12,7 @@ use tokio::{sync::Semaphore, time::sleep};
 
 use crate::application::infra::appsettings::AppConfigurations;
 
-const SECONDS_IN_5_MINUTES: u64 = 5 * 60;
+const SECONDS_IN_30_MINUTES: u64 = 30 * 60;
 
 #[derive(Clone)]
 pub struct GithubServices {
@@ -45,7 +45,7 @@ impl GithubServices {
         match someone_online {
             true => Ok(()),
             false => {
-                sleep(Duration::from_secs(SECONDS_IN_5_MINUTES)).await;
+                sleep(Duration::from_secs(SECONDS_IN_30_MINUTES)).await;
                 match self.is_someone_online(http, cache).await? {
                     true => Ok(()),
                     false => {
