@@ -66,9 +66,10 @@ pub async fn handler(
 fn dispatch_deploy(ctx: &Context, data: &DependencyContainer) {
     let http = ctx.http.to_owned();
     let services = data.github_services.to_owned();
+    let cache = ctx.cache.to_owned();
 
     tokio::spawn(async move {
-        services.try_deploy(http).await.log();
+        services.try_deploy(http, cache).await.log();
     });
 }
 
