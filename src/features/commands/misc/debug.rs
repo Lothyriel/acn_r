@@ -3,7 +3,12 @@ use poise::command;
 
 use crate::extensions::serenity_ext::{CommandResult, Context, OWNERS_ONLY};
 
-#[command(prefix_command, slash_command, category = "Misc", custom_data = "OWNERS_ONLY")]
+#[command(
+    prefix_command,
+    slash_command,
+    category = "Misc",
+    custom_data = "OWNERS_ONLY"
+)]
 pub async fn debug(ctx: Context<'_>) -> CommandResult {
     let option = {
         let mut configurations = ctx

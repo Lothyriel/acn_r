@@ -65,31 +65,26 @@ impl StatsServices {
 }
 
 fn get_user_stat(user_id: u64, activities: Vec<&UserActivity>) -> UserStats {
-    let connects: Vec<_> = activities
+    let connects = activities
         .iter()
-        .filter(|e| e.activity_type == Activity::Connected)
-        .collect();
+        .filter(|e| e.activity_type == Activity::Connected);
 
-    let disconnects: Vec<_> = activities
+    let disconnects = activities
         .iter()
-        .filter(|e| e.activity_type == Activity::Disconnected)
-        .collect();
+        .filter(|e| e.activity_type == Activity::Disconnected);
 
     let zip = connects.into_iter().zip(disconnects);
 
-    let connected_seconds: Vec<_> = zip
-        .into_iter()
-        .map(|e| {
-            let connected = e.0.date;
-            let disconnected = e.1.date;
+    let connected_seconds = zip.into_iter().map(|e| {
+        let connected = e.0.date;
+        let disconnected = e.1.date;
 
-            let time = disconnected - connected;
+        let time = disconnected - connected;
 
-            time.num_seconds()
-        })
-        .collect();
+        time.num_seconds()
+    });
 
-    let time_online = connected_seconds.into_iter().sum();
+    let time_online = connected_seconds.sum();
 
     UserStats {
         user_id,
