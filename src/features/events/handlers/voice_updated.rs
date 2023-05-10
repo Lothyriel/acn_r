@@ -48,7 +48,7 @@ pub async fn handler(
     dispatch_disconnect(guild_id, new, ctx, member);
 
     let guild = ctx.http().get_guild(guild_id).await?;
-
+    
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
         guild_id: guild_id,

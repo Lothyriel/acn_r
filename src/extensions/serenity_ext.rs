@@ -1,4 +1,7 @@
+use std::pin::Pin;
+
 use anyhow::{anyhow, Error};
+use futures::{future::join_all, Future, FutureExt, SinkExt};
 use serenity::{async_trait, http::Http, model::prelude::GuildId};
 
 use crate::application::{
@@ -94,6 +97,25 @@ impl ContextExt for Context<'_> {
             }
         }
         None
+    }
+}
+
+#[async_trait]
+pub trait ErrorExt<T: Send> {
+    async fn join_all(self) -> Vec<Result<T, Error>>;
+}
+
+#[async_trait]
+impl<T: Send, F> ErrorExt<T> for Vec<F>
+where
+    F: Future<Output = Result<T, serenity::Error>> + Send,
+{
+    async fn join_all(self) -> Vec<Result<T, Error>> {
+        join_all(self)
+            .await
+            .into_iter()
+            .map(|t| t.map_err(|e| anyhow!(e)))
+            .collect()
     }
 }
 
