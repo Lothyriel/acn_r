@@ -1,6 +1,8 @@
-use crate::application::{infra::env, models::appsettings::AppSettings};
+use crate::application::{infra::env};
 use anyhow::Error;
 use mongodb::{options::ClientOptions, Client};
+
+use super::appsettings::AppSettings;
 
 pub async fn create_mongo_client(appsettings: &AppSettings) -> Result<Client, Error> {
     let password = env::get("MONGO_PASSWORD")?;

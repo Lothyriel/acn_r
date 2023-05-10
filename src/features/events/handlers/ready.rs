@@ -1,11 +1,11 @@
-use crate::{
-    application::services::dependency_configuration::DependencyContainer,
-    extensions::log_ext::LogErrorsExt,
-};
 use anyhow::Error;
 use log::info;
 use poise::serenity_prelude::Context;
 use serenity::futures::future::join_all;
+
+use crate::{
+    application::dependency_configuration::DependencyContainer, extensions::log_ext::LogErrorsExt,
+};
 
 pub async fn handler(
     ctx: &Context,

@@ -2,7 +2,7 @@ use anyhow::Error;
 use poise::{serenity_prelude::Context, Event};
 
 use crate::{
-    application::services::dependency_configuration::DependencyContainer,
+    application::dependency_configuration::DependencyContainer,
     features::events::handlers::{
         guild_updated, invite_created, member_added, member_removed, member_updated, ready,
         voice_updated,

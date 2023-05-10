@@ -3,7 +3,7 @@ use futures::{future::join_all, Future};
 use serenity::{async_trait, http::Http, model::prelude::GuildId};
 
 use crate::application::{
-    models::dto::user_services::GuildInfo, services::dependency_configuration::DependencyContainer,
+    models::dto::user_services::GuildInfo, dependency_configuration::DependencyContainer,
 };
 
 #[async_trait]

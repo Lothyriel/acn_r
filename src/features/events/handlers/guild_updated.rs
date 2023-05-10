@@ -1,7 +1,7 @@
 use anyhow::Error;
 use serenity::model::prelude::PartialGuild;
 
-use crate::application::services::dependency_configuration::DependencyContainer;
+use crate::application::dependency_configuration::DependencyContainer;
 
 pub async fn handler(
     new: &PartialGuild,

@@ -2,8 +2,7 @@ use anyhow::Error;
 use serenity::prelude::GatewayIntents;
 
 use application::{
-    infra::env,
-    services::{appsettings, dependency_configuration::DependencyContainer},
+    infra::{env, appsettings}, dependency_configuration::DependencyContainer,
 };
 use features::{
     commands::groups_configuration,
@@ -15,7 +14,7 @@ pub mod extensions;
 pub mod features;
 
 pub async fn start_application() -> Result<(), Error> {
-    env:init();
+    env::init()?;
 
     let token = env::get("TOKEN_BOT")?;
     let settings = appsettings::load()?;

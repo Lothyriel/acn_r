@@ -3,8 +3,10 @@ use mongodb::Database;
 use std::sync::RwLock;
 
 use crate::application::{
-    infra::mongo_client::create_mongo_client,
-    models::appsettings::{AppConfigurations, AppSettings},
+    infra::{
+        appsettings::{AppConfigurations, AppSettings},
+        mongo_client::create_mongo_client,
+    },
     services::{
         command_services::CommandServices, github_services::GithubServices,
         guild_services::GuildServices, stats_services::StatsServices, user_services::UserServices,
