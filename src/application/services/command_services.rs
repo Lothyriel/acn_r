@@ -3,7 +3,7 @@ use mongodb::{Collection, Database};
 
 use crate::application::{
     models::{
-        dto::{command_dto::CommandUseDto, user_services::AddUserDto},
+        dto::{command_use::CommandUseDto, user::AddUserDto},
         entities::command::{CommandError, CommandUse},
     },
     services::user_services::UserServices,

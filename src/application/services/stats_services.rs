@@ -5,7 +5,7 @@ use futures::TryStreamExt;
 use mongodb::{bson::doc, Collection, Database};
 
 use crate::application::models::{
-    dto::stats_dto::{StatsDto, UserStats},
+    dto::stats::{StatsDto, UserStats},
     entities::{user::Activity, user_activity::UserActivity},
 };
 
@@ -38,7 +38,9 @@ impl StatsServices {
             .user_activity
             .find(doc! {"$and": filters}, None)
             .await?;
+
         let guild_activity: Vec<_> = cursor.try_collect().await?;
+
         let first_activity = guild_activity
             .iter()
             .min_by(|a1, a2| a1.date.cmp(&a2.date))
@@ -60,6 +62,7 @@ impl StatsServices {
             initial_date: first_activity.date,
             stats: time_by_user,
         };
+
         Ok(stats)
     }
 }

@@ -12,7 +12,7 @@ use serenity::{
 
 use crate::{
     application::{
-        models::{dto::user_services::UpdateActivityDto, entities::user::Activity}, dependency_configuration::DependencyContainer,
+        models::{dto::user::UpdateActivityDto, entities::user::Activity}, dependency_configuration::DependencyContainer,
     },
     extensions::log_ext::LogExt,
 };

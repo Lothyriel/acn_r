@@ -3,7 +3,7 @@ use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
 use crate::application::{
     models::{
-        dto::user_services::{AddUserDto, UpdateActivityDto, UpdateNickDto},
+        dto::user::{AddUserDto, UpdateActivityDto, UpdateNickDto},
         entities::{nickname::NicknameChange, user::User, user_activity::UserActivity},
     },
     services::guild_services::GuildServices,

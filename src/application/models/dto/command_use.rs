@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 
-use crate::application::models::dto::user_services::GuildInfo;
+use crate::application::models::dto::user::GuildInfo;
 
 pub struct CommandUseDto {
     pub user_id: u64,

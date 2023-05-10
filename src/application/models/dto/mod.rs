@@ -1,3 +1,3 @@
-pub mod user_services;
-pub mod command_dto;
-pub mod stats_dto;
+pub mod user;
+pub mod command_use;
+pub mod stats;
