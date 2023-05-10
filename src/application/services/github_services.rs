@@ -1,4 +1,7 @@
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{Arc, RwLock},
+    time::Duration,
+};
 
 use anyhow::{anyhow, Error};
 use log::warn;
@@ -7,16 +10,20 @@ use poise::serenity_prelude::Guild;
 use serenity::{client::Cache, http::Http};
 use tokio::{sync::Semaphore, time::sleep};
 
+use crate::application::infra::appsettings::AppConfigurations;
+
 const SECONDS_IN_5_MINUTES: u64 = 5 * 60;
 
 #[derive(Clone)]
 pub struct GithubServices {
     deploy_semaphor: Arc<Semaphore>,
+    configurations: Arc<RwLock<AppConfigurations>>,
 }
 
 impl GithubServices {
-    pub fn new(_database: &Database) -> Self {
+    pub fn new(_database: &Database, configurations: Arc<RwLock<AppConfigurations>>) -> Self {
         Self {
+            configurations,
             deploy_semaphor: Arc::new(Semaphore::new(1)),
         }
     }
