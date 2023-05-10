@@ -1,0 +1,23 @@
+{
+  "filter": {
+    "$and": [
+      {
+        "user_id": "id"
+      },
+      {
+        "guild_id": "id"
+      },
+      {
+        "activity_type": {
+          "$in": [
+            "Connected",
+            "Disconnected"
+          ]
+        }
+      }
+    ]
+  },
+  "sort": {
+    "data": 1
+  }
+}
