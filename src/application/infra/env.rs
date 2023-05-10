@@ -1,4 +1,6 @@
 use anyhow::{anyhow, Error};
+use env_logger::Target;
+use log::LevelFilter;
 use std::env;
 
 pub fn get(var_name: &str) -> Result<String, Error> {
