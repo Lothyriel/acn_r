@@ -1,13 +1,11 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::{anyhow, Error};
-use futures::future::join_all;
 use log::info;
 use mongodb::Database;
-use serenity::http::Http;
+use poise::serenity_prelude::Guild;
+use serenity::{client::Cache, http::Http};
 use tokio::{sync::Semaphore, time::sleep};
-
-use crate::extensions::std_ext::VecResultErrorExt;
 
 const SECONDS_IN_5_MINUTES: u64 = 5 * 60;
 
@@ -23,21 +21,25 @@ impl GithubServices {
         }
     }
 
-    pub async fn try_deploy(&self, http: Arc<Http>) -> Result<(), Error> {
+    pub async fn try_deploy(&self, http: Arc<Http>, cache: Arc<Cache>) -> Result<(), Error> {
         let permit_result = self.deploy_semaphor.acquire().await;
 
         match permit_result {
-            Ok(_) => self.poll_deploy(http).await,
+            Ok(_) => self.poll_deploy(http, cache).await,
             Err(_) => Ok(()),
         }
     }
 
-    async fn poll_deploy(&self, http: Arc<Http>) -> Result<(), Error> {
-        match self.is_someone_online(http.to_owned()).await? {
+    async fn poll_deploy(&self, http: Arc<Http>, cache: Arc<Cache>) -> Result<(), Error> {
+        let someone_online = self
+            .is_someone_online(http.to_owned(), cache.to_owned())
+            .await?;
+
+        match someone_online {
             true => Ok(()),
             false => {
                 sleep(Duration::from_secs(SECONDS_IN_5_MINUTES)).await;
-                match self.is_someone_online(http).await? {
+                match self.is_someone_online(http, cache).await? {
                     true => Ok(()),
                     false => {
                         self.start_deploy().await?;
@@ -48,31 +50,22 @@ impl GithubServices {
         }
     }
 
-    async fn is_someone_online(&self, http: Arc<Http>) -> Result<bool, Error> {
-        let guilds_info = http.get_guilds(None, None).await?;
-        let tasks_get_guild: Vec<_> = guilds_info
+    async fn is_someone_online(&self, http: Arc<Http>, cache: Arc<Cache>) -> Result<bool, Error> {
+        let guilds = get_guilds(&http, cache).await?;
+
+        let voice_states: Vec<_> = guilds
             .into_iter()
-            .map(|g| http.get_guild(g.id.0))
+            .flat_map(|g| g.voice_states.into_values())
             .collect();
 
-        let get_guild_results: Vec<_> = join_all(tasks_get_guild)
-            .await
-            .into_iter()
-            .map(|t| t.map_err(|e| anyhow!(e)))
-            .collect();
+        let online_count = voice_states
+            .iter()
+            .filter(|p| p.channel_id.is_some())
+            .count();
 
-        let guilds = get_guild_results.all_successes()?;
+        info!("Users online: {}", online_count);
 
-        let presence_count_results: Vec<_> = guilds
-            .into_iter()
-            .map(|g| {
-                g.approximate_presence_count
-                    .ok_or_else(|| anyhow!("Error getting presence count of: {}", g.id))
-            })
-            .collect();
-
-        let presence_counts = presence_count_results.all_successes()?;
-        Ok(presence_counts.iter().any(|p| p > &u64::MIN))
+        Ok(online_count > usize::MIN)
     }
 
     async fn start_deploy(&self) -> Result<(), Error> {
@@ -80,4 +73,15 @@ impl GithubServices {
         info!("(TODO!)");
         Ok(())
     }
+}
+
+async fn get_guilds(http: &Arc<Http>, cache: Arc<Cache>) -> Result<Vec<Guild>, Error> {
+    let guilds_info = http.get_guilds(None, None).await?;
+
+    let get_guild_results = guilds_info.into_iter().map(|g| {
+        g.id.to_guild_cached(&cache)
+            .ok_or_else(|| anyhow!("Couldn't get Guild {} from cache", g.id))
+    });
+
+    get_guild_results.collect()
 }
