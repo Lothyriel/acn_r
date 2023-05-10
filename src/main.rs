@@ -1,6 +1,6 @@
-use acn_r::{extensions::log_ext::LogExt, start_application};
+use acn_r::extensions::log_ext::LogExt;
 
 #[tokio::main]
 async fn main() {
-    start_application().await.log()
+    acn_r::start_application().await.log()
 }

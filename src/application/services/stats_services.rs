@@ -3,18 +3,12 @@ use std::collections::HashMap;
 use anyhow::{anyhow, Error};
 use futures::TryStreamExt;
 use mongodb::{bson::doc, Collection, Database};
-use serenity::prelude::TypeMapKey;
 
 use crate::application::models::{
-    dto::stats_dto::{StatsDto, UserStats},
+    dto::stats::{StatsDto, UserStats},
     entities::{user::Activity, user_activity::UserActivity},
 };
 
-impl TypeMapKey for StatsServices {
-    type Value = StatsServices;
-}
-
-#[derive(Clone)]
 pub struct StatsServices {
     user_activity: Collection<UserActivity>,
 }
@@ -36,19 +30,21 @@ impl StatsServices {
             doc! {"activity_type": {"$in": [Activity::Connected.to_string(), Activity::Disconnected.to_string()]}},
         ];
 
-        if let Some(user) = target {
-            filters.push(doc! {"user_id": user as i64});
+        if let Some(user_id) = target {
+            filters.push(doc! {"user_id": user_id as i64});
         }
 
         let cursor = self
             .user_activity
             .find(doc! {"$and": filters}, None)
             .await?;
+
         let guild_activity: Vec<_> = cursor.try_collect().await?;
+
         let first_activity = guild_activity
             .iter()
             .min_by(|a1, a2| a1.date.cmp(&a2.date))
-            .ok_or_else(|| anyhow!("Não contém dados"))?;
+            .ok_or_else(|| anyhow!("Guild {guild_id} hasn't any data"))?;
 
         let stats_by_user = guild_activity.iter().fold(HashMap::new(), |mut map, e| {
             map.entry(e.user_id).or_insert(Vec::new()).push(e);
@@ -66,36 +62,32 @@ impl StatsServices {
             initial_date: first_activity.date,
             stats: time_by_user,
         };
+
         Ok(stats)
     }
 }
 
 fn get_user_stat(user_id: u64, activities: Vec<&UserActivity>) -> UserStats {
-    let connects: Vec<_> = activities
+    let connects = activities
         .iter()
-        .filter(|e| e.activity_type == Activity::Connected)
-        .collect();
+        .filter(|e| e.activity_type == Activity::Connected);
 
-    let disconnects: Vec<_> = activities
+    let disconnects = activities
         .iter()
-        .filter(|e| e.activity_type == Activity::Disconnected)
-        .collect();
+        .filter(|e| e.activity_type == Activity::Disconnected);
 
     let zip = connects.into_iter().zip(disconnects);
 
-    let connected_seconds: Vec<_> = zip
-        .into_iter()
-        .map(|e| {
-            let connected = e.0.date;
-            let disconnected = e.1.date;
+    let connected_seconds = zip.into_iter().map(|e| {
+        let connected = e.0.date;
+        let disconnected = e.1.date;
 
-            let time = disconnected - connected;
+        let time = disconnected - connected;
 
-            time.num_seconds()
-        })
-        .collect();
+        time.num_seconds()
+    });
 
-    let time_online = connected_seconds.into_iter().sum();
+    let time_online = connected_seconds.sum();
 
     UserStats {
         user_id,

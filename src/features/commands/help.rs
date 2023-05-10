@@ -1,28 +1,20 @@
-use serenity::{
-    framework::standard::{
-        help_commands, macros::help, Args, CommandGroup, CommandResult, HelpOptions,
-    },
-    model::prelude::{Message, UserId},
-    prelude::Context,
-};
-use std::collections::HashSet;
+use anyhow::Error;
+use poise::command;
 
-#[help]
-#[individual_command_tip = "Comando de ajuda vei, se quer de um comando especifico use !help <commando>"]
-#[command_not_found_text = "Não existe: `{}` teu"]
-#[max_levenshtein_distance(3)]
-#[indention_prefix = "-"]
-#[lacking_permissions = "Strike"]
-#[lacking_role = "Strike"]
-#[wrong_channel = "Strike"]
+use crate::extensions::serenity_ext::Context;
+
+#[command(prefix_command, slash_command)]
 pub async fn help(
-    context: &Context,
-    msg: &Message,
-    args: Args,
-    help_options: &'static HelpOptions,
-    groups: &[&'static CommandGroup],
-    owners: HashSet<UserId>,
-) -> CommandResult {
-    _ = help_commands::with_embeds(context, msg, args, help_options, groups, owners).await?;
+    ctx: Context<'_>,
+    #[description = "O comando específico em questão"] command: Option<String>,
+) -> Result<(), Error> {
+    let config = poise::builtins::HelpConfiguration {
+        extra_text_at_bottom:
+            "Se quiser saber algo sobre um comando em específico, passe o nome dele como argumento",
+        ..Default::default()
+    };
+
+    poise::builtins::help(ctx, command.as_deref(), config).await?;
+
     Ok(())
 }

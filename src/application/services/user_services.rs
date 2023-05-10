@@ -1,18 +1,13 @@
 use anyhow::Error;
 use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
-use serenity::prelude::TypeMapKey;
 
 use crate::application::{
     models::{
-        dto::user_services::{AddUserDto, UpdateActivityDto, UpdateNickDto},
+        dto::user::{AddUserDto, UpdateActivityDto, UpdateNickDto},
         entities::{nickname::NicknameChange, user::User, user_activity::UserActivity},
     },
     services::guild_services::GuildServices,
 };
-
-impl TypeMapKey for UserServices {
-    type Value = UserServices;
-}
 
 #[derive(Clone)]
 pub struct UserServices {
@@ -33,8 +28,9 @@ impl UserServices {
     }
 
     pub async fn update_user_activity(&self, update_dto: UpdateActivityDto) -> Result<(), Error> {
-        self.add_activity(&update_dto).await?;
-        self.add_user(update_dto.into()).await?;
+        let ptr = &update_dto;
+        self.add_user(ptr.into()).await?;
+        self.add_activity(update_dto).await?;
 
         Ok(())
     }
@@ -44,7 +40,7 @@ impl UserServices {
             self.guild_services
                 .add_guild(
                     guild_info.guild_id,
-                    guild_info.guild_name.to_string(),
+                    guild_info.guild_name.to_owned(),
                     add_user_dto.date,
                 )
                 .await?;
@@ -110,7 +106,7 @@ impl UserServices {
         Ok(possible_last_change.map(|n| n.nickname))
     }
 
-    async fn add_activity(&self, update_dto: &UpdateActivityDto) -> Result<(), Error> {
+    async fn add_activity(&self, update_dto: UpdateActivityDto) -> Result<(), Error> {
         let activity = UserActivity {
             guild_id: update_dto.guild_id,
             user_id: update_dto.user_id,

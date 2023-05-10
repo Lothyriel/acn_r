@@ -1,13 +1,8 @@
 use anyhow::Error;
 use chrono::{DateTime, Utc};
 use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
-use serenity::prelude::TypeMapKey;
 
 use crate::application::models::entities::{guild::Guild, guild_name::GuildNameChange};
-
-impl TypeMapKey for GuildServices {
-    type Value = GuildServices;
-}
 
 #[derive(Clone)]
 pub struct GuildServices {

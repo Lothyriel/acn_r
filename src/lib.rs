@@ -1,13 +1,13 @@
 use anyhow::Error;
-use serenity::{
-    framework::standard::StandardFramework, model::prelude::UserId, prelude::GatewayIntents, Client,
-};
+use serenity::prelude::GatewayIntents;
 
-use application::{infra::env_var, services::appsettings_service};
-use extensions::group_registry::{DependenciesExtensions, FrameworkExtensions};
+use application::{
+    dependency_configuration::DependencyContainer,
+    infra::{appsettings, env},
+};
 use features::{
-    commands::help,
-    events::{after, invoker},
+    commands::groups_configuration,
+    events::{after, check, error, invoker},
 };
 
 pub mod application;
@@ -15,28 +15,38 @@ pub mod extensions;
 pub mod features;
 
 pub async fn start_application() -> Result<(), Error> {
-    env_logger::init();
-    dotenv::dotenv().ok();
+    env::init()?;
 
-    let token = env_var::get("TOKEN_BOT")?;
+    let token = env::get("TOKEN_BOT")?;
+    let settings = appsettings::load()?;
+    let prefix = settings.prefix.to_owned();
 
-    let settings = appsettings_service::load()?;
-    let owners = settings.allowed_ids.iter().map(|i| UserId(*i)).collect();
+    let framework = poise::Framework::builder()
+        .options(poise::FrameworkOptions {
+            commands: groups_configuration::register_commands(),
+            event_handler: |ctx, event, _, user_data| {
+                Box::pin(invoker::handler(ctx, event, user_data))
+            },
+            on_error: |error| Box::pin(error::handler(error)),
+            post_command: |ctx| Box::pin(after::handler(ctx)),
+            prefix_options: poise::PrefixFrameworkOptions {
+                prefix: Some(prefix),
+                mention_as_prefix: true,
+                ..Default::default()
+            },
+            command_check: Some(|ctx| Box::pin(check::handler(ctx))),
+            ..Default::default()
+        })
+        .token(token)
+        .intents(GatewayIntents::all())
+        .setup(|ctx, _, framework| {
+            Box::pin(async move {
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                Ok(DependencyContainer::build(settings).await?)
+            })
+        });
 
-    let framework = StandardFramework::new()
-        .configure(|c| c.prefix("!").with_whitespace(true).owners(owners))
-        .register_groups()
-        .help(&help::HELP)
-        .after(after::after);
-
-    let mut client = Client::builder(&token, GatewayIntents::all())
-        .framework(framework)
-        .event_handler(invoker::Handler)
-        .await?;
-
-    client.register_dependencies(settings).await?;
-
-    client.start().await?;
+    framework.run().await?;
 
     Ok(())
 }

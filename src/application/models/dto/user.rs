@@ -18,7 +18,6 @@ pub struct AddUserDto {
     pub date: DateTime<Utc>,
 }
 
-#[derive(Clone)]
 pub struct GuildInfo {
     pub guild_id: u64,
     pub guild_name: String,
@@ -31,15 +30,15 @@ pub struct UpdateNickDto {
     pub date: DateTime<Utc>,
 }
 
-impl From<UpdateActivityDto> for AddUserDto {
-    fn from(d: UpdateActivityDto) -> Self {
+impl From<&UpdateActivityDto> for AddUserDto {
+    fn from(d: &UpdateActivityDto) -> Self {
         Self {
             guild_info: Some(GuildInfo {
                 guild_id: d.guild_id,
-                guild_name: d.guild_name,
+                guild_name: d.guild_name.to_owned(),
             }),
             user_id: d.user_id,
-            nickname: d.nickname,
+            nickname: d.nickname.to_owned(),
             date: d.date,
         }
     }

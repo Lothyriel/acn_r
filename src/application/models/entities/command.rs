@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct CommandUse {
@@ -7,7 +7,7 @@ pub struct CommandUse {
     pub user_id: u64,
     pub date: DateTime<Utc>,
     pub name: String,
-    pub args: String
+    pub args: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -17,5 +17,5 @@ pub struct CommandError {
     pub date: DateTime<Utc>,
     pub name: String,
     pub args: String,
-    pub error: String
+    pub error: String,
 }

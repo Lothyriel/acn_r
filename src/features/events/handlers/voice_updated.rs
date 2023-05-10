@@ -1,15 +1,29 @@
+use std::{ops::Deref, sync::Arc};
+
 use anyhow::{anyhow, Error};
-use serenity::{model::voice::VoiceState, prelude::Context};
+use poise::serenity_prelude::Context;
+use serenity::{
+    http::{CacheHttp, Http},
+    model::{
+        prelude::{ChannelId, Member},
+        voice::VoiceState,
+    },
+};
 
 use crate::{
     application::{
-        models::{dto::user_services::UpdateActivityDto, entities::user::Activity},
-        services::user_services::UserServices,
+        dependency_configuration::DependencyContainer,
+        models::{dto::user::UpdateActivityDto, entities::user::Activity},
     },
-    extensions::dependency_ext::Dependencies,
+    extensions::log_ext::LogExt,
 };
 
-pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> Result<(), Error> {
+pub async fn handler(
+    ctx: &Context,
+    old: &Option<VoiceState>,
+    new: &VoiceState,
+    data: &DependencyContainer,
+) -> Result<(), Error> {
     let now = chrono::Utc::now();
 
     let activity = match old {
@@ -17,27 +31,76 @@ pub async fn handler(ctx: Context, old: Option<VoiceState>, new: VoiceState) -> 
         None => Activity::Connected,
     };
 
-    let user_services = ctx.get_dependency::<UserServices>().await?;
+    let user_services = &data.user_services;
 
-    let user = new
-        .member
-        .ok_or_else(|| anyhow!("VoiceStateUpdate não contem membro"))?;
+    dispatch_deploy(ctx, data);
+    let user = new.user_id.to_user(ctx).await?;
+    let member = new.member.as_ref().ok_or_else(|| {
+        anyhow!(
+            "{} VoiceStateUpdate triggered outside a Guild context",
+            user.name
+        )
+    })?;
 
-    let guild = ctx.http.get_guild(user.guild_id.0).await?;
+    let nickname = member.display_name().to_string();
+    let guild_id = member.guild_id.0;
 
-    let nickname = user.display_name().into_owned();
+    dispatch_disconnect(guild_id, new, ctx, member);
+
+    let guild = ctx.http().get_guild(guild_id).await?;
 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
-        guild_id: user.guild_id.0,
+        guild_id: guild_id,
         guild_name: guild.name,
         nickname,
         activity,
         date: now,
     };
+
     user_services.update_user_activity(dto).await?;
 
     Ok(())
+}
+
+fn dispatch_deploy(ctx: &Context, data: &DependencyContainer) {
+    let http = ctx.http.to_owned();
+    let services = data.github_services.to_owned();
+    let cache = ctx.cache.to_owned();
+
+    tokio::spawn(async move {
+        services.try_deploy(http, cache).await.log();
+    });
+}
+
+fn dispatch_disconnect(guild_id: u64, new: &VoiceState, ctx: &Context, member: &Member) {
+    let data = Arc::new(DisconnectData {
+        guild_id,
+        channel_id: new.channel_id,
+        http: ctx.http.to_owned(),
+        member: member.deref().to_owned(),
+    });
+
+    tokio::spawn(async {
+        disconnect_afk(data).await.log();
+    });
+}
+
+struct DisconnectData {
+    guild_id: u64,
+    channel_id: Option<ChannelId>,
+    http: Arc<Http>,
+    member: Member,
+}
+
+async fn disconnect_afk(data: Arc<DisconnectData>) -> Result<bool, Error> {
+    let guild = data.http.get_guild(data.guild_id).await?;
+    if guild.afk_channel_id == data.channel_id {
+        data.member.disconnect_from_voice(&data.http).await?;
+        return Ok(true);
+    }
+
+    Ok(false)
 }
 
 fn get_activity(old: &VoiceState, new: &VoiceState) -> Activity {

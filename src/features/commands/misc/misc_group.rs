@@ -1,8 +1,8 @@
-use serenity::framework::standard::macros::group;
-use crate::features::commands::misc::{att::ATT_COMMAND, stats::STATS_COMMAND, debug::DEBUG_COMMAND};
+use crate::{
+    extensions::serenity_ext::Command,
+    features::commands::misc::{att::att, debug::debug, stats::stats},
+};
 
-#[group]
-#[commands(att, stats, debug)]
-#[summary = "Miscellaneous"]
-#[description = "Simplesmente comandos miscellaneous..."]
-pub struct Misc;
+pub fn misc_group<'a>() -> Vec<Command> {
+    vec![att(), stats(), debug()]
+}
