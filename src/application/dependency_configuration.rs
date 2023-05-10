@@ -1,6 +1,6 @@
 use anyhow::Error;
 use mongodb::Database;
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 
 use crate::application::{
     infra::{
@@ -15,7 +15,7 @@ use crate::application::{
 
 pub struct DependencyContainer {
     pub allowed_ids: Vec<u64>,
-    pub app_configurations: RwLock<AppConfigurations>,
+    pub app_configurations: Arc<RwLock<AppConfigurations>>,
     pub user_services: UserServices,
     pub command_services: CommandServices,
     pub guild_services: GuildServices,
@@ -25,16 +25,16 @@ pub struct DependencyContainer {
 
 impl DependencyContainer {
     fn new(db: Database, settings: AppSettings) -> Self {
+        let app_configurations = Arc::new(RwLock::new(AppConfigurations::new()));
         let guild_services = GuildServices::new(&db);
         let user_services = UserServices::new(&db, guild_services.to_owned());
         let command_services = CommandServices::new(&db, user_services.to_owned());
         let stats_services = StatsServices::new(&db);
-        let app_configurations = AppConfigurations::new();
-        let github_services = GithubServices::new(&db);
+        let github_services = GithubServices::new(&db, app_configurations.to_owned());
 
         Self {
-            app_configurations: RwLock::new(app_configurations),
             allowed_ids: settings.allowed_ids,
+            app_configurations,
             user_services,
             guild_services,
             command_services,

@@ -1,0 +1,106 @@
+[
+    {
+        "$match": {
+            "$or": [
+                {
+                    "activity_type": "Connected"
+                },
+                {
+                    "activity_type": "Disconnected"
+                }
+            ]
+        }
+    },
+    {
+        "$sort": {
+            "date": 1
+        }
+    },
+    {
+        "$group": {
+            "_id": "$user_id",
+            "connected_activities": {
+                "$push": {
+                    "$cond": [
+                        {
+                            "$eq": [
+                                "$activity_type",
+                                "Connected"
+                            ]
+                        },
+                        "$date",
+                        "$$REMOVE"
+                    ]
+                }
+            },
+            "disconnected_activities": {
+                "$push": {
+                    "$cond": [
+                        {
+                            "$eq": [
+                                "$activity_type",
+                                "Disconnected"
+                            ]
+                        },
+                        "$date",
+                        "$$REMOVE"
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "$project": {
+            "_id": 1,
+            "time_spent_online": {
+                "$reduce": {
+                    "input": {
+                        "$zip": {
+                            "inputs": [
+                                "$connected_activities",
+                                "$disconnected_activities"
+                            ],
+                            "useLongestLength": true
+                        }
+                    },
+                    "initialValue": 0,
+                    "in": {
+                        "$add": [
+                            "$$value",
+                            {
+                                "$divide": [
+                                    {
+                                        "$subtract": [
+                                            {
+                                                "$toDate": {
+                                                    "$arrayElemAt": [
+                                                        "$$this",
+                                                        1
+                                                    ]
+                                                }
+                                            },
+                                            {
+                                                "$toDate": {
+                                                    "$arrayElemAt": [
+                                                        "$$this",
+                                                        0
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    1000
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    {
+        "$sort": {
+            "time_spent_online": -1
+        }
+    }
+]

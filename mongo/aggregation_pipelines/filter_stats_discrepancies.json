@@ -1,0 +1,45 @@
+[
+  {
+    "$group": {
+      "_id": "$user_id",
+      "connected_count": {
+        "$sum": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$activity_type",
+                "Connected"
+              ]
+            },
+            "then": 1,
+            "else": 0
+          }
+        }
+      },
+      "disconnected_count": {
+        "$sum": {
+          "$cond": {
+            "if": {
+              "$eq": [
+                "$activity_type",
+                "Disconnected"
+              ]
+            },
+            "then": 1,
+            "else": 0
+          }
+        }
+      }
+    }
+  },
+  {
+    "$match": {
+      "$expr": {
+        "$ne": [
+          "$connected_count",
+          "$disconnected_count"
+        ]
+      }
+    }
+  }
+]

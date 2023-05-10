@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Error};
 use futures::TryStreamExt;
-use mongodb::{bson::doc, Collection, Database};
+use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
 use crate::application::models::{
     dto::stats::{StatsDto, UserStats},
@@ -36,20 +36,22 @@ impl StatsServices {
 
         let cursor = self
             .user_activity
-            .find(doc! {"$and": filters}, None)
+            .find(doc! {"$and": &filters}, None)
             .await?;
 
         let guild_activity: Vec<_> = cursor.try_collect().await?;
-
-        let first_activity = guild_activity
-            .iter()
-            .min_by(|a1, a2| a1.date.cmp(&a2.date))
-            .ok_or_else(|| anyhow!("Guild {guild_id} hasn't any data"))?;
 
         let stats_by_user = guild_activity.iter().fold(HashMap::new(), |mut map, e| {
             map.entry(e.user_id).or_insert(Vec::new()).push(e);
             map
         });
+
+        let sort = FindOneOptions::builder().sort(doc! { "date": -1}).build();
+        let first_activity = self
+            .user_activity
+            .find_one(doc! {"$and": &filters}, sort)
+            .await?
+            .ok_or_else(|| anyhow!("Guild {guild_id} hasn't any data"))?;
 
         let mut time_by_user: Vec<_> = stats_by_user
             .into_iter()
