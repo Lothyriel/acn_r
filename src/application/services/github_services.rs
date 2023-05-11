@@ -1,14 +1,14 @@
-use std::{
-    sync::{Arc, RwLock},
-    time::Duration,
-};
+use std::{sync::Arc, time::Duration};
 
 use anyhow::{anyhow, Error};
 use log::warn;
 use mongodb::Database;
 use poise::serenity_prelude::Guild;
 use serenity::{client::Cache, http::Http};
-use tokio::{sync::Semaphore, time::sleep};
+use tokio::{
+    sync::{RwLock, Semaphore},
+    time::sleep,
+};
 
 use crate::application::infra::appsettings::AppConfigurations;
 
@@ -29,6 +29,15 @@ impl GithubServices {
     }
 
     pub async fn try_deploy(&self, http: Arc<Http>, cache: Arc<Cache>) -> Result<(), Error> {
+        let deploy_ready = {
+            let configurations = self.configurations.read().await;
+            configurations.deploy_ready
+        };
+
+        if !deploy_ready {
+            return Ok(());
+        }
+
         let permit_result = self.deploy_semaphor.acquire().await;
 
         match permit_result {

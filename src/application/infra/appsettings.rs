@@ -22,14 +22,12 @@ pub struct AppSettings {
 }
 
 pub struct AppConfigurations {
-    pub debug: bool,
     pub deploy_ready: bool,
 }
 
 impl AppConfigurations {
     pub fn new() -> Self {
         Self {
-            debug: false,
             deploy_ready: false,
         }
     }

@@ -1,6 +1,7 @@
 use anyhow::Error;
 use mongodb::Database;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 use crate::application::{
     infra::{
