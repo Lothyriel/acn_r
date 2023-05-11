@@ -10,7 +10,7 @@ use crate::extensions::{
 
 const SECONDS_IN_HOUR: i64 = 60 * 60;
 
-#[command(prefix_command, slash_command, category = "Misc")]
+#[command(guild_only, prefix_command, slash_command, category = "Misc")]
 pub async fn stats(
     ctx: Context<'_>,
     #[description = "Usuário para filtrar estatísticas"] target: Option<User>,
