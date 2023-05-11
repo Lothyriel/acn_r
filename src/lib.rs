@@ -3,7 +3,7 @@ use serenity::prelude::GatewayIntents;
 
 use application::{
     dependency_configuration::DependencyContainer,
-    infra::{appsettings, env},
+    infra::{appsettings::{self, AppSettings}, env},
 };
 use features::{
     commands::groups_configuration,
@@ -15,10 +15,8 @@ pub mod extensions;
 pub mod features;
 
 pub async fn start_application() -> Result<(), Error> {
-    env::init()?;
-
+    let settings = init_app()?;
     let token = env::get("TOKEN_BOT")?;
-    let settings = appsettings::load()?;
     let prefix = settings.prefix.to_owned();
 
     let framework = poise::Framework::builder()
@@ -49,4 +47,9 @@ pub async fn start_application() -> Result<(), Error> {
     framework.run().await?;
 
     Ok(())
+}
+
+pub fn init_app() -> Result<AppSettings, Error> {
+    env::init()?;
+    appsettings::load()
 }
