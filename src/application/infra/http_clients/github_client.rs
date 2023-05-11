@@ -29,8 +29,8 @@ impl GithubClient {
         let response = self
             .client
             .post(url)
-            .header("Accept", "application/vnd.github.v3+json")
             .header("Authorization", format!("Bearer {}", pat))
+            .header("User-Agent", &self.settings.username)
             .json(&body)
             .send()
             .await?;
