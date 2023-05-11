@@ -13,6 +13,7 @@ mod stats {
 
     const LA_PALOMBA_ID: u64 = 244922266050232321;
     const LOTHYRIEL_ID: u64 = 244922703667003392;
+    const SECONDS_IN_10_HOURS: i64 = 60 * 60 * 10;
 
     #[tokio::test]
     async fn should_get_stats() -> Result<(), Error> {
@@ -32,7 +33,7 @@ mod stats {
             .find(|e| e.user_id == LOTHYRIEL_ID)
             .ok_or_else(|| anyhow!("Couldn't find this user's data"))?;
 
-        let spent_some_time = lothyriel_data.seconds_online > 1000;
+        let spent_some_time = lothyriel_data.seconds_online >= SECONDS_IN_10_HOURS;
         assert!(spent_some_time);
         assert_eq!(lothyriel_data.user_id, LOTHYRIEL_ID);
 
