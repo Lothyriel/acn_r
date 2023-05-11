@@ -1,5 +1,3 @@
-- Github Action deploy
-
 ---------------------Jukebox----------------------------------
 JukeboxUse{id: Guid, guild_id: u64, user_id: u64, date: Date, youtube_title: String }
 Implementar comandos:
