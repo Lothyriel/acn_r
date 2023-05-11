@@ -19,9 +19,9 @@ pub async fn deploy(ctx: Context<'_>) -> CommandResult {
         configurations.deploy_ready = !configurations.deploy_ready;
 
         if configurations.deploy_ready {
-            "Ligado"
+            "Ativado"
         } else {
-            "Desligado"
+            "Desativado"
         }
     };
 
