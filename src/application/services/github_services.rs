@@ -2,7 +2,6 @@ use std::{sync::Arc, time::Duration};
 
 use anyhow::{anyhow, Error};
 use log::warn;
-use mongodb::Database;
 use poise::serenity_prelude::Guild;
 use serenity::{client::Cache, http::Http};
 use tokio::{
@@ -10,7 +9,9 @@ use tokio::{
     time::sleep,
 };
 
-use crate::application::infra::appsettings::AppConfigurations;
+use crate::application::infra::{
+    appsettings::AppConfigurations, http_clients::github_client::GithubClient,
+};
 
 const SECONDS_IN_30_MINUTES: u64 = 30 * 60;
 
@@ -18,14 +19,19 @@ const SECONDS_IN_30_MINUTES: u64 = 30 * 60;
 pub struct GithubServices {
     deploy_semaphor: Arc<Semaphore>,
     configurations: Arc<RwLock<AppConfigurations>>,
+    client: Arc<GithubClient>,
 }
 
 impl GithubServices {
-    pub fn new(_database: &Database, configurations: Arc<RwLock<AppConfigurations>>) -> Self {
-        Self {
+    pub fn build(
+        client: Arc<GithubClient>,
+        configurations: Arc<RwLock<AppConfigurations>>,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            client,
             configurations,
             deploy_semaphor: Arc::new(Semaphore::new(1)),
-        }
+        })
     }
 
     pub async fn try_deploy(&self, http: Arc<Http>, cache: Arc<Cache>) -> Result<(), Error> {
@@ -86,8 +92,7 @@ impl GithubServices {
 
     async fn start_deploy(&self) -> Result<(), Error> {
         warn!("Calling Github API and triggering action deploy");
-        warn!("(TODO!)");
-        Ok(())
+        self.client.deploy().await
     }
 }
 
