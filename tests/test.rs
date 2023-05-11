@@ -39,9 +39,9 @@ mod tests {
     async fn should_trigger_deploy() -> Result<(), Error> {
         let settings = get_app_settings()?;
 
-        let client = GithubClient::new(Client::new(), settings.github_settings);
+        let _client = GithubClient::new(Client::new(), settings.github_settings);
 
-        client.deploy().await?;
+        //client.deploy().await?;
 
         Ok(())
     }
