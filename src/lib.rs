@@ -42,7 +42,7 @@ pub async fn start_application() -> Result<(), Error> {
         .setup(|ctx, _, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(DependencyContainer::build(settings).await?)
+                DependencyContainer::build(settings).await
             })
         });
 

@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use poise::command;
 
 use crate::extensions::serenity_ext::{CommandResult, Context, OWNERS_ONLY};
@@ -9,24 +8,24 @@ use crate::extensions::serenity_ext::{CommandResult, Context, OWNERS_ONLY};
     category = "Misc",
     custom_data = "OWNERS_ONLY"
 )]
-pub async fn debug(ctx: Context<'_>) -> CommandResult {
+pub async fn deploy(ctx: Context<'_>) -> CommandResult {
     let option = {
         let mut configurations = ctx
             .data()
             .app_configurations
             .write()
-            .map_err(|_| anyhow!("Failed to get write lock on AppConfigurations"))?;
+            .await;
 
-        configurations.debug = !configurations.debug;
+        configurations.deploy_ready = !configurations.deploy_ready;
 
-        if configurations.debug {
-            "Ligado"
+        if configurations.deploy_ready {
+            "Ativado"
         } else {
-            "Desligado"
+            "Desativado"
         }
     };
 
-    ctx.say(format!("O modo debug está {option}")).await?;
+    ctx.say(format!("Deploy {option}")).await?;
 
     Ok(())
 }

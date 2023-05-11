@@ -1,8 +1,8 @@
 use crate::{
     extensions::serenity_ext::Command,
-    features::commands::misc::{att::att, debug::debug, stats::stats},
+    features::commands::misc::{att::att, deploy::deploy, stats::stats},
 };
 
 pub fn misc_group<'a>() -> Vec<Command> {
-    vec![att(), stats(), debug()]
+    vec![att(), stats(), deploy()]
 }

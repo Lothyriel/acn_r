@@ -30,7 +30,6 @@ impl GuildExt for GuildId {
 
 #[async_trait]
 pub trait ContextExt {
-    async fn discord_debug(self, error: &'_ str) -> Result<(), Error>;
     async fn get_author_name(self) -> String;
     async fn get_command_args(self) -> String;
     fn get_guild_info(self) -> Option<GuildInfo>;
@@ -38,24 +37,6 @@ pub trait ContextExt {
 
 #[async_trait]
 impl ContextExt for Context<'_> {
-    async fn discord_debug(self, error: &'_ str) -> Result<(), Error> {
-        let debug = {
-            let configuration = self
-                .data()
-                .app_configurations
-                .read()
-                .map_err(|_| anyhow!("Failed to get read lock on AppConfigurations"))?;
-
-            configuration.debug
-        };
-
-        if debug {
-            self.say(error).await?;
-        }
-
-        Ok(())
-    }
-
     async fn get_author_name(self) -> String {
         self.author_member()
             .await

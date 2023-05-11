@@ -16,13 +16,9 @@ async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
             event.name(),
             error
         )),
-        error => {
-            if let Err(e) = poise::builtins::on_error(error).await {
-                Err(anyhow!("Error while handling error: {}", e))
-            } else {
-                Ok(())
-            }
-        }
+        error => poise::builtins::on_error(error)
+            .await
+            .map_err(|e| anyhow!("Error while handling error: {}", e)),
     }
 }
 
@@ -40,7 +36,7 @@ async fn handle_command_error(ctx: Context<'_>, error: Error) -> Result<(), Erro
 
     let message = format!("{}: {}", ctx.id(), error);
 
-    ctx.discord_debug(&message).await?;
+    ctx.say(&message).await?;
 
     command_services
         .add_command_error(dto, message.to_owned())

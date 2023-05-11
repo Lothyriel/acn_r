@@ -1,5 +1,3 @@
-- tentar extrair lógica de obter read and write pra RwLock<AppConfiguration>
-- Comando para ligar/desligar a app_configurations.deploy_ready (similar ao /debug)
 - Github Action deploy
 
 ---------------------Jukebox----------------------------------
