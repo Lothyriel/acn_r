@@ -1,8 +1,7 @@
 name: Fly Deploy
 
 on:
-  repository_dispatch:
-    types: REMOTE_DEPLOY
+  workflow_dispatch
 
 env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
