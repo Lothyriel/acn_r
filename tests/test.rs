@@ -1,11 +1,15 @@
 #[cfg(test)]
 mod tests {
     use acn_r::application::{
-        infra::{appsettings, env, mongo_client::create_mongo_client},
+        infra::{
+            appsettings::{self, AppSettings}, env, http_clients::github_client::GithubClient,
+            mongo_client::create_mongo_client,
+        },
         services::stats_services::StatsServices,
     };
     use anyhow::{anyhow, Error};
     use mongodb::Database;
+    use reqwest::Client;
 
     #[tokio::test]
     async fn should_get_stats() -> Result<(), Error> {
@@ -31,9 +35,27 @@ mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn should_trigger_deploy() -> Result<(), Error> {
+        let settings = get_app_settings()?;
+
+        let client = GithubClient::new(Client::new(), settings.github_settings);
+
+        client.deploy().await?;
+
+        Ok(())
+    }
+
     async fn get_database() -> Result<Database, Error> {
+        let settings = get_app_settings()?;
+        Ok(create_mongo_client(&settings.mongo_settings)
+            .await?
+            .database("acn_r"))
+    }
+
+    fn get_app_settings() -> Result<AppSettings, Error> {
         env::init()?;
         let settings = appsettings::load()?;
-        Ok(create_mongo_client(&settings.mongo_settings).await?.database("acn_r"))
+        Ok(settings)
     }
 }
