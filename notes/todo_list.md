@@ -1,4 +1,3 @@
-- Comando para ligar/desligar a app_configurations.deploy_ready (similar ao /debug)
 - Github Action deploy
 
 ---------------------Jukebox----------------------------------
