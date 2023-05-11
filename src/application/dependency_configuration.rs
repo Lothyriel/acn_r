@@ -45,7 +45,7 @@ impl DependencyContainer {
     }
 
     pub async fn build(settings: AppSettings) -> Result<Self, Error> {
-        let db = create_mongo_client(&settings).await?.database("acn_r");
+        let db = create_mongo_client(&settings.mongo_settings).await?.database("acn_r");
         Ok(Self::new(db, settings))
     }
 }

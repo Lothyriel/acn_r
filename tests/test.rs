@@ -34,6 +34,6 @@ mod tests {
     async fn get_database() -> Result<Database, Error> {
         env::init()?;
         let settings = appsettings::load()?;
-        Ok(create_mongo_client(&settings).await?.database("acn_r"))
+        Ok(create_mongo_client(&settings.mongo_settings).await?.database("acn_r"))
     }
 }

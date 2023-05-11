@@ -15,10 +15,24 @@ pub fn load() -> Result<AppSettings, Error> {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct AppSettings {
     pub allowed_ids: Vec<u64>,
-    pub mongo_user: String,
-    pub mongo_connection_string: String,
-    pub mongo_url: String,
     pub prefix: String,
+    pub mongo_settings: MongoSettings,
+    pub github_settings: GithubSettings,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct MongoSettings {
+    pub user: String,
+    pub url: String,
+    pub connection_string: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct GithubSettings {
+    pub username: String,
+    pub repository: String,
+    pub workflow_file: String,
+    pub branch_name: String,
 }
 
 pub struct AppConfigurations {
