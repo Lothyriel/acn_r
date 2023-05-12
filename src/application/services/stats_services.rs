@@ -46,7 +46,7 @@ impl StatsServices {
             map
         });
 
-        let sort = FindOneOptions::builder().sort(doc! { "date": -1}).build();
+        let sort = FindOneOptions::builder().sort(doc! { "date": 1}).build();
         let first_activity = self
             .user_activity
             .find_one(doc! {"$and": &filters}, sort)
