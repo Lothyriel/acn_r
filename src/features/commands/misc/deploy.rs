@@ -10,11 +10,7 @@ use crate::extensions::serenity_ext::{CommandResult, Context, OWNERS_ONLY};
 )]
 pub async fn deploy(ctx: Context<'_>) -> CommandResult {
     let option = {
-        let mut configurations = ctx
-            .data()
-            .app_configurations
-            .write()
-            .await;
+        let mut configurations = ctx.data().app_configurations.write().await;
 
         configurations.deploy_ready = !configurations.deploy_ready;
 

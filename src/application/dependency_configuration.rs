@@ -31,7 +31,7 @@ impl DependencyContainer {
         let db = create_mongo_client(&settings.mongo_settings)
             .await?
             .database("acn_r");
-        
+
         let client = Client::new();
         let github_client = Arc::new(GithubClient::new(client, settings.github_settings));
 
@@ -40,8 +40,7 @@ impl DependencyContainer {
         let user_services = UserServices::new(&db, guild_services.to_owned());
         let command_services = CommandServices::new(&db, user_services.to_owned());
         let stats_services = StatsServices::new(&db);
-        let github_services =
-            GithubServices::build(github_client, configurations.to_owned())?;
+        let github_services = GithubServices::build(github_client, configurations.to_owned())?;
 
         Ok(Self {
             allowed_ids: settings.allowed_ids,
