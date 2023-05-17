@@ -12,7 +12,7 @@ async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
     match err {
         poise::FrameworkError::Command { error, ctx } => handle_command_error(ctx, error).await,
         poise::FrameworkError::EventHandler { error, event, .. } => Err(anyhow!(
-            "EventHandler returned error during {:?} event: {:?}",
+            "EventHandler returned error during {} event: {}",
             event.name(),
             error
         )),
