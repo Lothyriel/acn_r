@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use futures::future::join_all;
 use poise::{command, serenity_prelude::User};
-use serenity::{prelude::Mentionable, utils::MessageBuilder};
+use serenity::utils::MessageBuilder;
 
 use crate::extensions::{
     log_ext::LogErrorsExt,
@@ -32,7 +32,7 @@ pub async fn stats(
 
         Ok(format!(
             "- {} ficou {} segundos online ({} horas)",
-            member.mention(),
+            member.display_name(),
             seconds_online,
             hours_online
         ))
