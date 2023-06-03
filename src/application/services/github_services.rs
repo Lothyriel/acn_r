@@ -60,9 +60,13 @@ impl GithubServices {
         match someone_online {
             true => Ok(()),
             false => {
+                warn!("Deploying in {SECONDS_IN_30_MINUTES} seconds");
                 sleep(Duration::from_secs(SECONDS_IN_30_MINUTES)).await;
                 match self.is_someone_online(http, cache).await? {
-                    true => Ok(()),
+                    true => {
+                        warn!("Deploy cancelled");
+                        Ok(())
+                    }
                     false => {
                         self.start_deploy().await?;
                         Ok(())
