@@ -52,6 +52,8 @@ mod migrate {
             .send()
             .await?;
 
+        response.error_for_status_ref()?;
+
         #[derive(Deserialize)]
         struct Output {
             documents: Vec<UserActivity>,

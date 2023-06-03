@@ -23,6 +23,8 @@ mod filter_activity_discrepancies {
 
         let users_online = vec![LOTHYRIEL_ID];
 
+        assert!(activities.len() > 0);
+
         let users_with_discrepancies: Vec<_> = activities
             .iter()
             .filter(|act| {
