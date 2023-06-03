@@ -24,7 +24,7 @@ mod stats {
 
         let guild_stats = data
             .stats_services
-            .get_stats_of_guild(LA_PALOMBA_ID, Some(LOTHYRIEL_ID))
+            .get_guild_stats(LA_PALOMBA_ID, Some(LOTHYRIEL_ID))
             .await?;
 
         let lothyriel_data = guild_stats

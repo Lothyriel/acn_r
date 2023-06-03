@@ -22,7 +22,7 @@ pub async fn stats(
         .ok_or_else(|| anyhow!("Context doesn't include an Guild"))?;
 
     let guild_stats = service
-        .get_stats_of_guild(guild_id.0, target.map(|f| f.id.0))
+        .get_guild_stats(guild_id.0, target.map(|f| f.id.0))
         .await?;
 
     let build_message_lines_tasks = guild_stats.stats.into_iter().map(|f| async move {
