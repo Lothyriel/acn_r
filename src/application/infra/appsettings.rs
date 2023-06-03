@@ -4,7 +4,7 @@ use std::fs;
 
 use crate::application::infra::env;
 
-pub const APPSETTINGS_PATH: &str = "./appsettings_{ENV}.json";
+const APPSETTINGS_PATH: &str = "./appsettings_{ENV}.json";
 
 pub fn load() -> Result<AppSettings, Error> {
     let env = env::get("ENV")?;
