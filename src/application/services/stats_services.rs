@@ -65,7 +65,7 @@ impl StatsServices {
 
         let cursor = self
             .user_activity
-            .find(doc! {"$and": &filters}, None)
+            .find(doc! {"$and": filters}, None)
             .await?;
 
         let guild_activity: Vec<_> = cursor.try_collect().await?;
