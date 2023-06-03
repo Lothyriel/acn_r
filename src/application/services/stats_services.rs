@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Error};
 use futures::TryStreamExt;
-use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
+use mongodb::{bson::doc, Collection, Database};
 
 use crate::application::models::{
     dto::stats::{StatsDto, UserStats},
@@ -20,11 +20,40 @@ impl StatsServices {
         }
     }
 
-    pub async fn get_stats_of_guild(
+    pub async fn get_guild_stats(
         &self,
         guild_id: u64,
         target: Option<u64>,
     ) -> Result<StatsDto, Error> {
+        let activities_by_user = self.get_activities(guild_id, target).await?;
+
+        let first_activity_date = activities_by_user
+            .iter()
+            .flat_map(|a| a.1)
+            .min_by(|a, b| a.date.cmp(&b.date))
+            .map(|a| a.date)
+            .ok_or_else(|| anyhow!("Guild {guild_id} hasn't any data"))?;
+
+        let mut time_by_user: Vec<_> = activities_by_user
+            .into_iter()
+            .map(|e| get_user_stat(e.0, e.1))
+            .collect();
+
+        time_by_user.sort_by(|e1, e2| e2.seconds_online.cmp(&e1.seconds_online));
+
+        let stats = StatsDto {
+            initial_date: first_activity_date,
+            stats: time_by_user,
+        };
+
+        Ok(stats)
+    }
+
+    pub async fn get_activities(
+        &self,
+        guild_id: u64,
+        target: Option<u64>,
+    ) -> Result<HashMap<u64, Vec<UserActivity>>, Error> {
         let mut filters = vec![
             doc! {"guild_id": guild_id as i64},
             doc! {"activity_type": {"$in": [Activity::Connected.to_string(), Activity::Disconnected.to_string()]}},
@@ -41,35 +70,18 @@ impl StatsServices {
 
         let guild_activity: Vec<_> = cursor.try_collect().await?;
 
-        let stats_by_user = guild_activity.iter().fold(HashMap::new(), |mut map, e| {
-            map.entry(e.user_id).or_insert(Vec::new()).push(e);
-            map
-        });
-
-        let sort = FindOneOptions::builder().sort(doc! { "date": -1}).build();
-        let first_activity = self
-            .user_activity
-            .find_one(doc! {"$and": &filters}, sort)
-            .await?
-            .ok_or_else(|| anyhow!("Guild {guild_id} hasn't any data"))?;
-
-        let mut time_by_user: Vec<_> = stats_by_user
+        let stats_by_user = guild_activity
             .into_iter()
-            .map(|e| get_user_stat(e.0, e.1))
-            .collect();
+            .fold(HashMap::new(), |mut map, e| {
+                map.entry(e.user_id).or_insert(Vec::new()).push(e);
+                map
+            });
 
-        time_by_user.sort_by(|e1, e2| e2.seconds_online.cmp(&e1.seconds_online));
-
-        let stats = StatsDto {
-            initial_date: first_activity.date,
-            stats: time_by_user,
-        };
-
-        Ok(stats)
+        Ok(stats_by_user)
     }
 }
 
-fn get_user_stat(user_id: u64, activities: Vec<&UserActivity>) -> UserStats {
+fn get_user_stat(user_id: u64, activities: Vec<UserActivity>) -> UserStats {
     let connects = activities
         .iter()
         .filter(|e| e.activity_type == Activity::Connected);
