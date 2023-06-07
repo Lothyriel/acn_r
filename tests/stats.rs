@@ -20,7 +20,7 @@ mod stats {
         let settings = init_app()?;
         let data = DependencyContainer::build(settings).await?;
 
-        //populate_test_stats(data.user_services).await?;
+        populate_test_stats(data.user_services).await?;
 
         let guild_stats = data
             .stats_services
