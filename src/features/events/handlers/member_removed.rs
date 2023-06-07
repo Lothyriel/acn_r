@@ -7,7 +7,7 @@ use serenity::{
     prelude::Context,
 };
 
-use crate::extensions::serenity_ext::GuildExt;
+use crate::extensions::serenity::guild_ext::GuildExt;
 
 pub async fn handler(
     ctx: &Context,

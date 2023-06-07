@@ -4,7 +4,7 @@ use crate::{
     application::models::dto::command_use::CommandUseDto,
     extensions::{
         log_ext::LogExt,
-        serenity_ext::{Context, ContextExt, FrameworkError},
+        serenity::{serenity_structs::{Context, FrameworkError}, serenity_ext::ContextExt},
     },
 };
 

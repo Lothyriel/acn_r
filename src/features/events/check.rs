@@ -1,6 +1,6 @@
 use anyhow::Error;
 
-use crate::extensions::serenity_ext::Context;
+use crate::extensions::serenity::serenity_structs::Context;
 
 pub async fn handler(ctx: Context<'_>) -> Result<bool, Error> {
     let owners = &ctx.data().allowed_ids;

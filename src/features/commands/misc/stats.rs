@@ -5,7 +5,7 @@ use serenity::utils::MessageBuilder;
 
 use crate::extensions::{
     log_ext::LogErrorsExt,
-    serenity_ext::{CommandResult, Context},
+    serenity::serenity_structs::{CommandResult, Context},
 };
 
 const SECONDS_IN_HOUR: i64 = 60 * 60;

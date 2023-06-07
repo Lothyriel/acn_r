@@ -1,31 +1,8 @@
-use anyhow::{anyhow, Error};
-use serenity::{async_trait, http::Http, model::prelude::GuildId};
+use serenity::async_trait;
 
-use crate::application::{
-    dependency_configuration::DependencyContainer, models::dto::user::GuildInfo,
-};
+use crate::application::models::dto::user::GuildInfo;
 
-#[async_trait]
-pub trait GuildExt {
-    async fn say_on_main_text_channel(self, http: &Http, msg: &str) -> Result<(), Error>;
-}
-
-#[async_trait]
-impl GuildExt for GuildId {
-    async fn say_on_main_text_channel(self, http: &Http, msg: &str) -> Result<(), Error> {
-        let channels = self.channels(&http).await?;
-
-        let channel = channels
-            .values()
-            .filter(|c| c.is_text_based())
-            .min_by(|a, b| a.position.cmp(&b.position))
-            .ok_or_else(|| anyhow!("Guild {} doesn't contain a text channel", self.0))?;
-
-        channel.say(http, msg).await?;
-
-        Ok(())
-    }
-}
+use super::serenity_structs::Context;
 
 #[async_trait]
 pub trait ContextExt {
@@ -77,10 +54,3 @@ impl ContextExt for Context<'_> {
         None
     }
 }
-
-pub const OWNERS_ONLY: bool = true;
-pub type Context<'a> = poise::Context<'a, DependencyContainer, Error>;
-pub type Command = poise::Command<DependencyContainer, Error>;
-pub type CommandResult = Result<(), Error>;
-pub type FrameworkContext<'a> = poise::FrameworkContext<'a, DependencyContainer, Error>;
-pub type FrameworkError<'a> = poise::FrameworkError<'a, DependencyContainer, Error>;

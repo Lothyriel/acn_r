@@ -1,6 +1,6 @@
 use poise::command;
 
-use crate::extensions::serenity_ext::{CommandResult, Context, OWNERS_ONLY};
+use crate::extensions::serenity::serenity_structs::{CommandResult, Context, OWNERS_ONLY};
 
 #[command(
     prefix_command,
