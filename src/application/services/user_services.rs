@@ -116,7 +116,7 @@ impl UserServices {
 
     async fn add_activity(&self, update_dto: UpdateActivityDto) -> Result<ObjectId, Error> {
         let activity = UserActivity {
-            id: None,
+            id: ObjectId::new(),
             guild_id: update_dto.guild_id,
             user_id: update_dto.user_id,
             date: update_dto.date,
@@ -128,6 +128,6 @@ impl UserServices {
         result
             .inserted_id
             .as_object_id()
-            .ok_or_else(|| anyhow!("Id is not in valid format"))
+            .ok_or_else(|| anyhow!("{} is not a valid ObjectId", result.inserted_id))
     }
 }

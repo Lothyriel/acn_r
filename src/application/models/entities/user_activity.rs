@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserActivity {
     #[serde(rename = "_id")]
-    pub id: Option<ObjectId>,
+    pub id: ObjectId,
     pub guild_id: u64,
     pub user_id: u64,
     pub date: DateTime<Utc>,

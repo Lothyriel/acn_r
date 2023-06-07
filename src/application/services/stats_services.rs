@@ -15,8 +15,7 @@ use crate::{
         entities::{user::Activity, user_activity::UserActivity},
     },
     extensions::{
-        serenity::{guild_ext, serenity_structs::Context},
-        std_ext::VecResultErrorExt,
+        serenity::{guild_ext, serenity_structs::Context}
     },
 };
 
@@ -58,7 +57,7 @@ impl StatsServices {
             })
             .collect();
 
-        let ids = get_spoiled_ids(users_with_discrepancies)?;
+        let ids = get_spoiled_ids(users_with_discrepancies);
 
         self.user_activity.delete_many(doc! { "_id": { "$in": &ids } }, None).await?;
 
@@ -159,22 +158,21 @@ fn get_user_stat(user_id: u64, activities: Vec<UserActivity>) -> UserStats {
     }
 }
 
-fn get_spoiled_ids(discrepancy: Vec<(u64, Vec<UserActivity>)>) -> Result<Vec<ObjectId>, Error> {
+fn get_spoiled_ids(discrepancy: Vec<(u64, Vec<UserActivity>)>) -> Vec<ObjectId> {
     let mut spoiled = vec![];
 
     for (_, activities) in discrepancy.into_iter() {
         let ids = activities
             .windows(2)
             .filter(|w| w[0].activity_type == w[1].activity_type)
-            .map(|w| w[1].id)
-            .map(|i| i.ok_or_else(|| anyhow!("Documents from the database must have an id")));
+            .map(|w| w[1].id);
 
         for id in ids {
             spoiled.push(id)
         }
     }
 
-    spoiled.all_successes()
+    spoiled
 }
 
 #[async_trait]
