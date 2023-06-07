@@ -2,33 +2,36 @@
   {
     "$group": {
       "_id": "$user_id",
-      "connected_count": {
+      "ConnectedCount": {
         "$sum": {
-          "$cond": {
-            "if": {
+          "$cond": [
+            {
               "$eq": [
                 "$activity_type",
                 "Connected"
               ]
             },
-            "then": 1,
-            "else": 0
-          }
+            1,
+            0
+          ]
         }
       },
-      "disconnected_count": {
+      "DisconnectedCount": {
         "$sum": {
-          "$cond": {
-            "if": {
+          "$cond": [
+            {
               "$eq": [
                 "$activity_type",
                 "Disconnected"
               ]
             },
-            "then": 1,
-            "else": 0
-          }
+            1,
+            0
+          ]
         }
+      },
+      "guild_ids": {
+        "$addToSet": "$guild_id"
       }
     }
   },
@@ -36,10 +39,24 @@
     "$match": {
       "$expr": {
         "$ne": [
-          "$connected_count",
-          "$disconnected_count"
+          "$ConnectedCount",
+          "$DisconnectedCount"
         ]
       }
+    }
+  },
+  {
+    "$project": {
+      "user_id": "$_id",
+      "_id": 0,
+      "ConnectedCount": 1,
+      "DisconnectedCount": 1,
+      "guild_ids": 1
+    }
+  },
+  {
+    "$sort": {
+      "ConnectedCount": 1
     }
   }
 ]
