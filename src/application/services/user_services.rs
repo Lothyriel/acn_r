@@ -128,6 +128,6 @@ impl UserServices {
         result
             .inserted_id
             .as_object_id()
-            .ok_or_else(|| anyhow!("{} is not a valid ObjectId", result.inserted_id))
+            .ok_or_else(|| anyhow!("[IMPOSSIBLE] {} is not a valid ObjectId", result.inserted_id))
     }
 }

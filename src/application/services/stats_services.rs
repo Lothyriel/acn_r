@@ -47,7 +47,7 @@ impl StatsServices {
                 match (connects.len() as i32) - (disconnects.len() as i32) {
                     0 => {
                         let maybe_last = act.last().ok_or_else(|| {
-                            anyhow!("IMPOSSIBLE: User {id} got here without any activity")
+                            anyhow!("[IMPOSSIBLE] User {id} got here without any activity")
                         });
 
                         match maybe_last {

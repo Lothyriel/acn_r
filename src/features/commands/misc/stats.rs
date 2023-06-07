@@ -22,7 +22,7 @@ pub async fn stats(
 
     let guild_id = ctx
         .guild_id()
-        .ok_or_else(|| anyhow!("Context doesn't include an Guild"))?;
+        .ok_or_else(|| anyhow!("[IMPOSSIBLE] Context doesn't include an Guild"))?;
 
     let guild_stats = service
         .get_guild_stats(guild_id.0, target.map(|f| f.id.0), DiscordOnlineStatus(ctx))
