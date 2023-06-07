@@ -36,7 +36,7 @@ impl StatsServices {
         status_provider: impl OnlineStatusProvider,
     ) -> Result<Vec<ObjectId>, Error> {
         let activities = self
-            .get_activities(guild_id, Some(1001556463136809053))
+            .get_activities(guild_id, None)
             .await?;
 
         let users_online = status_provider.get_status().await?;
@@ -57,7 +57,11 @@ impl StatsServices {
             })
             .collect();
 
-        get_spoiled_ids(users_with_discrepancies)
+        let ids = get_spoiled_ids(users_with_discrepancies)?;
+
+        self.user_activity.delete_many(doc! { "_id": { "$in": &ids } }, None).await?;
+
+        Ok(ids)
     }
 
     pub async fn get_guild_stats(
