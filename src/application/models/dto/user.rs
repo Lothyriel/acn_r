@@ -2,7 +2,6 @@ use chrono::{DateTime, Utc};
 
 use crate::application::models::entities::user::Activity;
 
-#[derive(Clone)]
 pub struct UpdateActivityDto {
     pub user_id: u64,
     pub guild_id: u64,
