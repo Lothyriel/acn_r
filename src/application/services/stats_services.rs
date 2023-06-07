@@ -71,11 +71,11 @@ impl StatsServices {
         target: Option<u64>,
         status_provider: impl OnlineStatusProvider,
     ) -> Result<StatsDto, Error> {
-        let activities_by_user = self.get_activities(guild_id, target).await?;
-
         let cleaned_ids = self.clean_spoiled_stats(guild_id, status_provider).await?;
-
+        
         warn!("Spoiled activities cleaned: {}", cleaned_ids.len());
+
+        let activities_by_user = self.get_activities(guild_id, target).await?;
 
         let first_activity_date = activities_by_user
             .iter()
