@@ -138,7 +138,9 @@ mod stats {
             date,
         };
 
-        let activity_id = user_services.update_user_activity(wrong_disconnected).await?;
+        let activity_id = user_services
+            .update_user_activity(wrong_disconnected)
+            .await?;
 
         let connected = UpdateActivityDto {
             user_id: LOTHYRIEL_ID,

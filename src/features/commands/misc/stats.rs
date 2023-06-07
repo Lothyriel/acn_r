@@ -7,7 +7,7 @@ use poise::{
 use serenity::utils::MessageBuilder;
 
 use crate::{
-    application::services::{stats_services::DiscordOnlineStatus},
+    application::services::stats_services::DiscordOnlineStatus,
     extensions::{
         log_ext::LogErrorsExt,
         serenity::serenity_structs::{CommandResult, Context},

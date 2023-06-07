@@ -125,9 +125,11 @@ impl UserServices {
 
         let result = self.user_activity.insert_one(activity, None).await?;
 
-        result
-            .inserted_id
-            .as_object_id()
-            .ok_or_else(|| anyhow!("[IMPOSSIBLE] {} is not a valid ObjectId", result.inserted_id))
+        result.inserted_id.as_object_id().ok_or_else(|| {
+            anyhow!(
+                "[IMPOSSIBLE] {} is not a valid ObjectId",
+                result.inserted_id
+            )
+        })
     }
 }
