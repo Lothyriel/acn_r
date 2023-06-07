@@ -8,4 +8,5 @@ pub struct UserActivity {
     pub user_id: u64,
     pub date: DateTime<Utc>,
     pub activity_type: Activity,
+    pub id: Option<String>
 }

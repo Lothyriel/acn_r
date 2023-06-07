@@ -108,6 +108,7 @@ impl UserServices {
 
     async fn add_activity(&self, update_dto: UpdateActivityDto) -> Result<(), Error> {
         let activity = UserActivity {
+            id: None,
             guild_id: update_dto.guild_id,
             user_id: update_dto.user_id,
             date: update_dto.date,
