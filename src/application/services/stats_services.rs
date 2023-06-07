@@ -75,7 +75,7 @@ impl StatsServices {
 
         let cleaned_ids = self.clean_spoiled_stats(guild_id, status_provider).await?;
 
-        warn!("Activities deleted: {:?}", cleaned_ids.len());
+        warn!("Spoiled activities cleaned: {}", cleaned_ids.len());
 
         let first_activity_date = activities_by_user
             .iter()
