@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use anyhow::Error;
 use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
@@ -28,8 +30,7 @@ impl UserServices {
     }
 
     pub async fn update_user_activity(&self, update_dto: UpdateActivityDto) -> Result<(), Error> {
-        let ptr = &update_dto;
-        self.add_user(ptr.into()).await?;
+        self.add_user(update_dto.borrow().into()).await?;
         self.add_activity(update_dto).await?;
 
         Ok(())
