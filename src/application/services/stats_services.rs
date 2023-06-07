@@ -13,7 +13,10 @@ use crate::{
         dto::stats::{StatsDto, UserStats},
         entities::{user::Activity, user_activity::UserActivity},
     },
-    extensions::std_ext::VecResultErrorExt,
+    extensions::{
+        serenity::{guild_ext, serenity_structs::Context},
+        std_ext::VecResultErrorExt,
+    },
 };
 
 pub struct StatsServices {
@@ -54,35 +57,17 @@ impl StatsServices {
             })
             .collect();
 
-        self.get_spoiled_ids(users_with_discrepancies)
-    }
-
-    fn get_spoiled_ids(
-        &self,
-        discrepancy: Vec<(u64, Vec<UserActivity>)>,
-    ) -> Result<Vec<ObjectId>, Error> {
-        let mut spoiled = vec![];
-
-        for (_, activities) in discrepancy.into_iter() {
-            let ids = activities
-                .windows(2)
-                .filter(|w| w[0].activity_type == w[1].activity_type)
-                .map(|w| w[1].id)
-                .map(|i| i.ok_or_else(|| anyhow!("Documents from the database must have an id")));
-
-            for id in ids {
-                spoiled.push(id)
-            }
-        }
-
-        spoiled.all_successes()
+        get_spoiled_ids(users_with_discrepancies)
     }
 
     pub async fn get_guild_stats(
         &self,
         guild_id: u64,
         target: Option<u64>,
+        ctx: Context<'_>,
     ) -> Result<StatsDto, Error> {
+        self.clean_spoiled_stats(guild_id, DiscordOnlineStatus(ctx)).await?;
+
         let activities_by_user = self.get_activities(guild_id, target).await?;
 
         let first_activity_date = activities_by_user
@@ -167,7 +152,36 @@ fn get_user_stat(user_id: u64, activities: Vec<UserActivity>) -> UserStats {
     }
 }
 
+fn get_spoiled_ids(discrepancy: Vec<(u64, Vec<UserActivity>)>) -> Result<Vec<ObjectId>, Error> {
+    let mut spoiled = vec![];
+
+    for (_, activities) in discrepancy.into_iter() {
+        let ids = activities
+            .windows(2)
+            .filter(|w| w[0].activity_type == w[1].activity_type)
+            .map(|w| w[1].id)
+            .map(|i| i.ok_or_else(|| anyhow!("Documents from the database must have an id")));
+
+        for id in ids {
+            spoiled.push(id)
+        }
+    }
+
+    spoiled.all_successes()
+}
+
 #[async_trait]
 pub trait OnlineStatusProvider {
     async fn get_status(&self) -> Result<Vec<u64>, Error>;
+}
+
+struct DiscordOnlineStatus<'a>(Context<'a>);
+
+#[async_trait]
+impl OnlineStatusProvider for DiscordOnlineStatus<'_> {
+    async fn get_status(&self) -> Result<Vec<u64>, Error> {
+        let ctx = self.0.serenity_context();
+
+        guild_ext::get_all_online_users(ctx.http.to_owned(), ctx.cache.to_owned()).await
+    }
 }
