@@ -64,9 +64,9 @@ impl StatsServices {
         &self,
         guild_id: u64,
         target: Option<u64>,
-        ctx: Context<'_>,
+        status_provider: impl OnlineStatusProvider,
     ) -> Result<StatsDto, Error> {
-        self.clean_spoiled_stats(guild_id, DiscordOnlineStatus(ctx)).await?;
+        self.clean_spoiled_stats(guild_id, status_provider).await?;
 
         let activities_by_user = self.get_activities(guild_id, target).await?;
 
@@ -175,7 +175,7 @@ pub trait OnlineStatusProvider {
     async fn get_status(&self) -> Result<Vec<u64>, Error>;
 }
 
-struct DiscordOnlineStatus<'a>(Context<'a>);
+pub struct DiscordOnlineStatus<'a>(pub Context<'a>);
 
 #[async_trait]
 impl OnlineStatusProvider for DiscordOnlineStatus<'_> {
