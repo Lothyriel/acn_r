@@ -2,11 +2,18 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Error};
 use futures::TryStreamExt;
-use mongodb::{bson::doc, Collection, Database};
+use mongodb::{
+    bson::{doc, oid::ObjectId},
+    Collection, Database,
+};
+use serenity::async_trait;
 
-use crate::application::models::{
-    dto::stats::{StatsDto, UserStats},
-    entities::{user::Activity, user_activity::UserActivity},
+use crate::{
+    application::models::{
+        dto::stats::{StatsDto, UserStats},
+        entities::{user::Activity, user_activity::UserActivity},
+    },
+    extensions::std_ext::VecResultErrorExt,
 };
 
 pub struct StatsServices {
@@ -18,6 +25,57 @@ impl StatsServices {
         Self {
             user_activity: database.collection("UserActivity"),
         }
+    }
+
+    pub async fn clean_spoiled_stats(
+        &self,
+        guild_id: u64,
+        status_provider: impl OnlineStatusProvider,
+    ) -> Result<Vec<ObjectId>, Error> {
+        let activities = self
+            .get_activities(guild_id, Some(1001556463136809053))
+            .await?;
+
+        let users_online = status_provider.get_status().await?;
+
+        let users_with_discrepancies: Vec<_> = activities
+            .into_iter()
+            .filter(|act| {
+                let (connects, disconnects): (Vec<_>, Vec<_>) = act
+                    .1
+                    .iter()
+                    .partition(|a| a.activity_type == Activity::Connected);
+
+                match (connects.len() as i32) - (disconnects.len() as i32) {
+                    0 => false,
+                    1 if users_online.contains(&act.0) => false,
+                    _ => true,
+                }
+            })
+            .collect();
+
+        self.get_spoiled_ids(users_with_discrepancies)
+    }
+
+    fn get_spoiled_ids(
+        &self,
+        discrepancy: Vec<(u64, Vec<UserActivity>)>,
+    ) -> Result<Vec<ObjectId>, Error> {
+        let mut spoiled = vec![];
+
+        for (_, activities) in discrepancy.into_iter() {
+            let ids = activities
+                .windows(2)
+                .filter(|w| w[0].activity_type == w[1].activity_type)
+                .map(|w| w[1].id)
+                .map(|i| i.ok_or_else(|| anyhow!("Documents from the database must have an id")));
+
+            for id in ids {
+                spoiled.push(id)
+            }
+        }
+
+        spoiled.all_successes()
     }
 
     pub async fn get_guild_stats(
@@ -107,4 +165,9 @@ fn get_user_stat(user_id: u64, activities: Vec<UserActivity>) -> UserStats {
         user_id,
         seconds_online: time_online,
     }
+}
+
+#[async_trait]
+pub trait OnlineStatusProvider {
+    async fn get_status(&self) -> Result<Vec<u64>, Error>;
 }

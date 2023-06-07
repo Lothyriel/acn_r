@@ -1,12 +1,17 @@
 #[cfg(test)]
 mod filter_activity_discrepancies {
+    use std::str::FromStr;
+
     use acn_r::{
         application::{
-            dependency_configuration::DependencyContainer, models::entities::user::Activity,
+            dependency_configuration::DependencyContainer,
+            services::stats_services::OnlineStatusProvider,
         },
         init_app,
     };
     use anyhow::Error;
+    use mongodb::bson::oid::ObjectId;
+    use serenity::async_trait;
 
     const LA_PALOMBA_ID: u64 = 244922266050232321;
     const LOTHYRIEL_ID: u64 = 244922703667003392;
@@ -16,33 +21,24 @@ mod filter_activity_discrepancies {
         let settings = init_app()?;
         let data = DependencyContainer::build(settings).await?;
 
-        let activities = data
+        let spoiled_id = ObjectId::from_str("647fbb6bba0e327540cfed7b")?;
+
+        let removed_ids = data
             .stats_services
-            .get_activities(LA_PALOMBA_ID, Some(LOTHYRIEL_ID))
+            .clean_spoiled_stats(LA_PALOMBA_ID, MockStatusProvider)
             .await?;
 
-        let users_online = vec![LOTHYRIEL_ID];
-
-        assert!(activities.len() > 0);
-
-        let users_with_discrepancies: Vec<_> = activities
-            .iter()
-            .filter(|act| {
-                let (connects, disconnects): (Vec<_>, Vec<_>) = act
-                    .1
-                    .iter()
-                    .partition(|a| a.activity_type == Activity::Connected);
-
-                match connects.len() - disconnects.iter().len() {
-                    0 => false,
-                    1 if users_online.contains(&act.0) => false,
-                    _ => true,
-                }
-            })
-            .collect();
-
-        //let ids_to_delete = users_with_discrepancies.into_iter().map
+        assert!(removed_ids[0] == spoiled_id);
 
         Ok(())
+    }
+
+    struct MockStatusProvider;
+
+    #[async_trait]
+    impl OnlineStatusProvider for MockStatusProvider {
+        async fn get_status(&self) -> Result<Vec<u64>, Error> {
+            Ok(vec![LOTHYRIEL_ID])
+        }
     }
 }
