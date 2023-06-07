@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Not};
 
 use anyhow::{anyhow, Error};
 use futures::TryStreamExt;
-use log::warn;
+use log::{error, warn};
 use mongodb::{
     bson::{doc, oid::ObjectId},
     Collection, Database,
@@ -14,9 +14,7 @@ use crate::{
         dto::stats::{StatsDto, UserStats},
         entities::{user::Activity, user_activity::UserActivity},
     },
-    extensions::{
-        serenity::{guild_ext, serenity_structs::Context}
-    },
+    extensions::serenity::{guild_ext, serenity_structs::Context},
 };
 
 pub struct StatsServices {
@@ -35,23 +33,32 @@ impl StatsServices {
         guild_id: u64,
         status_provider: impl OnlineStatusProvider,
     ) -> Result<Vec<ObjectId>, Error> {
-        let activities = self
-            .get_activities(guild_id, None)
-            .await?;
+        let activities = self.get_activities(guild_id, None).await?;
 
         let users_online = status_provider.get_status().await?;
 
         let users_with_discrepancies: Vec<_> = activities
             .into_iter()
-            .filter(|act| {
+            .filter(|(id, act)| {
                 let (connects, disconnects): (Vec<_>, Vec<_>) = act
-                    .1
                     .iter()
                     .partition(|a| a.activity_type == Activity::Connected);
 
                 match (connects.len() as i32) - (disconnects.len() as i32) {
-                    0 => false,
-                    1 if users_online.contains(&act.0) => false,
+                    0 => {
+                        let maybe_last = act.last().ok_or_else(|| {
+                            anyhow!("IMPOSSIBLE: User {id} got here without any activity")
+                        });
+
+                        match maybe_last {
+                            Ok(last) => last.activity_type == Activity::Connected,
+                            Err(e) => {
+                                error!("{e}");
+                                false
+                            }
+                        }
+                    }
+                    1 => users_online.contains(&id).not(),
                     _ => true,
                 }
             })
@@ -59,7 +66,9 @@ impl StatsServices {
 
         let ids = get_spoiled_ids(users_with_discrepancies);
 
-        self.user_activity.delete_many(doc! { "_id": { "$in": &ids } }, None).await?;
+        self.user_activity
+            .delete_many(doc! { "_id": { "$in": &ids } }, None)
+            .await?;
 
         Ok(ids)
     }
@@ -71,7 +80,7 @@ impl StatsServices {
         status_provider: impl OnlineStatusProvider,
     ) -> Result<StatsDto, Error> {
         let cleaned_ids = self.clean_spoiled_stats(guild_id, status_provider).await?;
-        
+
         warn!("Spoiled activities cleaned: {}", cleaned_ids.len());
 
         let activities_by_user = self.get_activities(guild_id, target).await?;
