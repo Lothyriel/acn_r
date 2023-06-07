@@ -3,9 +3,12 @@ use futures::future::join_all;
 use poise::{command, serenity_prelude::User};
 use serenity::utils::MessageBuilder;
 
-use crate::extensions::{
-    log_ext::LogErrorsExt,
-    serenity::serenity_structs::{CommandResult, Context},
+use crate::{
+    application::services::stats_services::DiscordOnlineStatus,
+    extensions::{
+        log_ext::LogErrorsExt,
+        serenity::serenity_structs::{CommandResult, Context},
+    },
 };
 
 const SECONDS_IN_HOUR: i64 = 60 * 60;
@@ -22,7 +25,7 @@ pub async fn stats(
         .ok_or_else(|| anyhow!("Context doesn't include an Guild"))?;
 
     let guild_stats = service
-        .get_guild_stats(guild_id.0, target.map(|f| f.id.0), ctx)
+        .get_guild_stats(guild_id.0, target.map(|f| f.id.0), DiscordOnlineStatus(ctx))
         .await?;
 
     let build_message_lines_tasks = guild_stats.stats.into_iter().map(|f| async move {
