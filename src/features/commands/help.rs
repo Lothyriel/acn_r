@@ -1,7 +1,7 @@
 use anyhow::Error;
 use poise::command;
 
-use crate::extensions::serenity_ext::Context;
+use crate::extensions::serenity::serenity_structs::Context;
 
 #[command(prefix_command, slash_command)]
 pub async fn help(

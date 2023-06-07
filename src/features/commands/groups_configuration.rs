@@ -1,5 +1,5 @@
 use crate::{
-    extensions::serenity_ext::Command,
+    extensions::serenity::serenity_structs::Command,
     features::commands::{help::help, misc::misc_group::misc_group, r34::r34_group::r34_group},
 };
 

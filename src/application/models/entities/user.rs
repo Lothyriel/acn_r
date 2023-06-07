@@ -7,7 +7,7 @@ pub struct User {
     pub id: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum Activity {
     Connected,
     Disconnected,

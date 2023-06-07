@@ -4,12 +4,14 @@ mod stats {
         application::{
             dependency_configuration::DependencyContainer,
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
-            services::user_services::UserServices,
+            services::{stats_services::OnlineStatusProvider, user_services::UserServices},
         },
         init_app,
     };
     use anyhow::{anyhow, Error};
     use chrono::Duration;
+    use mongodb::bson::oid::ObjectId;
+    use serenity::async_trait;
 
     const LA_PALOMBA_ID: u64 = 244922266050232321;
     const LOTHYRIEL_ID: u64 = 244922703667003392;
@@ -20,11 +22,11 @@ mod stats {
         let settings = init_app()?;
         let data = DependencyContainer::build(settings).await?;
 
-        populate_test_stats(data.user_services).await?;
+        populate_good_test_stats(data.user_services).await?;
 
         let guild_stats = data
             .stats_services
-            .get_stats_of_guild(LA_PALOMBA_ID, Some(LOTHYRIEL_ID))
+            .get_guild_stats(LA_PALOMBA_ID, Some(LOTHYRIEL_ID), MockStatusProvider)
             .await?;
 
         let lothyriel_data = guild_stats
@@ -40,7 +42,33 @@ mod stats {
         Ok(())
     }
 
-    async fn populate_test_stats(user_services: UserServices) -> Result<(), Error> {
+    #[tokio::test]
+    async fn should_filter_activity_discrepancies() -> Result<(), Error> {
+        let settings = init_app()?;
+        let data = DependencyContainer::build(settings).await?;
+
+        let bad_activity = populate_bad_test_stats(data.user_services).await?;
+
+        let removed_ids = data
+            .stats_services
+            .clean_spoiled_stats(LA_PALOMBA_ID, MockStatusProvider)
+            .await?;
+
+        assert!(removed_ids.contains(&bad_activity));
+
+        Ok(())
+    }
+
+    struct MockStatusProvider;
+
+    #[async_trait]
+    impl OnlineStatusProvider for MockStatusProvider {
+        async fn get_status(&self) -> Result<Vec<u64>, Error> {
+            Ok(vec![])
+        }
+    }
+
+    async fn populate_good_test_stats(user_services: UserServices) -> Result<(), Error> {
         let mut date = chrono::Utc::now();
 
         for _ in 0..10 {
@@ -70,5 +98,58 @@ mod stats {
         }
 
         Ok(())
+    }
+
+    async fn populate_bad_test_stats(user_services: UserServices) -> Result<ObjectId, Error> {
+        let mut date = chrono::Utc::now();
+
+        for _ in 0..10 {
+            let connected = UpdateActivityDto {
+                user_id: LOTHYRIEL_ID,
+                guild_id: LA_PALOMBA_ID,
+                guild_name: "La Palombert".to_owned(),
+                nickname: "Lothyriel".to_owned(),
+                activity: Activity::Connected,
+                date,
+            };
+            user_services.update_user_activity(connected).await?;
+
+            date = date + Duration::hours(1);
+
+            let disconnected = UpdateActivityDto {
+                user_id: LOTHYRIEL_ID,
+                guild_id: LA_PALOMBA_ID,
+                guild_name: "La Palombert".to_owned(),
+                nickname: "Lothyriel".to_owned(),
+                activity: Activity::Disconnected,
+                date,
+            };
+            user_services.update_user_activity(disconnected).await?;
+
+            date = date + Duration::hours(1);
+        }
+
+        let wrong_disconnected = UpdateActivityDto {
+            user_id: LOTHYRIEL_ID,
+            guild_id: LA_PALOMBA_ID,
+            guild_name: "La Palombert".to_owned(),
+            nickname: "Lothyriel".to_owned(),
+            activity: Activity::Disconnected,
+            date,
+        };
+
+        let activity_id = user_services.update_user_activity(wrong_disconnected).await?;
+
+        let connected = UpdateActivityDto {
+            user_id: LOTHYRIEL_ID,
+            guild_id: LA_PALOMBA_ID,
+            guild_name: "La Palombert".to_owned(),
+            nickname: "Lothyriel".to_owned(),
+            activity: Activity::Connected,
+            date,
+        };
+        user_services.update_user_activity(connected).await?;
+
+        Ok(activity_id)
     }
 }

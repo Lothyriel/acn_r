@@ -3,7 +3,10 @@ use serenity::{futures::future::join_all, http::CacheHttp};
 
 use crate::extensions::{
     log_ext::LogErrorsExt,
-    serenity_ext::{CommandResult, Context, GuildExt, OWNERS_ONLY},
+    serenity::{
+        guild_ext::GuildExt,
+        serenity_structs::{CommandResult, Context, OWNERS_ONLY},
+    },
 };
 
 #[command(

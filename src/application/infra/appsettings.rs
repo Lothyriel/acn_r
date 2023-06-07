@@ -4,12 +4,12 @@ use std::fs;
 
 use crate::application::infra::env;
 
-pub const APPSETTINGS_PATH: &str = "./appsettings_{ENV}.json";
+const APPSETTINGS_PATH: &str = "./appsettings_{ENV}.json";
 
 pub fn load() -> Result<AppSettings, Error> {
     let env = env::get("ENV")?;
     let settings_path = fs::read_to_string(APPSETTINGS_PATH.replace("{ENV}", env.as_str()))?;
-    Ok(serde_json::from_str::<AppSettings>(&settings_path)?)
+    Ok(serde_json::from_str(&settings_path)?)
 }
 
 #[derive(Deserialize, Serialize, Debug)]

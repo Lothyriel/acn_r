@@ -3,7 +3,7 @@ use serenity::prelude::GatewayIntents;
 
 use application::{
     dependency_configuration::DependencyContainer,
-    infra::{appsettings::{self, AppSettings}, env},
+    infra::{appsettings, env},
 };
 use features::{
     commands::groups_configuration,
@@ -49,7 +49,7 @@ pub async fn start_application() -> Result<(), Error> {
     Ok(())
 }
 
-pub fn init_app() -> Result<AppSettings, Error> {
+pub fn init_app() -> Result<appsettings::AppSettings, Error> {
     env::init()?;
     appsettings::load()
 }

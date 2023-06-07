@@ -1,11 +1,14 @@
 use anyhow::anyhow;
 use futures::future::join_all;
 use poise::{command, serenity_prelude::User};
-use serenity::{prelude::Mentionable, utils::MessageBuilder};
+use serenity::utils::MessageBuilder;
 
-use crate::extensions::{
-    log_ext::LogErrorsExt,
-    serenity_ext::{CommandResult, Context},
+use crate::{
+    application::services::stats_services::DiscordOnlineStatus,
+    extensions::{
+        log_ext::LogErrorsExt,
+        serenity::serenity_structs::{CommandResult, Context},
+    },
 };
 
 const SECONDS_IN_HOUR: i64 = 60 * 60;
@@ -22,7 +25,7 @@ pub async fn stats(
         .ok_or_else(|| anyhow!("Context doesn't include an Guild"))?;
 
     let guild_stats = service
-        .get_stats_of_guild(guild_id.0, target.map(|f| f.id.0))
+        .get_guild_stats(guild_id.0, target.map(|f| f.id.0), DiscordOnlineStatus(ctx))
         .await?;
 
     let build_message_lines_tasks = guild_stats.stats.into_iter().map(|f| async move {
@@ -32,7 +35,7 @@ pub async fn stats(
 
         Ok(format!(
             "- {} ficou {} segundos online ({} horas)",
-            member.mention(),
+            member.display_name(),
             seconds_online,
             hours_online
         ))
