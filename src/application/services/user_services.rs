@@ -33,6 +33,15 @@ impl UserServices {
         }
     }
 
+    pub async fn get_last_name(&self, user_id: u64) -> Result<Option<String>, Error> {
+        let filter = doc! {"user_id": user_id as i64};
+        let options = FindOneOptions::builder().sort(doc! { "date": -1 }).build();
+
+        let possible_last_change = self.nickname_changes.find_one(filter, options).await?;
+
+        Ok(possible_last_change.map(|n| n.nickname))
+    }
+
     pub async fn update_user_activity(
         &self,
         update_dto: UpdateActivityDto,
@@ -105,15 +114,6 @@ impl UserServices {
         Ok(self.users.find_one(doc, None).await?)
     }
 
-    async fn get_last_name(&self, user_id: u64) -> Result<Option<String>, Error> {
-        let filter = doc! {"user_id": user_id as i64};
-        let options = FindOneOptions::builder().sort(doc! { "date": -1 }).build();
-
-        let possible_last_change = self.nickname_changes.find_one(filter, options).await?;
-
-        Ok(possible_last_change.map(|n| n.nickname))
-    }
-
     async fn add_activity(&self, update_dto: UpdateActivityDto) -> Result<ObjectId, Error> {
         let activity = UserActivity {
             id: ObjectId::new(),
@@ -125,9 +125,11 @@ impl UserServices {
 
         let result = self.user_activity.insert_one(activity, None).await?;
 
-        result
-            .inserted_id
-            .as_object_id()
-            .ok_or_else(|| anyhow!("{} is not a valid ObjectId", result.inserted_id))
+        result.inserted_id.as_object_id().ok_or_else(|| {
+            anyhow!(
+                "[IMPOSSIBLE] {} is not a valid ObjectId",
+                result.inserted_id
+            )
+        })
     }
 }
