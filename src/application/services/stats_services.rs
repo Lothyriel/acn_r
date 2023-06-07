@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Error};
 use futures::TryStreamExt;
+use log::warn;
 use mongodb::{
     bson::{doc, oid::ObjectId},
     Collection, Database,
@@ -70,9 +71,11 @@ impl StatsServices {
         target: Option<u64>,
         status_provider: impl OnlineStatusProvider,
     ) -> Result<StatsDto, Error> {
-        self.clean_spoiled_stats(guild_id, status_provider).await?;
-
         let activities_by_user = self.get_activities(guild_id, target).await?;
+
+        let cleaned_ids = self.clean_spoiled_stats(guild_id, status_provider).await?;
+
+        warn!("Activities deleted: {:?}", cleaned_ids.len());
 
         let first_activity_date = activities_by_user
             .iter()
