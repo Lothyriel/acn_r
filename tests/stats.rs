@@ -1,12 +1,10 @@
 #[cfg(test)]
 mod stats {
-    use std::str::FromStr;
-
     use acn_r::{
         application::{
             dependency_configuration::DependencyContainer,
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
-            services::{user_services::UserServices, stats_services::OnlineStatusProvider},
+            services::{stats_services::OnlineStatusProvider, user_services::UserServices},
         },
         init_app,
     };
@@ -24,7 +22,7 @@ mod stats {
         let settings = init_app()?;
         let data = DependencyContainer::build(settings).await?;
 
-        populate_test_stats(data.user_services).await?;
+        populate_good_test_stats(data.user_services).await?;
 
         let guild_stats = data
             .stats_services
@@ -43,20 +41,20 @@ mod stats {
 
         Ok(())
     }
-    
+
     #[tokio::test]
     async fn should_filter_activity_discrepancies() -> Result<(), Error> {
         let settings = init_app()?;
         let data = DependencyContainer::build(settings).await?;
 
-        let spoiled_id = ObjectId::from_str("647fbb6bba0e327540cfed7b")?;
+        let bad_activity = populate_bad_test_stats(data.user_services).await?;
 
         let removed_ids = data
             .stats_services
             .clean_spoiled_stats(LA_PALOMBA_ID, MockStatusProvider)
             .await?;
 
-        assert!(removed_ids[0] == spoiled_id);
+        assert!(removed_ids.contains(&bad_activity));
 
         Ok(())
     }
@@ -66,11 +64,11 @@ mod stats {
     #[async_trait]
     impl OnlineStatusProvider for MockStatusProvider {
         async fn get_status(&self) -> Result<Vec<u64>, Error> {
-            Ok(vec![LOTHYRIEL_ID])
+            Ok(vec![])
         }
     }
 
-    async fn populate_test_stats(user_services: UserServices) -> Result<(), Error> {
+    async fn populate_good_test_stats(user_services: UserServices) -> Result<(), Error> {
         let mut date = chrono::Utc::now();
 
         for _ in 0..10 {
@@ -100,5 +98,58 @@ mod stats {
         }
 
         Ok(())
+    }
+
+    async fn populate_bad_test_stats(user_services: UserServices) -> Result<ObjectId, Error> {
+        let mut date = chrono::Utc::now();
+
+        for _ in 0..10 {
+            let connected = UpdateActivityDto {
+                user_id: LOTHYRIEL_ID,
+                guild_id: LA_PALOMBA_ID,
+                guild_name: "La Palombert".to_owned(),
+                nickname: "Lothyriel".to_owned(),
+                activity: Activity::Connected,
+                date,
+            };
+            user_services.update_user_activity(connected).await?;
+
+            date = date + Duration::hours(1);
+
+            let disconnected = UpdateActivityDto {
+                user_id: LOTHYRIEL_ID,
+                guild_id: LA_PALOMBA_ID,
+                guild_name: "La Palombert".to_owned(),
+                nickname: "Lothyriel".to_owned(),
+                activity: Activity::Disconnected,
+                date,
+            };
+            user_services.update_user_activity(disconnected).await?;
+
+            date = date + Duration::hours(1);
+        }
+
+        let wrong_disconnected = UpdateActivityDto {
+            user_id: LOTHYRIEL_ID,
+            guild_id: LA_PALOMBA_ID,
+            guild_name: "La Palombert".to_owned(),
+            nickname: "Lothyriel".to_owned(),
+            activity: Activity::Disconnected,
+            date,
+        };
+
+        let activity_id = user_services.update_user_activity(wrong_disconnected).await?;
+
+        let connected = UpdateActivityDto {
+            user_id: LOTHYRIEL_ID,
+            guild_id: LA_PALOMBA_ID,
+            guild_name: "La Palombert".to_owned(),
+            nickname: "Lothyriel".to_owned(),
+            activity: Activity::Connected,
+            date,
+        };
+        user_services.update_user_activity(connected).await?;
+
+        Ok(activity_id)
     }
 }
