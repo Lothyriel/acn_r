@@ -1,3 +1,4 @@
+use anyhow::Error;
 use poise::command;
 
 use crate::extensions::serenity::serenity_structs::{CommandResult, Context, OWNERS_ONLY};
@@ -23,5 +24,16 @@ pub async fn deploy(ctx: Context<'_>) -> CommandResult {
 
     ctx.say(format!("Deploy {option}")).await?;
 
+    try_deploy(ctx).await?;
+
     Ok(())
+}
+
+async fn try_deploy(ctx: Context<'_>) -> Result<(), Error> {
+    let s_ctx = ctx.serenity_context();
+    let github_service = &ctx.data().github_services;
+
+    github_service
+        .try_deploy(s_ctx.http.to_owned(), s_ctx.cache.to_owned())
+        .await
 }
