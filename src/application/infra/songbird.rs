@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Error;
-use lavalink_rs::{model::Track, LavalinkClient};
+use lavalink_rs::model::Track;
 use songbird::Songbird;
 
 use crate::extensions::serenity::{context_ext::ContextExt, serenity_structs::Context};
