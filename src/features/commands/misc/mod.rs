@@ -1,4 +1,4 @@
-pub mod att;
-pub mod deploy;
+mod att;
+mod deploy;
 pub mod misc_group;
-pub mod stats;
+mod stats;
