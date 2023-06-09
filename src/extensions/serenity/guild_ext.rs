@@ -11,16 +11,6 @@ pub trait GuildExt {
     fn get_online_users(self, cache: Arc<Cache>) -> Result<Vec<u64>, Error>;
 }
 
-pub trait OptionGuildExt {
-    fn assure_guild_context(self) -> Result<GuildId, Error>;
-}
-
-impl OptionGuildExt for Option<GuildId> {
-    fn assure_guild_context(self) -> Result<GuildId, Error> {
-        self.ok_or_else(|| anyhow!("[IMPOSSIBLE] Context doesn't include an Guild"))
-    }
-}
-
 #[async_trait]
 impl GuildExt for GuildId {
     async fn say_on_main_text_channel(self, http: &Http, msg: &str) -> Result<(), Error> {
@@ -38,9 +28,7 @@ impl GuildExt for GuildId {
     }
 
     fn get_online_users(self, cache: Arc<Cache>) -> Result<Vec<u64>, Error> {
-        let guild = self
-            .to_guild_cached(&cache)
-            .ok_or_else(|| anyhow!("Couldn't get Guild {} from cache", self.0))?;
+        let guild = cache.guild(self).ok_or_else(|| anyhow!(""))?;
 
         let online_users = guild
             .voice_states
