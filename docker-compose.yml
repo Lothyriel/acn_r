@@ -9,4 +9,11 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: acn
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-      
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:latest
+    restart: unless-stopped
+    ports:
+      - 2333:2333
+    environment:
+      SERVER_PORT: 2333
+      LAVALINK_SERVER_PASSWORD: ${LAVALINK_PASSWORD}

@@ -16,6 +16,7 @@ pub fn load() -> Result<AppSettings, Error> {
 pub struct AppSettings {
     pub allowed_ids: Vec<u64>,
     pub prefix: String,
+    pub lavalink_url: String,
     pub mongo_settings: MongoSettings,
     pub github_settings: GithubSettings,
 }

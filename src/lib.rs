@@ -28,8 +28,8 @@ pub async fn start_application() -> Result<(), Error> {
     let bot_id = Http::new(&token).get_current_application_info().await?;
 
     let lava_client = LavalinkClient::builder(bot_id.id.0)
-        .set_host("127.0.0.1")
-        .set_password("SENHA???")
+        .set_host(&settings.lavalink_url)
+        .set_password(env::get("LAVALINK_PASSWORD")?)
         .build(LavalinkHandler)
         .await?;
 
