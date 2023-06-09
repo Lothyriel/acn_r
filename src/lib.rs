@@ -4,7 +4,10 @@ use serenity::{http::Http, prelude::GatewayIntents};
 
 use application::{
     dependency_configuration::DependencyContainer,
-    infra::{appsettings, env},
+    infra::{
+        appsettings::{self, AppSettings},
+        env,
+    },
 };
 use features::{
     commands::groups_configuration,
@@ -25,13 +28,7 @@ pub async fn start_application() -> Result<(), Error> {
     let token = env::get("TOKEN_BOT")?;
     let prefix = settings.prefix.to_owned();
 
-    let bot_id = Http::new(&token).get_current_application_info().await?;
-
-    let lava_client = LavalinkClient::builder(bot_id.id.0)
-        .set_host(&settings.lavalink_url)
-        .set_password(env::get("LAVALINK_PASSWORD")?)
-        .build(LavalinkHandler)
-        .await?;
+    let lava_client = get_lavalink_client(&token, &settings).await?;
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -63,7 +60,17 @@ pub async fn start_application() -> Result<(), Error> {
     Ok(())
 }
 
-pub fn init_app() -> Result<appsettings::AppSettings, Error> {
+async fn get_lavalink_client(token: &str, settings: &AppSettings) -> Result<LavalinkClient, Error> {
+    let bot_id = Http::new(token).get_current_application_info().await?;
+    let lava_client = LavalinkClient::builder(bot_id.id.0)
+        .set_host(&settings.lavalink_url)
+        .set_password(env::get("LAVALINK_PASSWORD")?)
+        .build(LavalinkHandler)
+        .await?;
+    Ok(lava_client)
+}
+
+pub fn init_app() -> Result<AppSettings, Error> {
     env::init()?;
     appsettings::load()
 }
