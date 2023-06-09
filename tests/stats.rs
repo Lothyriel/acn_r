@@ -4,13 +4,17 @@ mod stats {
         application::{
             dependency_configuration::DependencyContainer,
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
-            services::{stats_services::OnlineStatusProvider, user_services::UserServices},
+            services::{
+                guild_services::GuildServices,
+                stats_services::{OnlineStatusProvider, StatsServices},
+                user_services::UserServices,
+            },
         },
         init_app,
     };
     use anyhow::{anyhow, Error};
     use chrono::Duration;
-    use mongodb::bson::oid::ObjectId;
+    use mongodb::{bson::oid::ObjectId, Database};
     use serenity::async_trait;
 
     const LA_PALOMBA_ID: u64 = 244922266050232321;
@@ -20,12 +24,12 @@ mod stats {
     #[tokio::test]
     async fn should_get_stats() -> Result<(), Error> {
         let settings = init_app()?;
-        let data = DependencyContainer::build(settings).await?;
+        let db = DependencyContainer::database(&settings).await?;
+        let stats_services = StatsServices::new(&db);
 
-        populate_good_test_stats(data.user_services).await?;
+        populate_good_test_stats(&db).await?;
 
-        let guild_stats = data
-            .stats_services
+        let guild_stats = stats_services
             .get_guild_stats(LA_PALOMBA_ID, Some(LOTHYRIEL_ID), MockStatusProvider)
             .await?;
 
@@ -45,12 +49,13 @@ mod stats {
     #[tokio::test]
     async fn should_filter_activity_discrepancies() -> Result<(), Error> {
         let settings = init_app()?;
-        let data = DependencyContainer::build(settings).await?;
+        let db = DependencyContainer::database(&settings).await?;
 
-        let bad_activity = populate_bad_test_stats(data.user_services).await?;
+        let bad_activity = populate_bad_test_stats(&db).await?;
 
-        let removed_ids = data
-            .stats_services
+        let stats_services = StatsServices::new(&db);
+
+        let removed_ids = stats_services
             .clean_spoiled_stats(LA_PALOMBA_ID, MockStatusProvider)
             .await?;
 
@@ -68,7 +73,9 @@ mod stats {
         }
     }
 
-    async fn populate_good_test_stats(user_services: UserServices) -> Result<(), Error> {
+    async fn populate_good_test_stats(db: &Database) -> Result<(), Error> {
+        let user_services = UserServices::new(&db, GuildServices::new(&db));
+
         let mut date = chrono::Utc::now();
 
         for _ in 0..10 {
@@ -100,7 +107,9 @@ mod stats {
         Ok(())
     }
 
-    async fn populate_bad_test_stats(user_services: UserServices) -> Result<ObjectId, Error> {
+    async fn populate_bad_test_stats(db: &Database) -> Result<ObjectId, Error> {
+        let user_services = UserServices::new(&db, GuildServices::new(&db));
+
         let mut date = chrono::Utc::now();
 
         for _ in 0..10 {

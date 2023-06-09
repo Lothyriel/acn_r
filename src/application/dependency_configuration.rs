@@ -1,4 +1,5 @@
 use anyhow::Error;
+use lavalink_rs::LavalinkClient;
 use reqwest::Client;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -6,6 +7,7 @@ use tokio::sync::RwLock;
 use crate::application::{
     infra::{
         appsettings::{AppConfigurations, AppSettings},
+        http_clients::github_client::GithubClient,
         mongo_client::create_mongo_client,
     },
     services::{
@@ -13,8 +15,6 @@ use crate::application::{
         guild_services::GuildServices, stats_services::StatsServices, user_services::UserServices,
     },
 };
-
-use super::infra::http_clients::github_client::GithubClient;
 
 pub struct DependencyContainer {
     pub allowed_ids: Vec<u64>,
@@ -24,13 +24,12 @@ pub struct DependencyContainer {
     pub guild_services: GuildServices,
     pub stats_services: StatsServices,
     pub github_services: GithubServices,
+    pub lava_client: LavalinkClient,
 }
 
 impl DependencyContainer {
-    pub async fn build(settings: AppSettings) -> Result<Self, Error> {
-        let db = create_mongo_client(&settings.mongo_settings)
-            .await?
-            .database("acn_r");
+    pub async fn build(settings: AppSettings, lava_client: LavalinkClient) -> Result<Self, Error> {
+        let db = Self::database(&settings).await?;
 
         let client = Client::new();
         let github_client = Arc::new(GithubClient::new(client, settings.github_settings));
@@ -50,6 +49,13 @@ impl DependencyContainer {
             command_services,
             stats_services,
             github_services,
+            lava_client,
         })
+    }
+
+    pub async fn database(settings: &AppSettings) -> Result<mongodb::Database, Error> {
+        Ok(create_mongo_client(&settings.mongo_settings)
+            .await?
+            .database("acn_r"))
     }
 }
