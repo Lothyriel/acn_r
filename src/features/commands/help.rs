@@ -1,13 +1,13 @@
 use anyhow::Error;
 use poise::command;
 
-use crate::extensions::serenity::serenity_structs::Context;
+use crate::extensions::serenity::serenity_structs::{Context, CommandResult};
 
 #[command(prefix_command, slash_command)]
 pub async fn help(
     ctx: Context<'_>,
     #[description = "O comando específico em questão"] command: Option<String>,
-) -> Result<(), Error> {
+) -> CommandResult {
     let config = poise::builtins::HelpConfiguration {
         extra_text_at_bottom:
             "Se quiser saber algo sobre um comando em específico, passe o nome dele como argumento",
