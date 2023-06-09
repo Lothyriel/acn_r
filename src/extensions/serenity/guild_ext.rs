@@ -11,6 +11,16 @@ pub trait GuildExt {
     fn get_online_users(self, cache: Arc<Cache>) -> Result<Vec<u64>, Error>;
 }
 
+pub trait OptionGuildExt {
+    fn assure(self) -> Result<GuildId, Error>;
+}
+
+impl OptionGuildExt for Option<GuildId> {
+    fn assure(self) -> Result<GuildId, Error> {
+        self.ok_or_else(|| anyhow!("[IMPOSSIBLE] Context doesn't include an Guild"))
+    }
+}
+
 #[async_trait]
 impl GuildExt for GuildId {
     async fn say_on_main_text_channel(self, http: &Http, msg: &str) -> Result<(), Error> {

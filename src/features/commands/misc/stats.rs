@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use futures::future::join_all;
 use poise::{
     command,
@@ -10,7 +10,10 @@ use crate::{
     application::services::stats_services::DiscordOnlineStatus,
     extensions::{
         log_ext::LogErrorsExt,
-        serenity::serenity_structs::{CommandResult, Context},
+        serenity::{
+            guild_ext::OptionGuildExt,
+            serenity_structs::{CommandResult, Context},
+        },
     },
 };
 
@@ -23,9 +26,7 @@ pub async fn stats(
 ) -> CommandResult {
     let service = &ctx.data().stats_services;
 
-    let guild_id = ctx
-        .guild_id()
-        .ok_or_else(|| anyhow!("[IMPOSSIBLE] Context doesn't include an Guild"))?;
+    let guild_id = ctx.guild_id().assure()?;
 
     let guild_stats = service
         .get_guild_stats(guild_id.0, target.map(|f| f.id.0), DiscordOnlineStatus(ctx))
