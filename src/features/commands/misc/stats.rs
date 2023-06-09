@@ -11,7 +11,7 @@ use crate::{
     extensions::{
         log_ext::LogErrorsExt,
         serenity::{
-            guild_ext::OptionGuildExt,
+            context_ext::ContextExt,
             serenity_structs::{CommandResult, Context},
         },
     },
@@ -26,7 +26,7 @@ pub async fn stats(
 ) -> CommandResult {
     let service = &ctx.data().stats_services;
 
-    let guild_id = ctx.guild_id().assure_guild_context()?;
+    let guild_id = ctx.assure_guild_context()?;
 
     let guild_stats = service
         .get_guild_stats(guild_id.0, target.map(|f| f.id.0), DiscordOnlineStatus(ctx))
