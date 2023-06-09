@@ -22,4 +22,4 @@ reqwest = { version = "0.11.16", features = ["json"] }
 futures = "0.3.28"
 poise = { version = "0.5.5", features = ["cache"] }
 lavalink-rs = { version = "0.8", features = ["rustls"] }
-# songbird = "0.3.2"
+songbird = "0.3.2"
