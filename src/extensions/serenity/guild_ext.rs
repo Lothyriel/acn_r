@@ -12,11 +12,11 @@ pub trait GuildExt {
 }
 
 pub trait OptionGuildExt {
-    fn assure(self) -> Result<GuildId, Error>;
+    fn assure_guild_context(self) -> Result<GuildId, Error>;
 }
 
 impl OptionGuildExt for Option<GuildId> {
-    fn assure(self) -> Result<GuildId, Error> {
+    fn assure_guild_context(self) -> Result<GuildId, Error> {
         self.ok_or_else(|| anyhow!("[IMPOSSIBLE] Context doesn't include an Guild"))
     }
 }
