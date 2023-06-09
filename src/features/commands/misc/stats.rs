@@ -45,6 +45,7 @@ pub async fn stats(
     let lines = join_all(build_message_lines_tasks).await.log_errors();
 
     let mut message_builder = MessageBuilder::new();
+
     message_builder.push_line(format!(
         "Dados coletados desde: {}",
         guild_stats.initial_date
