@@ -11,7 +11,7 @@ use application::{
 };
 use features::{
     commands::groups_configuration,
-    events::{after, check, error, invoker},
+    events::{after, check, error, handlers::invoker},
 };
 
 pub mod application;
