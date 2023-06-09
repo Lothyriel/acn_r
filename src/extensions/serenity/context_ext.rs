@@ -1,13 +1,15 @@
+use anyhow::{anyhow, Error};
 use serenity::async_trait;
 
-use crate::application::models::dto::user::GuildInfo;
+use crate::application::{infra::songbird::ContextSongbird, models::dto::user::GuildInfo};
 
-use super::serenity_structs::Context;
+use crate::extensions::serenity::serenity_structs::Context;
 
 #[async_trait]
 pub trait ContextExt {
     async fn get_author_name(self) -> String;
     async fn get_command_args(self) -> String;
+    async fn get_songbird<'a>(self) -> Result<ContextSongbird<'a>, Error>;
     fn get_guild_info(self) -> Option<GuildInfo>;
 }
 
@@ -37,6 +39,20 @@ impl ContextExt for Context<'_> {
             }
             poise::Context::Prefix(ctx) => ctx.args.to_owned(),
         }
+    }
+
+    async fn get_songbird<'a>(self) -> Result<ContextSongbird<'a>, Error> {
+        let guild_id = self.guild_id().assure_guild_context()?.0;
+
+        let songbird = songbird::get(self.serenity_context())
+            .await
+            .ok_or_else(|| anyhow!("Couldn't get songbird voice client"))?;
+
+        Ok(ContextSongbird {
+            ctx: self,
+            songbird,
+            guild_id,
+        })
     }
 
     fn get_guild_info(self) -> Option<GuildInfo> {
