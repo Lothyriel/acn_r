@@ -26,7 +26,7 @@ pub async fn stats(
 ) -> CommandResult {
     let service = &ctx.data().stats_services;
 
-    let guild_id = ctx.guild_id().assure()?;
+    let guild_id = ctx.guild_id().assure_guild_context()?;
 
     let guild_stats = service
         .get_guild_stats(guild_id.0, target.map(|f| f.id.0), DiscordOnlineStatus(ctx))
