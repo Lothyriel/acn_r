@@ -1,16 +1,18 @@
 use anyhow::{anyhow, Error};
+use poise::serenity_prelude::{Guild, GuildId};
 use serenity::async_trait;
 
 use crate::application::{infra::songbird::ContextSongbird, models::dto::user::GuildInfo};
-
 use crate::extensions::serenity::serenity_structs::Context;
 
 #[async_trait]
 pub trait ContextExt {
     async fn get_author_name(self) -> String;
     async fn get_command_args(self) -> String;
-    async fn get_songbird<'a>(self) -> Result<ContextSongbird<'a>, Error>;
+    async fn get_songbird(self) -> Result<ContextSongbird, Error>;
     fn get_guild_info(self) -> Option<GuildInfo>;
+    fn assure_cached_guild(self) -> Result<Guild, Error>;
+    fn assure_guild_context(self) -> Result<GuildId, Error>;
 }
 
 #[async_trait]
@@ -41,18 +43,25 @@ impl ContextExt for Context<'_> {
         }
     }
 
-    async fn get_songbird<'a>(self) -> Result<ContextSongbird<'a>, Error> {
-        let guild_id = self.guild_id().assure_guild_context()?.0;
+    async fn get_songbird(self) -> Result<ContextSongbird, Error> {
+        let guild_id = self.assure_guild_context()?.0;
 
         let songbird = songbird::get(self.serenity_context())
             .await
             .ok_or_else(|| anyhow!("Couldn't get songbird voice client"))?;
 
-        Ok(ContextSongbird {
-            ctx: self,
-            songbird,
-            guild_id,
-        })
+        Ok(ContextSongbird::new(guild_id, songbird))
+    }
+
+    fn assure_cached_guild(self) -> Result<Guild, Error> {
+        let guild_id = self.assure_guild_context()?;
+        self.guild()
+            .ok_or_else(|| anyhow!("Couldn't get Guild {guild_id} from cache"))
+    }
+
+    fn assure_guild_context(self) -> Result<GuildId, Error> {
+        self.guild_id()
+            .ok_or_else(|| anyhow!("[IMPOSSIBLE] Context doesn't include an Guild"))
     }
 
     fn get_guild_info(self) -> Option<GuildInfo> {
