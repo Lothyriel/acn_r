@@ -43,14 +43,13 @@ impl ContextExt for Context<'_> {
         let guild_id = self.guild_id().map(|g| g.0);
         let guild_name = self.guild_id().and_then(|g| g.name(self));
 
-        if let Some(id) = guild_id {
-            if let Some(name) = guild_name {
-                return Some(GuildInfo {
-                    guild_id: id,
-                    guild_name: name,
-                });
-            }
-        }
-        None
+        guild_id.and_then(|i| {
+            guild_name.and_then(|n| {
+                Some(GuildInfo {
+                    guild_id: i,
+                    guild_name: n,
+                })
+            })
+        })
     }
 }
