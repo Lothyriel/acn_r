@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::Error;
+use anyhow::{anyhow, Error};
 use lavalink_rs::model::Track;
 use songbird::Songbird;
 
@@ -85,18 +85,19 @@ impl ContextSongbird {
         match handler {
             Ok(connection_info) => {
                 let lava_client = &ctx.data().lava_client;
-                todo!()
-                //lava_client.create_session(&connection_info).await?;
+                lava_client.create_session(&connection_info).await?;
+                Ok(())
             }
-            Err(why) => {
+            Err(error) => {
                 let msg = format!(
                     "Guild {} | Error joining the channel: {}",
-                    self.guild_id, why
+                    self.guild_id, error
                 );
+
                 ctx.say(msg).await?;
+
+                Err(anyhow!(error))
             }
         }
-
-        Ok(())
     }
 }

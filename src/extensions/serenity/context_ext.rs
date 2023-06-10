@@ -61,7 +61,7 @@ impl ContextExt for Context<'_> {
 
     fn assure_guild_context(self) -> Result<GuildId, Error> {
         self.guild_id()
-            .ok_or_else(|| anyhow!("[IMPOSSIBLE] Context doesn't include an Guild"))
+            .ok_or_else(|| anyhow!("Context doesn't include an Guild"))
     }
 
     fn get_guild_info(self) -> Option<GuildInfo> {
@@ -69,11 +69,9 @@ impl ContextExt for Context<'_> {
         let guild_name = self.guild_id().and_then(|g| g.name(self));
 
         guild_id.and_then(|i| {
-            guild_name.and_then(|n| {
-                Some(GuildInfo {
-                    guild_id: i,
-                    guild_name: n,
-                })
+            guild_name.map(|n| GuildInfo {
+                guild_id: i,
+                guild_name: n,
             })
         })
     }
