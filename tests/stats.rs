@@ -14,8 +14,8 @@ mod stats {
     };
     use anyhow::{anyhow, Error};
     use chrono::Duration;
+    use poise::async_trait;
     use mongodb::{bson::oid::ObjectId, Database};
-    use serenity::async_trait;
 
     const LA_PALOMBA_ID: u64 = 244922266050232321;
     const LOTHYRIEL_ID: u64 = 244922703667003392;

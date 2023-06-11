@@ -11,7 +11,8 @@ use features::{
     commands::groups_configuration,
     events::{after, check, error, handlers::invoker},
 };
-use poise::serenity_prelude::GatewayIntents;
+use lavalink_rs::{LavalinkClient, gateway::LavalinkEventHandler, async_trait};
+use poise::serenity_prelude::{GatewayIntents, Http};
 
 pub mod application;
 pub mod extensions;

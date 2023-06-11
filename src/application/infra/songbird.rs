@@ -83,9 +83,9 @@ impl ContextSongbird {
         let (_, handler) = self.songbird.join_gateway(self.guild_id, connect_to).await;
 
         match handler {
-            Ok(connection_info) => {
-                let lava_client = &ctx.data().lava_client;
-                lava_client.create_session(&connection_info).await?;
+            Ok(_connection_info) => {
+                let _lava_client = &ctx.data().lava_client;
+                //lava_client.create_session(&connection_info).await?;
                 Ok(())
             }
             Err(error) => {
