@@ -85,7 +85,7 @@ impl ContextSongbird {
         match handler {
             Ok(connection_info) => {
                 let lava_client = &ctx.data().lava_client;
-                //lava_client.create_session(&connection_info).await?;
+                lava_client.create_session_with_songbird(&connection_info).await?;
                 Ok(())
             }
             Err(error) => {

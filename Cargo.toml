@@ -18,5 +18,5 @@ mongodb = { version = "2.5.0", features = ["bson-chrono-0_4"] }
 reqwest = { version = "0.11.16", features = ["json"] }
 futures = "0.3.28"
 poise = { version = "0.5.5", features = ["cache"] }
-lavalink-rs = { version = "0.8.0", features = ["rustls"] } 
+lavalink-rs = { git = "https://github.com/DoggySazHi/lavalink-rs-moogan", branch = "master"}
 songbird = "0.3.2"
