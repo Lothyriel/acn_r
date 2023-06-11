@@ -1,10 +1,32 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use lavalink_rs::model::Track;
+use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, model::Track, LavalinkClient};
+use poise::serenity_prelude::Http;
 use songbird::Songbird;
 
 use crate::extensions::serenity::{context_ext::ContextExt, serenity_structs::Context};
+use crate::infra::{appsettings::AppSettings, env};
+
+struct LavalinkHandler;
+
+#[async_trait]
+impl LavalinkEventHandler for LavalinkHandler {}
+
+pub async fn get_lavalink_client(
+    token: &str,
+    settings: &AppSettings,
+) -> Result<LavalinkClient, Error> {
+    let bot_id = Http::new(token).get_current_application_info().await?;
+
+    let lava_client = LavalinkClient::builder(bot_id.id.0)
+        .set_host(&settings.lavalink_url)
+        .set_password(env::get("LAVALINK_PASSWORD")?)
+        .build(LavalinkHandler)
+        .await?;
+
+    Ok(lava_client)
+}
 
 pub struct ContextSongbird {
     guild_id: u64,
@@ -85,7 +107,9 @@ impl ContextSongbird {
         match handler {
             Ok(connection_info) => {
                 let lava_client = &ctx.data().lava_client;
-                lava_client.create_session_with_songbird(&connection_info).await?;
+                lava_client
+                    .create_session_with_songbird(&connection_info)
+                    .await?;
                 Ok(())
             }
             Err(error) => {
