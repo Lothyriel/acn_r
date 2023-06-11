@@ -11,7 +11,7 @@ use features::{
     commands::groups_configuration,
     events::{after, check, error, handlers::invoker},
 };
-use lavalink_rs::{LavalinkClient, gateway::LavalinkEventHandler, async_trait};
+use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, LavalinkClient};
 use poise::serenity_prelude::{GatewayIntents, Http};
 
 pub mod application;
@@ -62,7 +62,7 @@ pub async fn start_application() -> Result<(), Error> {
 
 async fn get_lavalink_client(token: &str, settings: &AppSettings) -> Result<LavalinkClient, Error> {
     let bot_id = Http::new(token).get_current_application_info().await?;
-    
+
     let lava_client = LavalinkClient::builder(bot_id.id.0)
         .set_host(&settings.lavalink_url)
         .set_password(env::get("LAVALINK_PASSWORD")?)

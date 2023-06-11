@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use poise::{async_trait, serenity_prelude::{Http, Cache, GuildId}};
+use poise::{
+    async_trait,
+    serenity_prelude::{Cache, GuildId, Http},
+};
 
 use crate::extensions::std_ext::VecResultErrorExt;
 

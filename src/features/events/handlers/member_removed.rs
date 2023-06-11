@@ -1,5 +1,5 @@
 use anyhow::Error;
-use poise::serenity_prelude::{Member, User, GuildId, Context};
+use poise::serenity_prelude::{Context, GuildId, Member, User};
 
 use crate::extensions::serenity::guild_ext::GuildExt;
 

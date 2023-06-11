@@ -2,7 +2,7 @@ use anyhow::Error;
 use futures::future::join_all;
 use poise::{
     command,
-    serenity_prelude::{GuildId, User, MessageBuilder},
+    serenity_prelude::{GuildId, MessageBuilder, User},
 };
 
 use crate::{

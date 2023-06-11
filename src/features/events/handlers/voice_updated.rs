@@ -1,7 +1,7 @@
 use std::{ops::Deref, sync::Arc};
 
 use anyhow::{anyhow, Error};
-use poise::serenity_prelude::{Context, VoiceState, Member, ChannelId, Http};
+use poise::serenity_prelude::{ChannelId, Context, Http, Member, VoiceState};
 
 use crate::{
     application::{
