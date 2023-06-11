@@ -1,5 +1,5 @@
 use anyhow::Error;
-use serenity::model::prelude::Member;
+use poise::serenity_prelude::Member;
 
 use crate::application::{
     dependency_configuration::DependencyContainer, models::dto::user::UpdateNickDto,

@@ -1,6 +1,4 @@
-use anyhow::{anyhow, Error};
-use poise::serenity_prelude::{Guild, GuildId};
-use serenity::async_trait;
+use poise::async_trait;
 
 use crate::application::{infra::songbird::ContextSongbird, models::dto::user::GuildInfo};
 use crate::extensions::serenity::serenity_structs::Context;

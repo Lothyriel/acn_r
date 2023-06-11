@@ -1,14 +1,7 @@
 use std::{ops::Deref, sync::Arc};
 
 use anyhow::{anyhow, Error};
-use poise::serenity_prelude::Context;
-use serenity::{
-    http::{CacheHttp, Http},
-    model::{
-        prelude::{ChannelId, Member},
-        voice::VoiceState,
-    },
-};
+use poise::serenity_prelude::{Context, VoiceState, Member, ChannelId, Http};
 
 use crate::{
     application::{
@@ -47,7 +40,7 @@ pub async fn handler(
 
     dispatch_disconnect(guild_id, new, ctx, member);
 
-    let guild = ctx.http().get_guild(guild_id).await?;
+    let guild = ctx.http.get_guild(guild_id).await?;
 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,

@@ -18,7 +18,6 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
- "serenity 0.11.5",
  "songbird 0.3.2",
  "tokio",
 ]

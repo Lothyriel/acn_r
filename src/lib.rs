@@ -1,6 +1,4 @@
 use anyhow::Error;
-use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, LavalinkClient};
-use serenity::{http::Http, prelude::GatewayIntents};
 
 use application::{
     dependency_configuration::DependencyContainer,
@@ -13,6 +11,7 @@ use features::{
     commands::groups_configuration,
     events::{after, check, error, handlers::invoker},
 };
+use poise::serenity_prelude::GatewayIntents;
 
 pub mod application;
 pub mod extensions;

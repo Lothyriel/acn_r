@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Error};
-use poise::serenity_prelude::Context;
-use serenity::{model::prelude::InviteCreateEvent, prelude::Mentionable};
+use poise::serenity_prelude::{Context, InviteCreateEvent, Mentionable};
 
 pub async fn handler(ctx: &Context, event: &InviteCreateEvent) -> Result<(), Error> {
     let identifier = event

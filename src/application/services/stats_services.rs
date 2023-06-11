@@ -7,7 +7,7 @@ use mongodb::{
     bson::{doc, oid::ObjectId},
     Collection, Database,
 };
-use serenity::async_trait;
+use poise::async_trait;
 
 use crate::{
     application::models::{
