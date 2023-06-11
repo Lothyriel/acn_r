@@ -66,7 +66,7 @@ impl ContextSongbird {
     }
 
     async fn add_to_queue(&self, ctx: Context<'_>, track: Track) -> Result<(), Error> {
-        let message = get_track_name(&track);
+        let message = format!("Added to queue: {}", get_track_name(&track));
 
         let lava_client = &ctx.data().lava_client;
 
@@ -118,15 +118,10 @@ impl ContextSongbird {
     }
 }
 
-fn get_track_name(track: &Track) -> String {
-    let message = {
-        let msg = track
-            .info
-            .as_ref()
-            .map(|i| i.title.as_str())
-            .unwrap_or_else(|| track.track.as_str());
-
-        format!("Added to queue: {msg}")
-    };
-    message
+fn get_track_name(track: &Track) -> &str {
+    track
+        .info
+        .as_ref()
+        .map(|i| i.title.as_str())
+        .unwrap_or_else(|| track.track.as_str())
 }
