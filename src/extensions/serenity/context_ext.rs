@@ -1,4 +1,4 @@
-use serenity::async_trait;
+use poise::async_trait;
 
 use crate::application::models::dto::user::GuildInfo;
 

@@ -1,5 +1,4 @@
 use anyhow::Error;
-use serenity::prelude::GatewayIntents;
 
 use application::{
     dependency_configuration::DependencyContainer,
@@ -9,6 +8,7 @@ use features::{
     commands::groups_configuration,
     events::{after, check, error, invoker},
 };
+use poise::serenity_prelude::GatewayIntents;
 
 pub mod application;
 pub mod extensions;

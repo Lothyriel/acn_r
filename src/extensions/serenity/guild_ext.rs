@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use serenity::{async_trait, client::Cache, http::Http, model::prelude::GuildId};
+use poise::{async_trait, serenity_prelude::{Http, Cache, GuildId}};
 
 use crate::extensions::std_ext::VecResultErrorExt;
 

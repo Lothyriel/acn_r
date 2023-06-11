@@ -2,9 +2,8 @@ use anyhow::{anyhow, Error};
 use futures::future::join_all;
 use poise::{
     command,
-    serenity_prelude::{GuildId, User},
+    serenity_prelude::{GuildId, User, MessageBuilder},
 };
-use serenity::utils::MessageBuilder;
 
 use crate::{
     application::services::stats_services::DiscordOnlineStatus,

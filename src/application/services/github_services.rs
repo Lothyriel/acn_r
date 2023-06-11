@@ -1,6 +1,6 @@
 use anyhow::Error;
 use log::warn;
-use serenity::{client::Cache, http::Http};
+use poise::serenity_prelude::{Cache, Http};
 use std::{sync::Arc, time::Duration};
 use tokio::{
     sync::{RwLock, Semaphore},

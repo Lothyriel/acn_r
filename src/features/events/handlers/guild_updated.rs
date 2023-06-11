@@ -1,5 +1,5 @@
 use anyhow::Error;
-use serenity::model::prelude::PartialGuild;
+use poise::serenity_prelude::PartialGuild;
 
 use crate::application::dependency_configuration::DependencyContainer;
 
