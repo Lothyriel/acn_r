@@ -14,7 +14,7 @@ pub struct JukeboxUse {
 #[derive(Serialize, Deserialize)]
 pub struct JukeboxTrack {
     pub name: String,
-    pub info: Option<TrackInfo>
+    pub info: Option<TrackInfo>,
 }
 
 #[derive(Serialize, Deserialize)]
