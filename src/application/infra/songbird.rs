@@ -1,10 +1,14 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::{anyhow, Error};
 use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, model::Track, LavalinkClient};
 use poise::serenity_prelude::Http;
 use songbird::Songbird;
 
+use crate::application::models::entities::jukebox_use::{JukeboxTrack, JukeboxUse, TrackInfo};
+use crate::application::services::jukebox_services::JukeboxServices;
+use crate::extensions::log_ext::LogExt;
 use crate::extensions::serenity::{context_ext::ContextExt, serenity_structs::Context};
 use crate::infra::{appsettings::AppSettings, env};
 
@@ -30,12 +34,27 @@ pub async fn get_lavalink_client(
 
 pub struct ContextSongbird {
     guild_id: u64,
+    user_id: u64,
     songbird: Arc<Songbird>,
+    lava_client: LavalinkClient,
+    jukebox_services: JukeboxServices,
 }
 
 impl ContextSongbird {
-    pub fn new(guild_id: u64, songbird: Arc<Songbird>) -> Self {
-        Self { guild_id, songbird }
+    pub fn new(
+        guild_id: u64,
+        user_id: u64,
+        songbird: Arc<Songbird>,
+        lava_client: LavalinkClient,
+        jukebox_services: JukeboxServices,
+    ) -> Self {
+        Self {
+            guild_id,
+            user_id,
+            songbird,
+            lava_client,
+            jukebox_services,
+        }
     }
 
     pub async fn queue(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
@@ -49,12 +68,10 @@ impl ContextSongbird {
     }
 
     async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
-        let lava_client = &ctx.data().lava_client;
-
-        let query_information = lava_client.auto_search_tracks(&query).await?;
+        let query_information = self.lava_client.auto_search_tracks(&query).await?;
 
         match query_information.tracks.first() {
-            Some(t) => self.add_to_queue(ctx, t.to_owned()).await,
+            Some(track) => self.add_to_queue(ctx, track.to_owned()).await,
             None => {
                 let reply = "Could not find any video of the search query.";
 
@@ -66,13 +83,15 @@ impl ContextSongbird {
     }
 
     async fn add_to_queue(&self, ctx: Context<'_>, track: Track) -> Result<(), Error> {
-        let message = format!("Added to queue: {}", get_track_name(&track));
+        self.lava_client
+            .play(self.guild_id, track.to_owned())
+            .queue()
+            .await?;
 
-        let lava_client = &ctx.data().lava_client;
+        self.add_jukebox_use(&track);
 
-        lava_client.play(self.guild_id, track).queue().await?;
-
-        ctx.say(message).await?;
+        ctx.say(format!("Added to queue: {}", get_track_name(&track)))
+            .await?;
 
         Ok(())
     }
@@ -98,8 +117,7 @@ impl ContextSongbird {
 
         match handler {
             Ok(connection_info) => {
-                let lava_client = &ctx.data().lava_client;
-                lava_client
+                self.lava_client
                     .create_session_with_songbird(&connection_info)
                     .await?;
                 Ok(())
@@ -115,6 +133,33 @@ impl ContextSongbird {
                 Err(anyhow!(error))
             }
         }
+    }
+
+    fn add_jukebox_use(&self, track: &Track) {
+        let j_use = JukeboxUse {
+            guild_id: self.guild_id,
+            user_id: self.user_id,
+            date: chrono::Utc::now(),
+            track: get_track_info(&track),
+        };
+
+        let service = self.jukebox_services.to_owned();
+
+        tokio::spawn(async move { service.add_jukebox_use(j_use).await.log() });
+    }
+}
+
+fn get_track_info(track: &Track) -> JukeboxTrack {
+    JukeboxTrack {
+        name: track.track.to_owned(),
+        info: track.info.as_ref().map(|i| TrackInfo {
+            length: Duration::from_millis(i.length),
+            identifier: i.identifier.to_owned(),
+            author: i.author.to_owned(),
+            title: i.title.to_owned(),
+            uri: i.uri.to_owned(),
+            position: i.position,
+        }),
     }
 }
 
