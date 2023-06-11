@@ -12,19 +12,21 @@ use crate::application::{
     },
     services::{
         command_services::CommandServices, github_services::GithubServices,
-        guild_services::GuildServices, stats_services::StatsServices, user_services::UserServices,
+        guild_services::GuildServices, jukebox_services::JukeboxServices,
+        stats_services::StatsServices, user_services::UserServices,
     },
 };
 
 pub struct DependencyContainer {
     pub allowed_ids: Vec<u64>,
+    pub lava_client: LavalinkClient,
     pub app_configurations: Arc<RwLock<AppConfigurations>>,
     pub user_services: UserServices,
     pub command_services: CommandServices,
     pub guild_services: GuildServices,
     pub stats_services: StatsServices,
     pub github_services: GithubServices,
-    pub lava_client: LavalinkClient,
+    pub jukebox_services: JukeboxServices,
 }
 
 impl DependencyContainer {
@@ -39,7 +41,8 @@ impl DependencyContainer {
         let user_services = UserServices::new(&db, guild_services.to_owned());
         let command_services = CommandServices::new(&db, user_services.to_owned());
         let stats_services = StatsServices::new(&db);
-        let github_services = GithubServices::build(github_client, configurations.to_owned())?;
+        let github_services = GithubServices::new(github_client, configurations.to_owned())?;
+        let jukebox_services = JukeboxServices::new(&db);
 
         Ok(Self {
             allowed_ids: settings.allowed_ids,
@@ -50,6 +53,7 @@ impl DependencyContainer {
             stats_services,
             github_services,
             lava_client,
+            jukebox_services,
         })
     }
 
