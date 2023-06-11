@@ -46,11 +46,23 @@ impl ContextExt for Context<'_> {
     async fn get_songbird(self) -> Result<ContextSongbird, Error> {
         let guild_id = self.assure_guild_context()?.0;
 
+        let lava_client = self.data().lava_client.to_owned();
+
+        let jukebox_services = self.data().jukebox_services.to_owned();
+
+        let user_id = self.author().id.0;
+
         let songbird = songbird::get(self.serenity_context())
             .await
             .ok_or_else(|| anyhow!("Couldn't get songbird voice client"))?;
 
-        Ok(ContextSongbird::new(guild_id, songbird))
+        Ok(ContextSongbird::new(
+            guild_id,
+            user_id,
+            songbird,
+            lava_client,
+            jukebox_services,
+        ))
     }
 
     fn assure_cached_guild(self) -> Result<Guild, Error> {
