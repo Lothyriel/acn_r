@@ -1,15 +1,17 @@
-use std::sync::Arc;
-use std::time::Duration;
-
 use anyhow::{anyhow, Error};
 use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, model::Track, LavalinkClient};
 use poise::serenity_prelude::Http;
 use songbird::Songbird;
+use std::sync::Arc;
 
-use crate::application::models::entities::jukebox_use::{JukeboxTrack, JukeboxUse, TrackInfo};
-use crate::application::services::jukebox_services::JukeboxServices;
-use crate::extensions::log_ext::LogExt;
-use crate::extensions::serenity::{context_ext::ContextExt, serenity_structs::Context};
+use crate::application::{
+    models::entities::jukebox_use::{JukeboxUse, TrackInfo},
+    services::jukebox_services::JukeboxServices,
+};
+use crate::extensions::{
+    log_ext::LogExt,
+    serenity::{context_ext::ContextExt, serenity_structs::Context},
+};
 use crate::infra::{appsettings::AppSettings, env};
 
 struct LavalinkHandler;
@@ -137,10 +139,11 @@ impl ContextSongbird {
 
     fn add_jukebox_use(&self, track: &Track) {
         let j_use = JukeboxUse {
+            track_data: track.track.to_owned(),
             guild_id: self.guild_id,
             user_id: self.user_id,
             date: chrono::Utc::now(),
-            track: get_track_info(&track),
+            info: get_track_info(&track),
         };
 
         let service = self.jukebox_services.to_owned();
@@ -149,18 +152,13 @@ impl ContextSongbird {
     }
 }
 
-fn get_track_info(track: &Track) -> JukeboxTrack {
-    JukeboxTrack {
-        name: track.track.to_owned(),
-        info: track.info.as_ref().map(|i| TrackInfo {
-            length: Duration::from_millis(i.length),
-            identifier: i.identifier.to_owned(),
-            author: i.author.to_owned(),
-            title: i.title.to_owned(),
-            uri: i.uri.to_owned(),
-            position: i.position,
-        }),
-    }
+fn get_track_info(track: &Track) -> Option<TrackInfo> {
+    track.info.as_ref().map(|i| TrackInfo {
+        length_in_ms: i.length,
+        author: i.author.to_owned(),
+        title: i.title.to_owned(),
+        uri: i.uri.to_owned(),
+    })
 }
 
 fn get_track_name(track: &Track) -> &str {
