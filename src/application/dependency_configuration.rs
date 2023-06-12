@@ -14,7 +14,7 @@ use crate::application::{
     },
 };
 
-use super::infra::http_clients::github_client::GithubClient;
+use super::{infra::http_clients::github_client::GithubClient, services::reaction_services::{ReactionServices}};
 
 pub struct DependencyContainer {
     pub allowed_ids: Vec<u64>,
@@ -24,6 +24,7 @@ pub struct DependencyContainer {
     pub guild_services: GuildServices,
     pub stats_services: StatsServices,
     pub github_services: GithubServices,
+    pub reaction_services: ReactionServices
 }
 
 impl DependencyContainer {
@@ -41,6 +42,7 @@ impl DependencyContainer {
         let command_services = CommandServices::new(&db, user_services.to_owned());
         let stats_services = StatsServices::new(&db);
         let github_services = GithubServices::build(github_client, configurations.to_owned())?;
+        let reaction_services = ReactionServices::new(&db);
 
         Ok(Self {
             allowed_ids: settings.allowed_ids,
@@ -50,6 +52,7 @@ impl DependencyContainer {
             command_services,
             stats_services,
             github_services,
+            reaction_services
         })
     }
 }
