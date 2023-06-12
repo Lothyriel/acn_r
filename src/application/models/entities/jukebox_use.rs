@@ -16,26 +16,26 @@ impl JukeboxUse {
         Self {
             track_data: track.track.to_owned(),
             date: chrono::Utc::now(),
-            info: Self::get_track_info(track),
+            info: get_track_info(track),
             guild_id,
             user_id,
         }
     }
+}
 
-    fn get_track_info(track: &Track) -> Option<TrackInfo> {
-        track.info.as_ref().map(|i| TrackInfo {
-            length_in_ms: i.length,
-            author: i.author.to_owned(),
-            title: i.title.to_owned(),
-            uri: i.uri.to_owned(),
-        })
-    }
+fn get_track_info(track: &Track) -> Option<TrackInfo> {
+    track.info.as_ref().map(|i| TrackInfo {
+        length_in_ms: i.length,
+        author: i.author.to_owned(),
+        title: i.title.to_owned(),
+        uri: i.uri.to_owned(),
+    })
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct TrackInfo {
     pub author: String,
-    pub length_in_ms: u64,
     pub title: String,
     pub uri: String,
+    pub length_in_ms: u64,
 }
