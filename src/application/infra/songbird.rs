@@ -126,14 +126,11 @@ impl ContextSongbird {
                 Ok(())
             }
             Err(error) => {
-                let msg = format!(
-                    "Guild {} | Error joining the channel: {}",
-                    self.guild_id, error
-                );
+                let msg = format!("Error joining the channel: {}", error);
 
-                ctx.say(msg).await?;
+                ctx.say(&msg).await?;
 
-                Err(anyhow!(error))
+                Err(anyhow!("Guild {} | {}", self.guild_id, msg))
             }
         }
     }
