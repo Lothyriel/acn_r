@@ -140,9 +140,9 @@ impl ContextSongbird {
 
     fn add_jukebox_use(&self, track: &Track) {
         let service = self.jukebox_services.to_owned();
-        
+
         let j_use = JukeboxUse::new(self.guild_id, self.user_id, track);
-        
+
         tokio::spawn(async move { service.add_jukebox_use(j_use).await.log() });
     }
 }
