@@ -4,15 +4,17 @@ use poise::serenity_prelude::Http;
 use songbird::Songbird;
 use std::sync::Arc;
 
-use crate::application::{
-    models::entities::jukebox_use::{JukeboxUse, TrackInfo},
-    services::jukebox_services::JukeboxServices,
+use crate::{
+    application::{
+        models::entities::jukebox_use::{JukeboxUse, TrackInfo},
+        services::jukebox_services::JukeboxServices,
+    },
+    extensions::{
+        log_ext::LogExt,
+        serenity::{context_ext::ContextExt, serenity_structs::Context},
+    },
+    infra::{appsettings::AppSettings, env},
 };
-use crate::extensions::{
-    log_ext::LogExt,
-    serenity::{context_ext::ContextExt, serenity_structs::Context},
-};
-use crate::infra::{appsettings::AppSettings, env};
 
 struct LavalinkHandler;
 
