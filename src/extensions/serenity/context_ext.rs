@@ -3,7 +3,7 @@ use poise::async_trait;
 use poise::serenity_prelude::{Guild, GuildId};
 
 use crate::{
-    application::{infra::songbird::ContextSongbird, models::dto::user::GuildInfo},
+    application::{infra::songbird::SongbirdCtx, models::dto::user::GuildInfo},
     extensions::serenity::serenity_structs::Context,
 };
 
@@ -11,7 +11,7 @@ use crate::{
 pub trait ContextExt {
     async fn get_author_name(self) -> String;
     async fn get_command_args(self) -> String;
-    async fn get_songbird(self) -> Result<ContextSongbird, Error>;
+    async fn get_songbird(self) -> Result<SongbirdCtx, Error>;
     fn get_guild_info(self) -> Option<GuildInfo>;
     fn assure_cached_guild(self) -> Result<Guild, Error>;
     fn assure_guild_context(self) -> Result<GuildId, Error>;
@@ -45,7 +45,7 @@ impl ContextExt for Context<'_> {
         }
     }
 
-    async fn get_songbird(self) -> Result<ContextSongbird, Error> {
+    async fn get_songbird(self) -> Result<SongbirdCtx, Error> {
         let guild_id = self.assure_guild_context()?.0;
 
         let lava_client = self.data().lava_client.to_owned();
@@ -58,7 +58,7 @@ impl ContextExt for Context<'_> {
             .await
             .ok_or_else(|| anyhow!("Couldn't get songbird voice client"))?;
 
-        Ok(ContextSongbird::new(
+        Ok(SongbirdCtx::new(
             guild_id,
             user_id,
             songbird,
