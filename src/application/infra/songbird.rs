@@ -6,8 +6,7 @@ use std::sync::Arc;
 
 use crate::{
     application::{
-        models::entities::jukebox_use::{JukeboxUse, TrackInfo},
-        services::jukebox_services::JukeboxServices,
+        models::entities::jukebox_use::JukeboxUse, services::jukebox_services::JukeboxServices,
     },
     extensions::{
         log_ext::LogExt,
@@ -140,27 +139,12 @@ impl ContextSongbird {
     }
 
     fn add_jukebox_use(&self, track: &Track) {
-        let j_use = JukeboxUse {
-            track_data: track.track.to_owned(),
-            guild_id: self.guild_id,
-            user_id: self.user_id,
-            date: chrono::Utc::now(),
-            info: get_track_info(&track),
-        };
-
         let service = self.jukebox_services.to_owned();
-
+        
+        let j_use = JukeboxUse::new(self.guild_id, self.user_id, track);
+        
         tokio::spawn(async move { service.add_jukebox_use(j_use).await.log() });
     }
-}
-
-fn get_track_info(track: &Track) -> Option<TrackInfo> {
-    track.info.as_ref().map(|i| TrackInfo {
-        length_in_ms: i.length,
-        author: i.author.to_owned(),
-        title: i.title.to_owned(),
-        uri: i.uri.to_owned(),
-    })
 }
 
 fn get_track_name(track: &Track) -> &str {
