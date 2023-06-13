@@ -1,8 +1,9 @@
+use std::sync::Arc;
+
 use anyhow::{anyhow, Error};
 use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, model::Track, LavalinkClient};
-use poise::serenity_prelude::{Http, Mentionable};
+use poise::serenity_prelude::{Http, Mentionable, MessageBuilder};
 use songbird::Songbird;
-use std::sync::Arc;
 
 use crate::{
     application::{
@@ -75,7 +76,32 @@ impl SongbirdCtx {
         Ok(())
     }
 
-    pub async fn queue(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
+    pub async fn show_queue(&self, ctx: Context<'_>) -> Result<(), Error> {
+        let nodes = self.lava_client.nodes().await;
+        let node = nodes.get(&self.guild_id).ok_or_else(|| anyhow!(""))?;
+
+        let mut message_builder = MessageBuilder::new();
+        message_builder.push_line("Queue: ");
+
+        for track in node.queue.iter() {
+            let track_name = get_track_name(&track.track);
+
+            let requester = track
+                .requester
+                .map(|r| format!("<@{}>", r.0))
+                .unwrap_or_else(|| "Unknown".to_owned());
+
+            let line = format!("- {}  --- {}", track_name, requester);
+
+            message_builder.push_line(line);
+        }
+
+        ctx.say(message_builder.build()).await?;
+
+        Ok(())
+    }
+
+    pub async fn play(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
         match self.songbird.get(self.guild_id) {
             Some(_) => self.queue_music(ctx, query).await,
             None => {

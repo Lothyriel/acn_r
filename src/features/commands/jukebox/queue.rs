@@ -6,11 +6,10 @@ use crate::extensions::{
 };
 
 #[command(prefix_command, slash_command, guild_only)]
-pub async fn play(
-    ctx: Context<'_>,
-    #[description = "A song URL or YouTube search query"] query: String,
-) -> CommandResult {
+pub async fn queue(ctx: Context<'_>) -> CommandResult {
     let songbird = ctx.get_songbird().await?;
 
-    songbird.play(ctx, query).await
+    songbird.show_queue(ctx).await?;
+
+    Ok(())
 }
