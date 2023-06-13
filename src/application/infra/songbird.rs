@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Error};
 use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, model::Track, LavalinkClient};
-use poise::serenity_prelude::Http;
+use poise::serenity_prelude::{Http, Mentionable};
 use songbird::Songbird;
 use std::sync::Arc;
 
@@ -58,6 +58,21 @@ impl SongbirdCtx {
             lava_client,
             jukebox_services,
         }
+    }
+
+    pub async fn skip(&self, ctx: Context<'_>) -> Result<(), Error> {
+        let message = match self.lava_client.skip(self.guild_id).await {
+            Some(track) => format!(
+                "{} Skipped: {}",
+                ctx.author().mention(),
+                get_track_name(&track.track)
+            ),
+            None => "Nothing to skip.".to_owned(),
+        };
+
+        ctx.say(message).await?;
+
+        Ok(())
     }
 
     pub async fn queue(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
