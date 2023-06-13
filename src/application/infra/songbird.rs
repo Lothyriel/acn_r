@@ -110,7 +110,7 @@ impl SongbirdCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let line = format!("- {}  --- {}", track_name, requester);
+                        let line = format!("- {}  --- By: {}", track_name, requester);
 
                         message_builder.push_line(line);
                     }
