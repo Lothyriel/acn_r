@@ -5,8 +5,7 @@ use crate::extensions::serenity::serenity_structs::{CommandResult, Context};
 #[command(prefix_command, slash_command)]
 pub async fn help(
     ctx: Context<'_>,
-    #[description = "O comando específico em questão"] 
-    command: Option<String>,
+    #[description = "O comando específico em questão"] command: Option<String>,
 ) -> CommandResult {
     let config = poise::builtins::HelpConfiguration {
         extra_text_at_bottom:

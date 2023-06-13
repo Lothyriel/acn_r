@@ -13,6 +13,6 @@ pub fn register_commands() -> Vec<Command> {
     for mut command in register_groups() {
         commands.append(command.as_mut());
     }
-    
+
     commands
 }
