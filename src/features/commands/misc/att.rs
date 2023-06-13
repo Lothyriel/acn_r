@@ -17,7 +17,8 @@ use crate::extensions::{
 )]
 pub async fn att(
     ctx: Context<'_>,
-    #[description = "Mensagem que será enviada as guildas"] message: String,
+    #[description = "Mensagem que será enviada as guildas"] 
+    message: String,
 ) -> CommandResult {
     let guilds = ctx.http().get_guilds(None, None).await?;
 

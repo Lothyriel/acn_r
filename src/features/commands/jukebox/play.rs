@@ -8,7 +8,8 @@ use crate::extensions::{
 #[command(prefix_command, slash_command, track_edits, guild_only)]
 pub async fn play(
     ctx: Context<'_>,
-    #[description = "A song URL or YouTube search query"] query: String,
+    #[description = "A song URL or YouTube search query"] 
+    query: String,
 ) -> CommandResult {
     let songbird = ctx.get_songbird().await?;
 

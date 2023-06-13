@@ -99,6 +99,7 @@ mod stats {
                 activity: Activity::Disconnected,
                 date,
             };
+            
             user_services.update_user_activity(disconnected).await?;
 
             date = date + Duration::hours(1);

@@ -21,7 +21,8 @@ const SECONDS_IN_HOUR: i64 = 60 * 60;
 #[command(guild_only, prefix_command, slash_command, category = "Misc")]
 pub async fn stats(
     ctx: Context<'_>,
-    #[description = "Usuário para filtrar estatísticas"] target: Option<User>,
+    #[description = "Usuário para filtrar estatísticas"] 
+    target: Option<User>,
 ) -> CommandResult {
     let service = &ctx.data().stats_services;
 
