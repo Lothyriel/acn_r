@@ -5,13 +5,18 @@ use crate::extensions::serenity::serenity_structs::{CommandResult, Context};
 #[command(prefix_command, slash_command, category = "reactions")]
 pub async fn react(
     ctx: Context<'_>,
-    #[description = "Describes the images emotion"] 
-    emotion: String
+    #[description = "Describes the images emotion"] emotion: String,
 ) -> CommandResult {
-    let img = emotion.as_bytes().to_owned(); 
-    let sexo = AttachmentType::Bytes { data: img.into(), filename: emotion };
+    let service = &ctx.data().reaction_services;
 
-    ctx.send(|x| x.attachment(sexo)).await?;
+    let reaction = service.react(emotion, ctx.guild_id().map(|g| g.0)).await?;
+
+    let file = AttachmentType::Bytes {
+        data: reaction.bytes.into(),
+        filename: reaction.file_name,
+    };
+
+    ctx.send(|x| x.attachment(file).content(reaction.emotion)).await?;
 
     Ok(())
 }
