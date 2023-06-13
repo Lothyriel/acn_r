@@ -63,11 +63,23 @@ impl SongbirdCtx {
 
     pub async fn skip(&self, ctx: Context<'_>) -> Result<(), Error> {
         let message = match self.lava_client.skip(self.guild_id).await {
-            Some(track) => format!(
-                "{} Skipped: {}",
-                ctx.author().mention(),
-                get_track_name(&track.track)
-            ),
+            Some(track) => {
+                let nodes = self.lava_client.nodes().await;
+
+                let node = nodes
+                    .get(&self.guild_id)
+                    .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+
+                if node.queue.is_empty() {
+                    self.lava_client.stop(self.guild_id).await?;
+                }
+
+                format!(
+                    "{} Skipped: {}",
+                    ctx.author().mention(),
+                    get_track_name(&track.track)
+                )
+            }
             None => "Nothing to skip.".to_owned(),
         };
 
@@ -77,26 +89,41 @@ impl SongbirdCtx {
     }
 
     pub async fn show_queue(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let nodes = self.lava_client.nodes().await;
-        let node = nodes.get(&self.guild_id).ok_or_else(|| anyhow!(""))?;
+        let queue = {
+            let nodes = self.lava_client.nodes().await;
 
-        let mut message_builder = MessageBuilder::new();
-        message_builder.push_line("Queue: ");
+            let node = nodes
+                .get(&self.guild_id)
+                .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
 
-        for track in node.queue.iter() {
-            let track_name = get_track_name(&track.track);
+            let mut message_builder = MessageBuilder::new();
 
-            let requester = track
-                .requester
-                .map(|r| format!("<@{}>", r.0))
-                .unwrap_or_else(|| "Unknown".to_owned());
+            match node.queue.is_empty() {
+                false => {
+                    message_builder.push_line("Queue: ");
 
-            let line = format!("- {}  --- {}", track_name, requester);
+                    for track in node.queue.iter() {
+                        let track_name = get_track_name(&track.track);
 
-            message_builder.push_line(line);
-        }
+                        let requester = track
+                            .requester
+                            .map(|r| format!("<@{}>", r.0))
+                            .unwrap_or_else(|| "Unknown".to_owned());
 
-        ctx.say(message_builder.build()).await?;
+                        let line = format!("- {}  --- {}", track_name, requester);
+
+                        message_builder.push_line(line);
+                    }
+                }
+                true => {
+                    message_builder.push_line("EMPTY!!!");
+                }
+            };
+
+            message_builder.build()
+        };
+
+        ctx.say(queue).await?;
 
         Ok(())
     }
