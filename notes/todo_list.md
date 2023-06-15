@@ -1,11 +1,11 @@
 ---------------------Jukebox----------------------------------
-JukeboxUse{id: Guid, guild_id: u64, user_id: u64, date: Date, youtube_title: String }
+aliases:
+-play, -p
+-queue, -q
+
 Implementar comandos:
--play, -p: adiciona ao fim da fila
 
 -play-next, -pn: adiciona na fila após a musica atual
-
--queue, -q: mostra a fila
 
 -stop, -s, -clear: para e limpa a fila
 
