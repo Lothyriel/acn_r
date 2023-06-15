@@ -1,7 +1,12 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, model::{TrackQueue, Track}, LavalinkClient};
+use lavalink_rs::{
+    async_trait,
+    gateway::LavalinkEventHandler,
+    model::{Track, TrackQueue},
+    LavalinkClient,
+};
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
 use songbird::Songbird;
 
