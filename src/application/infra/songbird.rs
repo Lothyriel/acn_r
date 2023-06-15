@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
 use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, model::Track, LavalinkClient};
-use poise::serenity_prelude::{Http, Mentionable, MessageBuilder};
+use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
 use songbird::Songbird;
 
 use crate::{
@@ -170,21 +170,7 @@ impl SongbirdCtx {
     }
 
     async fn join_voice_channel(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let guild = ctx.assure_cached_guild()?;
-
-        let channel_id = guild
-            .voice_states
-            .get(&ctx.author().id)
-            .and_then(|voice_state| voice_state.channel_id);
-
-        let connect_to = match channel_id {
-            Some(channel) => channel,
-            None => {
-                ctx.say("Join a voice channel.").await?;
-
-                return Ok(());
-            }
-        };
+        let connect_to = get_author_voice_channel(ctx).await?;
 
         let (_, handler) = self.songbird.join_gateway(self.guild_id, connect_to).await;
 
@@ -212,6 +198,25 @@ impl SongbirdCtx {
 
         tokio::spawn(async move { service.add_jukebox_use(j_use).await.log() });
     }
+}
+
+async fn get_author_voice_channel(ctx: Context<'_>) -> Result<ChannelId, Error> {
+    let guild = ctx.assure_cached_guild()?;
+    let channel_id = guild
+        .voice_states
+        .get(&ctx.author().id)
+        .and_then(|voice_state| voice_state.channel_id);
+
+    let connect_to = match channel_id {
+        Some(channel) => channel,
+        None => {
+            ctx.say("Join a voice channel.").await?;
+
+            return Err(anyhow!("User is not connected to a voice channel"));
+        }
+    };
+
+    Ok(connect_to)
 }
 
 fn get_track_name(track: &Track) -> &str {
