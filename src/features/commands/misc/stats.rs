@@ -1,16 +1,18 @@
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use futures::future::join_all;
 use poise::{
     command,
-    serenity_prelude::{GuildId, User},
+    serenity_prelude::{GuildId, MessageBuilder, User},
 };
-use serenity::utils::MessageBuilder;
 
 use crate::{
     application::services::stats_services::DiscordOnlineStatus,
     extensions::{
         log_ext::LogErrorsExt,
-        serenity::serenity_structs::{CommandResult, Context},
+        serenity::{
+            context_ext::ContextExt,
+            serenity_structs::{CommandResult, Context},
+        },
     },
 };
 
@@ -23,9 +25,7 @@ pub async fn stats(
 ) -> CommandResult {
     let service = &ctx.data().stats_services;
 
-    let guild_id = ctx
-        .guild_id()
-        .ok_or_else(|| anyhow!("[IMPOSSIBLE] Context doesn't include an Guild"))?;
+    let guild_id = ctx.assure_guild_context()?;
 
     let guild_stats = service
         .get_guild_stats(guild_id.0, target.map(|f| f.id.0), DiscordOnlineStatus(ctx))
@@ -45,6 +45,7 @@ pub async fn stats(
     let lines = join_all(build_message_lines_tasks).await.log_errors();
 
     let mut message_builder = MessageBuilder::new();
+
     message_builder.push_line(format!(
         "Dados coletados desde: {}",
         guild_stats.initial_date

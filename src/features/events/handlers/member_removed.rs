@@ -1,11 +1,5 @@
 use anyhow::Error;
-use serenity::{
-    model::{
-        prelude::{GuildId, Member},
-        user::User,
-    },
-    prelude::Context,
-};
+use poise::serenity_prelude::{Context, GuildId, Member, User};
 
 use crate::extensions::serenity::guild_ext::GuildExt;
 

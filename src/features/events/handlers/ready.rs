@@ -1,7 +1,7 @@
 use anyhow::Error;
+use futures::future::join_all;
 use log::warn;
 use poise::serenity_prelude::Context;
-use serenity::futures::future::join_all;
 
 use crate::{
     application::dependency_configuration::DependencyContainer, extensions::log_ext::LogErrorsExt,

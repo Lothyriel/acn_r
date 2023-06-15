@@ -16,6 +16,7 @@ pub fn load() -> Result<AppSettings, Error> {
 pub struct AppSettings {
     pub allowed_ids: Vec<u64>,
     pub prefix: String,
+    pub lavalink_settings: LavalinkSettings,
     pub mongo_settings: MongoSettings,
     pub github_settings: GithubSettings,
 }
@@ -33,6 +34,12 @@ pub struct GithubSettings {
     pub repository: String,
     pub workflow_file: String,
     pub branch_name: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct LavalinkSettings {
+    pub url: String,
+    pub port: u16,
 }
 
 pub struct AppConfigurations {

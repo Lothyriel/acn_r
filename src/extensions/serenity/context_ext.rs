@@ -1,14 +1,20 @@
-use serenity::async_trait;
+use anyhow::{anyhow, Error};
+use poise::async_trait;
+use poise::serenity_prelude::{Guild, GuildId};
 
-use crate::application::models::dto::user::GuildInfo;
-
-use super::serenity_structs::Context;
+use crate::{
+    application::{infra::songbird::SongbirdCtx, models::dto::user::GuildInfo},
+    extensions::serenity::serenity_structs::Context,
+};
 
 #[async_trait]
 pub trait ContextExt {
     async fn get_author_name(self) -> String;
     async fn get_command_args(self) -> String;
+    async fn get_songbird(self) -> Result<SongbirdCtx, Error>;
     fn get_guild_info(self) -> Option<GuildInfo>;
+    fn assure_cached_guild(self) -> Result<Guild, Error>;
+    fn assure_guild_context(self) -> Result<GuildId, Error>;
 }
 
 #[async_trait]
@@ -39,18 +45,48 @@ impl ContextExt for Context<'_> {
         }
     }
 
+    async fn get_songbird(self) -> Result<SongbirdCtx, Error> {
+        let guild_id = self.assure_guild_context()?.0;
+
+        let lava_client = self.data().lava_client.to_owned();
+
+        let jukebox_services = self.data().jukebox_services.to_owned();
+
+        let user_id = self.author().id.0;
+
+        let songbird = songbird::get(self.serenity_context())
+            .await
+            .ok_or_else(|| anyhow!("Couldn't get songbird voice client"))?;
+
+        Ok(SongbirdCtx::new(
+            guild_id,
+            user_id,
+            songbird,
+            lava_client,
+            jukebox_services,
+        ))
+    }
+
+    fn assure_cached_guild(self) -> Result<Guild, Error> {
+        let guild_id = self.assure_guild_context()?;
+        self.guild()
+            .ok_or_else(|| anyhow!("Couldn't get Guild {guild_id} from cache"))
+    }
+
+    fn assure_guild_context(self) -> Result<GuildId, Error> {
+        self.guild_id()
+            .ok_or_else(|| anyhow!("Context doesn't include an Guild"))
+    }
+
     fn get_guild_info(self) -> Option<GuildInfo> {
         let guild_id = self.guild_id().map(|g| g.0);
         let guild_name = self.guild_id().and_then(|g| g.name(self));
 
-        if let Some(id) = guild_id {
-            if let Some(name) = guild_name {
-                return Some(GuildInfo {
-                    guild_id: id,
-                    guild_name: name,
-                });
-            }
-        }
-        None
+        guild_id.and_then(|i| {
+            guild_name.map(|n| GuildInfo {
+                guild_id: i,
+                guild_name: n,
+            })
+        })
     }
 }

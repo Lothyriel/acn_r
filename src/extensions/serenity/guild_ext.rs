@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use serenity::{async_trait, client::Cache, http::Http, model::prelude::GuildId};
+use poise::{
+    async_trait,
+    serenity_prelude::{Cache, GuildId, Http},
+};
 
 use crate::extensions::std_ext::VecResultErrorExt;
 
@@ -28,9 +31,7 @@ impl GuildExt for GuildId {
     }
 
     fn get_online_users(self, cache: Arc<Cache>) -> Result<Vec<u64>, Error> {
-        let guild = self
-            .to_guild_cached(&cache)
-            .ok_or_else(|| anyhow!("Couldn't get Guild {} from cache", self.0))?;
+        let guild = cache.guild(self).ok_or_else(|| anyhow!(""))?;
 
         let online_users = guild
             .voice_states

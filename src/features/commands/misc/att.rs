@@ -1,5 +1,5 @@
-use poise::command;
-use serenity::{futures::future::join_all, http::CacheHttp};
+use futures::future::join_all;
+use poise::{command, serenity_prelude::CacheHttp};
 
 use crate::extensions::{
     log_ext::LogErrorsExt,

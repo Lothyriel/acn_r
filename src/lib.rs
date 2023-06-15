@@ -1,14 +1,22 @@
 use anyhow::Error;
-use serenity::prelude::GatewayIntents;
 
-use application::{
-    dependency_configuration::DependencyContainer,
-    infra::{appsettings, env},
+use crate::{
+    application::{
+        dependency_configuration::DependencyContainer,
+        infra::{
+            self,
+            appsettings::{self, AppSettings},
+            env,
+        },
+    },
+    features::{
+        commands::groups_configuration,
+        events::{after, check, error, handlers::invoker},
+    },
 };
-use features::{
-    commands::groups_configuration,
-    events::{after, check, error, invoker},
-};
+
+use poise::serenity_prelude::GatewayIntents;
+use songbird::SerenityInit;
 
 pub mod application;
 pub mod extensions;
@@ -17,7 +25,6 @@ pub mod features;
 pub async fn start_application() -> Result<(), Error> {
     let settings = init_app()?;
     let token = env::get("TOKEN_BOT")?;
-    let prefix = settings.prefix.to_owned();
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -28,19 +35,21 @@ pub async fn start_application() -> Result<(), Error> {
             on_error: |error| Box::pin(error::handler(error)),
             post_command: |ctx| Box::pin(after::handler(ctx)),
             prefix_options: poise::PrefixFrameworkOptions {
-                prefix: Some(prefix),
+                prefix: Some(settings.prefix.to_owned()),
                 mention_as_prefix: true,
                 ..Default::default()
             },
             command_check: Some(|ctx| Box::pin(check::handler(ctx))),
             ..Default::default()
         })
-        .token(token)
+        .token(&token)
+        .client_settings(|c| c.register_songbird())
         .intents(GatewayIntents::all())
         .setup(|ctx, _, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                DependencyContainer::build(settings).await
+                let lava_client = infra::songbird::get_lavalink_client(&token, &settings).await?;
+                DependencyContainer::build(settings, lava_client).await
             })
         });
 
@@ -49,7 +58,7 @@ pub async fn start_application() -> Result<(), Error> {
     Ok(())
 }
 
-pub fn init_app() -> Result<appsettings::AppSettings, Error> {
+pub fn init_app() -> Result<AppSettings, Error> {
     env::init()?;
     appsettings::load()
 }

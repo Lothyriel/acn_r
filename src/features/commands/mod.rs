@@ -1,4 +1,5 @@
 pub mod groups_configuration;
-pub mod help;
-pub mod misc;
-pub mod r34;
+mod help;
+mod jukebox;
+mod misc;
+mod r34;

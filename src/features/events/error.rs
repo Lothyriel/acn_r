@@ -37,7 +37,12 @@ async fn handle_command_error(ctx: Context<'_>, error: Error) -> Result<(), Erro
 
     let command_services = &ctx.data().command_services;
 
-    let message = format!("{}: {}", ctx.id(), error);
+    let id = ctx
+        .guild()
+        .map(|g| g.id.to_string())
+        .unwrap_or_else(|| format!("DM: {}", dto.user_id));
+
+    let message = format!("{id}: {error}");
 
     ctx.say(&message).await?;
 
