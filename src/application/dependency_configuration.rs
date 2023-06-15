@@ -18,6 +18,7 @@ use crate::application::{
 };
 
 pub struct DependencyContainer {
+    pub id: u64,
     pub allowed_ids: Vec<u64>,
     pub lava_client: LavalinkClient,
     pub app_configurations: Arc<RwLock<AppConfigurations>>,
@@ -30,7 +31,7 @@ pub struct DependencyContainer {
 }
 
 impl DependencyContainer {
-    pub async fn build(settings: AppSettings, lava_client: LavalinkClient) -> Result<Self, Error> {
+    pub async fn build(settings: AppSettings, lava_client: LavalinkClient, id: u64) -> Result<Self, Error> {
         let db = Self::database(&settings).await?;
 
         let client = Client::new();
@@ -54,6 +55,7 @@ impl DependencyContainer {
             github_services,
             lava_client,
             jukebox_services,
+            id
         })
     }
 
