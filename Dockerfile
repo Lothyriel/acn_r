@@ -4,7 +4,7 @@ FROM rust:1.67 as builder
 COPY /src ./src
 COPY Cargo.toml ./
 
-RUN cargo build --release
+RUN apt-get update && apt-get install -y cmake && cargo build --release
 
 # Prod stage
 FROM gcr.io/distroless/cc
