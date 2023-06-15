@@ -1,17 +1,20 @@
 use anyhow::Error;
 
-use application::{
-    dependency_configuration::DependencyContainer,
-    infra::{
-        self,
-        appsettings::{self, AppSettings},
-        env,
+use crate::{
+    application::{
+        dependency_configuration::DependencyContainer,
+        infra::{
+            self,
+            appsettings::{self, AppSettings},
+            env,
+        },
+    },
+    features::{
+        commands::groups_configuration,
+        events::{after, check, error, handlers::invoker},
     },
 };
-use features::{
-    commands::groups_configuration,
-    events::{after, check, error, handlers::invoker},
-};
+
 use poise::serenity_prelude::GatewayIntents;
 use songbird::SerenityInit;
 
