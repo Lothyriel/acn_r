@@ -28,7 +28,8 @@ pub async fn get_lavalink_client(
     let app_info = Http::new(token).get_current_application_info().await?;
 
     let lava_client = LavalinkClient::builder(app_info.id.0)
-        .set_host(&settings.lavalink_url)
+        .set_host(&settings.lavalink_settings.url)
+        .set_port(settings.lavalink_settings.port)
         .set_password(env::get("LAVALINK_PASSWORD")?)
         .build(LavalinkHandler)
         .await?;
