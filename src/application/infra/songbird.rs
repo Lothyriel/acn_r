@@ -1,7 +1,15 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, model::Track, LavalinkClient};
+use lavalink_rs::{
+    async_trait,
+    gateway::LavalinkEventHandler,
+    model::{
+        PlayerDestroyed, PlayerUpdate, Stats, Track, TrackException, TrackFinish, TrackQueue,
+        TrackStart, TrackStuck, WebSocketClosed,
+    },
+    LavalinkClient,
+};
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
 use songbird::Songbird;
 
@@ -63,24 +71,12 @@ impl SongbirdCtx {
     }
 
     pub async fn skip(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let message = match self.lava_client.skip(self.guild_id).await {
-            Some(track) => {
-                let nodes = self.lava_client.nodes().await;
-
-                let node = nodes
-                    .get(&self.guild_id)
-                    .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
-
-                if node.queue.is_empty() {
-                    self.lava_client.stop(self.guild_id).await?;
-                }
-
-                format!(
-                    "{} Skipped: {}",
-                    ctx.author().mention(),
-                    get_track_name(&track.track)
-                )
-            }
+        let message = match self.skip_track().await? {
+            Some(track) => format!(
+                "{} Skipped: {}",
+                ctx.author().mention(),
+                get_track_name(&track.track)
+            ),
             None => "Nothing to skip.".to_owned(),
         };
 
@@ -111,7 +107,13 @@ impl SongbirdCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let line = format!("- {}  --- By: {}", track_name, requester);
+                        let now = if node.queue.first() == Some(track) {
+                            "NOW | "
+                        } else {
+                            ""
+                        };
+
+                        let line = format!("-{} {}  --- By: {}", now, track_name, requester);
 
                         message_builder.push_line(line);
                     }
@@ -131,7 +133,21 @@ impl SongbirdCtx {
 
     pub async fn play(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
         match self.songbird.get(self.guild_id) {
-            Some(_) => self.queue_music(ctx, query).await,
+            Some(call) => {
+                self.queue_music(ctx, query).await?;
+
+                let disconnected = {
+                    let lock = call.lock().await;
+                    lock.current_connection().is_none()
+                };
+
+                if disconnected {
+                    self.skip_track().await?;
+                    self.join_voice_channel(ctx).await?;
+                }
+
+                Ok(())
+            }
             None => {
                 self.join_voice_channel(ctx).await?;
                 self.queue_music(ctx, query).await
@@ -189,6 +205,24 @@ impl SongbirdCtx {
                 Err(anyhow!("Guild {} | {}", self.guild_id, msg))
             }
         }
+    }
+
+    async fn skip_track(&self) -> Result<Option<TrackQueue>, Error> {
+        let skipped_track = self.lava_client.skip(self.guild_id).await;
+
+        if let Some(_) = skipped_track {
+            let nodes = self.lava_client.nodes().await;
+
+            let node = nodes
+                .get(&self.guild_id)
+                .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+
+            if node.queue.is_empty() {
+                self.lava_client.stop(self.guild_id).await?;
+            }
+        }
+
+        Ok(skipped_track)
     }
 
     fn add_jukebox_use(&self, track: &Track) {
