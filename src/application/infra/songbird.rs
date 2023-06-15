@@ -157,6 +157,7 @@ impl SongbirdCtx {
     async fn add_to_queue(&self, ctx: Context<'_>, track: Track) -> Result<(), Error> {
         self.lava_client
             .play(self.guild_id, track.to_owned())
+            .requester(self.user_id)
             .queue()
             .await?;
 
