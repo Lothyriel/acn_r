@@ -96,7 +96,7 @@ impl SongbirdCtx {
                 false => {
                     message_builder.push_line("Queue: ");
 
-                    for track in node.queue.iter() {
+                    for (i, track) in node.queue.iter().enumerate() {
                         let track_name = get_track_name(&track.track);
 
                         let requester = track
@@ -104,7 +104,7 @@ impl SongbirdCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let now = if node.queue.first() == Some(track) {
+                        let now = if i == 0 {
                             "NOW | "
                         } else {
                             ""
