@@ -104,11 +104,7 @@ impl SongbirdCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let now = if i == 0 {
-                            "NOW | "
-                        } else {
-                            ""
-                        };
+                        let now = if i == 0 { "NOW | " } else { "" };
 
                         let line = format!("-{} {}  --- By: {}", now, track_name, requester);
 
@@ -129,26 +125,26 @@ impl SongbirdCtx {
     }
 
     pub async fn play(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
-        match self.songbird.get(self.guild_id) {
-            Some(call) => {
-                self.queue_music(ctx, query).await?;
+        let channel = get_author_voice_channel(ctx).await?;
+        self.join_voice_channel(channel).await?;
+        self.queue_music(ctx, query).await
+    }
 
-                let disconnected = {
-                    let lock = call.lock().await;
-                    lock.current_connection().is_none()
-                };
+    pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<(), Error> {
+        let (_, handler) = self.songbird.join_gateway(self.guild_id, channel_id).await;
 
-                if disconnected {
-                    self.skip_track().await?;
-                    self.join_voice_channel(ctx).await?;
-                }
-
+        match handler {
+            Ok(connection_info) => {
+                self.lava_client
+                    .create_session_with_songbird(&connection_info)
+                    .await?;
                 Ok(())
             }
-            None => {
-                self.join_voice_channel(ctx).await?;
-                self.queue_music(ctx, query).await
-            }
+            Err(error) => Err(anyhow!(
+                "Guild {} | Error joining the channel: {}",
+                self.guild_id,
+                error
+            )),
         }
     }
 
@@ -180,28 +176,6 @@ impl SongbirdCtx {
             .await?;
 
         Ok(())
-    }
-
-    async fn join_voice_channel(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let connect_to = get_author_voice_channel(ctx).await?;
-
-        let (_, handler) = self.songbird.join_gateway(self.guild_id, connect_to).await;
-
-        match handler {
-            Ok(connection_info) => {
-                self.lava_client
-                    .create_session_with_songbird(&connection_info)
-                    .await?;
-                Ok(())
-            }
-            Err(error) => {
-                let msg = format!("Error joining the channel: {}", error);
-
-                ctx.say(&msg).await?;
-
-                Err(anyhow!("Guild {} | {}", self.guild_id, msg))
-            }
-        }
     }
 
     async fn skip_track(&self) -> Result<Option<TrackQueue>, Error> {
