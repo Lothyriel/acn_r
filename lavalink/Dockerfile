@@ -1,3 +1,2 @@
-FROM ghcr.io/lavalink-devs/lavalink:latest
-
-EXPOSE 2333
+FROM "fredboat/lavalink:master"
+COPY "application.yml" "/opt/Lavalink/application.yml"
