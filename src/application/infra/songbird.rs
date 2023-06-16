@@ -206,6 +206,10 @@ impl SongbirdCtx {
             self.add_track_to_queue(&track).await?;
         }
 
+        let reply = format!("Added {} tracks to the queue", query_info.tracks.len());
+
+        ctx.say(reply).await?;
+
         Ok(())
     }
 
