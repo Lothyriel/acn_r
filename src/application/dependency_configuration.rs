@@ -31,23 +31,27 @@ pub struct DependencyContainer {
 }
 
 impl DependencyContainer {
-    pub async fn build(settings: AppSettings, lava_client: LavalinkClient, id: u64) -> Result<Self, Error> {
+    pub async fn build(
+        settings: AppSettings,
+        lava_client: LavalinkClient,
+        id: u64,
+    ) -> Result<Self, Error> {
         let db = Self::database(&settings).await?;
 
         let client = Client::new();
         let github_client = Arc::new(GithubClient::new(client, settings.github_settings));
 
-        let configurations = Arc::new(RwLock::new(AppConfigurations::new()));
+        let app_configurations = Arc::new(RwLock::new(AppConfigurations::new()));
         let guild_services = GuildServices::new(&db);
         let user_services = UserServices::new(&db, guild_services.to_owned());
         let command_services = CommandServices::new(&db, user_services.to_owned());
         let stats_services = StatsServices::new(&db);
-        let github_services = GithubServices::new(github_client, configurations.to_owned())?;
+        let github_services = GithubServices::new(github_client, app_configurations.to_owned())?;
         let jukebox_services = JukeboxServices::new(&db);
 
         Ok(Self {
             allowed_ids: settings.allowed_ids,
-            app_configurations: configurations,
+            app_configurations,
             user_services,
             guild_services,
             command_services,
@@ -55,7 +59,7 @@ impl DependencyContainer {
             github_services,
             lava_client,
             jukebox_services,
-            id
+            id,
         })
     }
 

@@ -37,7 +37,7 @@ impl ContextExt for Context<'_> {
                     .into_iter()
                     .flat_map(|a| {
                         a.value
-                            .to_owned()
+                            .as_ref()
                             .map(|v| format!("{v}").trim_matches('"').to_owned())
                     })
                     .collect();

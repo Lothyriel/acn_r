@@ -1,13 +1,14 @@
-use std::sync::Arc;
+use std::{borrow::BorrowMut, sync::Arc};
 
 use anyhow::{anyhow, Error};
 use lavalink_rs::{
     async_trait,
     gateway::LavalinkEventHandler,
-    model::{Track, TrackQueue},
+    model::{Track, TrackQueue, Tracks},
     LavalinkClient,
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
+use rand::seq::SliceRandom;
 use songbird::Songbird;
 
 use crate::{
@@ -67,6 +68,32 @@ impl SongbirdCtx {
         }
     }
 
+    pub async fn shuffle(&self, ctx: Context<'_>) -> Result<(), Error> {
+        self.shuffle_playlist().await?;
+
+        ctx.say("Shuffled queue!").await?;
+
+        Ok(())
+    }
+
+    pub async fn stop(&self, ctx: Context<'_>) -> Result<(), Error> {
+        self.lava_client.stop(self.guild_id).await?;
+
+        self.songbird.remove(self.guild_id).await?;
+
+        let nodes = self.lava_client.nodes().await;
+
+        let mut node = nodes
+            .get_mut(&self.guild_id)
+            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+
+        node.queue.clear();
+
+        ctx.say("Player stopped! Queue cleared!").await?;
+
+        Ok(())
+    }
+
     pub async fn skip(&self, ctx: Context<'_>) -> Result<(), Error> {
         let message = match self.skip_track().await? {
             Some(track) => format!(
@@ -83,7 +110,7 @@ impl SongbirdCtx {
     }
 
     pub async fn show_queue(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let queue = {
+        let queue_description = {
             let nodes = self.lava_client.nodes().await;
 
             let node = nodes
@@ -96,7 +123,7 @@ impl SongbirdCtx {
                 false => {
                     message_builder.push_line("Queue: ");
 
-                    for (i, track) in node.queue.iter().enumerate() {
+                    for (i, track) in node.queue.iter().take(10).enumerate() {
                         let track_name = get_track_name(&track.track);
 
                         let requester = track
@@ -104,11 +131,15 @@ impl SongbirdCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let now = if i == 0 { "NOW | " } else { "" };
+                        let now = if i == 0 { "▶️" } else { "" };
 
-                        let line = format!("-{} {}  --- By: {}", now, track_name, requester);
+                        let line = format!("- {} {} | By: {}", now, track_name, requester);
 
                         message_builder.push_line(line);
+                    }
+
+                    if node.queue.len() > 10 {
+                        message_builder.push(format!("{} more tracks...", node.queue.len() - 10));
                     }
                 }
                 true => {
@@ -119,14 +150,27 @@ impl SongbirdCtx {
             message_builder.build()
         };
 
-        ctx.say(queue).await?;
+        ctx.say(queue_description).await?;
 
         Ok(())
     }
 
     pub async fn play(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
         let channel = get_author_voice_channel(ctx).await?;
-        self.join_voice_channel(channel).await?;
+
+        let should_join = match self.songbird.get(self.guild_id) {
+            Some(call) => {
+                let lock = call.lock().await;
+
+                lock.current_connection().is_none()
+            }
+            None => true,
+        };
+
+        if should_join {
+            self.join_voice_channel(channel).await?
+        }
+
         self.queue_music(ctx, query).await
     }
 
@@ -151,7 +195,26 @@ impl SongbirdCtx {
     async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
         let query_information = self.lava_client.auto_search_tracks(&query).await?;
 
-        match query_information.tracks.first() {
+        match query_information.playlist_info {
+            Some(_) => self.add_multi_tracks(ctx, &query_information).await,
+            None => self.add_single_track(ctx, query_information).await,
+        }
+    }
+
+    async fn add_multi_tracks(&self, ctx: Context<'_>, query_info: &Tracks) -> Result<(), Error> {
+        for track in query_info.tracks.iter() {
+            self.add_track_to_queue(&track).await?;
+        }
+
+        let reply = format!("Added {} tracks to the queue", query_info.tracks.len());
+
+        ctx.say(reply).await?;
+
+        Ok(())
+    }
+
+    async fn add_single_track(&self, ctx: Context<'_>, query_info: Tracks) -> Result<(), Error> {
+        match query_info.tracks.first() {
             Some(track) => self.add_to_queue(ctx, track.to_owned()).await,
             None => {
                 let reply = "Could not find any video of the search query.";
@@ -164,16 +227,22 @@ impl SongbirdCtx {
     }
 
     async fn add_to_queue(&self, ctx: Context<'_>, track: Track) -> Result<(), Error> {
+        self.add_track_to_queue(&track).await?;
+
+        ctx.say(format!("Added to queue: {}", get_track_name(&track)))
+            .await?;
+
+        Ok(())
+    }
+
+    async fn add_track_to_queue(&self, track: &Track) -> Result<(), Error> {
         self.lava_client
             .play(self.guild_id, track.to_owned())
             .requester(self.user_id)
             .queue()
             .await?;
 
-        self.add_jukebox_use(&track);
-
-        ctx.say(format!("Added to queue: {}", get_track_name(&track)))
-            .await?;
+        self.add_jukebox_use(track);
 
         Ok(())
     }
@@ -194,6 +263,22 @@ impl SongbirdCtx {
         }
 
         Ok(skipped_track)
+    }
+
+    async fn shuffle_playlist(&self) -> Result<(), Error> {
+        let nodes = self.lava_client.nodes().await;
+
+        let mut node = nodes
+            .get_mut(&self.guild_id)
+            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+
+        let now_playing = node.queue.remove(0);
+
+        node.queue.shuffle(rand::thread_rng().borrow_mut());
+
+        node.queue.insert(0, now_playing);
+
+        Ok(())
     }
 
     fn add_jukebox_use(&self, track: &Track) {
