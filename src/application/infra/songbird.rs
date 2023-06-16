@@ -4,7 +4,7 @@ use anyhow::{anyhow, Error};
 use lavalink_rs::{
     async_trait,
     gateway::LavalinkEventHandler,
-    model::{Track, TrackQueue},
+    model::{Track, TrackQueue, Tracks},
     LavalinkClient,
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
@@ -81,6 +81,14 @@ impl SongbirdCtx {
 
         self.songbird.remove(self.guild_id).await?;
 
+        let nodes = self.lava_client.nodes().await;
+
+        let mut node = nodes
+            .get_mut(&self.guild_id)
+            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+
+        node.queue.clear();
+
         ctx.say("Player stopped! Playlist cleared!").await?;
 
         Ok(())
@@ -115,7 +123,7 @@ impl SongbirdCtx {
                 false => {
                     message_builder.push_line("Queue: ");
 
-                    for (i, track) in node.queue.iter().enumerate() {
+                    for (i, track) in node.queue.iter().take(10).enumerate() {
                         let track_name = get_track_name(&track.track);
 
                         let requester = track
@@ -123,7 +131,7 @@ impl SongbirdCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let now = if i == 0 { "NOW | " } else { "" };
+                        let now = if i == 0 { "▶️" } else { "" };
 
                         let line = format!("- {} {} | By: {}", now, track_name, requester);
 
@@ -183,6 +191,25 @@ impl SongbirdCtx {
     async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
         let query_information = self.lava_client.auto_search_tracks(&query).await?;
 
+        match query_information.playlist_info {
+            Some(_) => self.add_multi_tracks(&query_information).await,
+            None => self.add_single_track(query_information, ctx).await,
+        }
+    }
+
+    async fn add_multi_tracks(&self, query_information: &Tracks) -> Result<(), Error> {
+        for track in query_information.tracks.iter() {
+            self.add_track_to_queue(&track).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn add_single_track(
+        &self,
+        query_information: Tracks,
+        ctx: Context<'_>,
+    ) -> Result<(), Error> {
         match query_information.tracks.first() {
             Some(track) => self.add_to_queue(ctx, track.to_owned()).await,
             None => {
@@ -196,16 +223,22 @@ impl SongbirdCtx {
     }
 
     async fn add_to_queue(&self, ctx: Context<'_>, track: Track) -> Result<(), Error> {
+        self.add_track_to_queue(&track).await?;
+
+        ctx.say(format!("Added to queue: {}", get_track_name(&track)))
+            .await?;
+
+        Ok(())
+    }
+
+    async fn add_track_to_queue(&self, track: &Track) -> Result<(), Error> {
         self.lava_client
             .play(self.guild_id, track.to_owned())
             .requester(self.user_id)
             .queue()
             .await?;
 
-        self.add_jukebox_use(&track);
-
-        ctx.say(format!("Added to queue: {}", get_track_name(&track)))
-            .await?;
+        self.add_jukebox_use(track);
 
         Ok(())
     }
