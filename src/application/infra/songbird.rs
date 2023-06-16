@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{borrow::BorrowMut, sync::Arc};
 
 use anyhow::{anyhow, Error};
 use lavalink_rs::{
@@ -8,6 +8,7 @@ use lavalink_rs::{
     LavalinkClient,
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
+use rand::seq::SliceRandom;
 use songbird::Songbird;
 
 use crate::{
@@ -67,9 +68,29 @@ impl SongbirdCtx {
         }
     }
 
+    pub async fn shuffle(&self, ctx: Context<'_>) -> Result<(), Error> {
+        self.shuffle_playlist().await?;
+
+        ctx.say("Shuffled playlist!").await?;
+
+        Ok(())
+    }
+
+    async fn shuffle_playlist(&self) -> Result<(), Error> {
+        let nodes = self.lava_client.nodes().await;
+
+        let mut node = nodes
+            .get_mut(&self.guild_id)
+            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+
+        node.queue.shuffle(rand::thread_rng().borrow_mut());
+
+        Ok(())
+    }
+
     pub async fn stop(&self, ctx: Context<'_>) -> Result<(), Error> {
         self.lava_client.stop(self.guild_id).await?;
-        
+
         ctx.say("Player stopped! Playlist cleared!").await?;
 
         Ok(())
@@ -91,7 +112,7 @@ impl SongbirdCtx {
     }
 
     pub async fn show_queue(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let queue = {
+        let queue_description = {
             let nodes = self.lava_client.nodes().await;
 
             let node = nodes
@@ -127,7 +148,7 @@ impl SongbirdCtx {
             message_builder.build()
         };
 
-        ctx.say(queue).await?;
+        ctx.say(queue_description).await?;
 
         Ok(())
     }
