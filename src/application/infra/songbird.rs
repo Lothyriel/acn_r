@@ -126,7 +126,20 @@ impl SongbirdCtx {
 
     pub async fn play(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
         let channel = get_author_voice_channel(ctx).await?;
-        self.join_voice_channel(channel).await?;
+
+        let should_join = match self.songbird.get(self.guild_id) {
+            Some(call) => {
+                let lock = call.lock().await;
+
+                lock.current_connection().is_none()
+            }
+            None => true,
+        };
+
+        if should_join {
+            self.join_voice_channel(channel).await?
+        }
+
         self.queue_music(ctx, query).await
     }
 
