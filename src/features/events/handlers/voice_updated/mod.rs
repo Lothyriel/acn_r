@@ -88,7 +88,7 @@ async fn trigger_dispatches(data: Arc<DispatchData>) -> Result<(), Error> {
     let dispatches_results = join_all(tasks).await.all_successes()?;
 
     dispatches_results.all_successes()?;
-    
+
     Ok(())
 }
 
