@@ -93,6 +93,13 @@ impl SongbirdCtx {
 
         self.songbird.remove(self.guild_id).await?;
 
+        let nodes = self.lava_client.nodes().await;
+
+        let mut node = nodes
+            .get_mut(&self.guild_id)
+            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+
+        node.queue.clear();
         ctx.say("Player stopped! Playlist cleared!").await?;
 
         Ok(())
