@@ -106,7 +106,7 @@ impl SongbirdCtx {
 
                         let now = if i == 0 { "NOW | " } else { "" };
 
-                        let line = format!("-{} {}  --- By: {}", now, track_name, requester);
+                        let line = format!("- {} {} | By: {}", now, track_name, requester);
 
                         message_builder.push_line(line);
                     }
