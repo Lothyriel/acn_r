@@ -209,12 +209,8 @@ impl SongbirdCtx {
         Ok(())
     }
 
-    async fn add_single_track(
-        &self,
-        query_information: Tracks,
-        ctx: Context<'_>,
-    ) -> Result<(), Error> {
-        match query_information.tracks.first() {
+    async fn add_single_track(&self, query_info: Tracks, ctx: Context<'_>) -> Result<(), Error> {
+        match query_info.tracks.first() {
             Some(track) => self.add_to_queue(ctx, track.to_owned()).await,
             None => {
                 let reply = "Could not find any video of the search query.";
