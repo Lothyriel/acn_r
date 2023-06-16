@@ -1,14 +1,3 @@
----------------------Jukebox----------------------------------
-aliases:
--play, -p
--queue, -q
-
-Implementar comandos:
-
--play-next, -pn: adiciona na fila após a musica atual
-
--stop, -s, -clear: para e limpa a fila
-
 --------------------R34-----------------------------------
 R34Use{id: Guid, guild_id: u64, user_id: u64, date: Date, post_title: String }
 Implementar comandos:
