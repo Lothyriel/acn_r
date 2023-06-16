@@ -268,7 +268,11 @@ impl SongbirdCtx {
             .get_mut(&self.guild_id)
             .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
 
+        let now_playing = node.queue.remove(0);
+
         node.queue.shuffle(rand::thread_rng().borrow_mut());
+
+        node.queue.insert(0, now_playing);
 
         Ok(())
     }
