@@ -1,8 +1,13 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use lavalink_rs::{async_trait, gateway::LavalinkEventHandler, model::Track, LavalinkClient};
-use poise::serenity_prelude::{Http, Mentionable, MessageBuilder};
+use lavalink_rs::{
+    async_trait,
+    gateway::LavalinkEventHandler,
+    model::{Track, TrackQueue},
+    LavalinkClient,
+};
+use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
 use songbird::Songbird;
 
 use crate::{
@@ -63,24 +68,12 @@ impl SongbirdCtx {
     }
 
     pub async fn skip(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let message = match self.lava_client.skip(self.guild_id).await {
-            Some(track) => {
-                let nodes = self.lava_client.nodes().await;
-
-                let node = nodes
-                    .get(&self.guild_id)
-                    .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
-
-                if node.queue.is_empty() {
-                    self.lava_client.stop(self.guild_id).await?;
-                }
-
-                format!(
-                    "{} Skipped: {}",
-                    ctx.author().mention(),
-                    get_track_name(&track.track)
-                )
-            }
+        let message = match self.skip_track().await? {
+            Some(track) => format!(
+                "{} Skipped: {}",
+                ctx.author().mention(),
+                get_track_name(&track.track)
+            ),
             None => "Nothing to skip.".to_owned(),
         };
 
@@ -103,7 +96,7 @@ impl SongbirdCtx {
                 false => {
                     message_builder.push_line("Queue: ");
 
-                    for track in node.queue.iter() {
+                    for (i, track) in node.queue.iter().enumerate() {
                         let track_name = get_track_name(&track.track);
 
                         let requester = track
@@ -111,7 +104,9 @@ impl SongbirdCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let line = format!("- {}  --- By: {}", track_name, requester);
+                        let now = if i == 0 { "NOW | " } else { "" };
+
+                        let line = format!("-{} {}  --- By: {}", now, track_name, requester);
 
                         message_builder.push_line(line);
                     }
@@ -130,12 +125,26 @@ impl SongbirdCtx {
     }
 
     pub async fn play(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
-        match self.songbird.get(self.guild_id) {
-            Some(_) => self.queue_music(ctx, query).await,
-            None => {
-                self.join_voice_channel(ctx).await?;
-                self.queue_music(ctx, query).await
+        let channel = get_author_voice_channel(ctx).await?;
+        self.join_voice_channel(channel).await?;
+        self.queue_music(ctx, query).await
+    }
+
+    pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<(), Error> {
+        let (_, handler) = self.songbird.join_gateway(self.guild_id, channel_id).await;
+
+        match handler {
+            Ok(connection_info) => {
+                self.lava_client
+                    .create_session_with_songbird(&connection_info)
+                    .await?;
+                Ok(())
             }
+            Err(error) => Err(anyhow!(
+                "Guild {} | Error joining the channel: {}",
+                self.guild_id,
+                error
+            )),
         }
     }
 
@@ -157,6 +166,7 @@ impl SongbirdCtx {
     async fn add_to_queue(&self, ctx: Context<'_>, track: Track) -> Result<(), Error> {
         self.lava_client
             .play(self.guild_id, track.to_owned())
+            .requester(self.user_id)
             .queue()
             .await?;
 
@@ -168,40 +178,22 @@ impl SongbirdCtx {
         Ok(())
     }
 
-    async fn join_voice_channel(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let guild = ctx.assure_cached_guild()?;
+    async fn skip_track(&self) -> Result<Option<TrackQueue>, Error> {
+        let skipped_track = self.lava_client.skip(self.guild_id).await;
 
-        let channel_id = guild
-            .voice_states
-            .get(&ctx.author().id)
-            .and_then(|voice_state| voice_state.channel_id);
+        if let Some(_) = skipped_track {
+            let nodes = self.lava_client.nodes().await;
 
-        let connect_to = match channel_id {
-            Some(channel) => channel,
-            None => {
-                ctx.say("Join a voice channel.").await?;
+            let node = nodes
+                .get(&self.guild_id)
+                .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
 
-                return Ok(());
-            }
-        };
-
-        let (_, handler) = self.songbird.join_gateway(self.guild_id, connect_to).await;
-
-        match handler {
-            Ok(connection_info) => {
-                self.lava_client
-                    .create_session_with_songbird(&connection_info)
-                    .await?;
-                Ok(())
-            }
-            Err(error) => {
-                let msg = format!("Error joining the channel: {}", error);
-
-                ctx.say(&msg).await?;
-
-                Err(anyhow!("Guild {} | {}", self.guild_id, msg))
+            if node.queue.is_empty() {
+                self.lava_client.stop(self.guild_id).await?;
             }
         }
+
+        Ok(skipped_track)
     }
 
     fn add_jukebox_use(&self, track: &Track) {
@@ -211,6 +203,25 @@ impl SongbirdCtx {
 
         tokio::spawn(async move { service.add_jukebox_use(j_use).await.log() });
     }
+}
+
+async fn get_author_voice_channel(ctx: Context<'_>) -> Result<ChannelId, Error> {
+    let guild = ctx.assure_cached_guild()?;
+    let channel_id = guild
+        .voice_states
+        .get(&ctx.author().id)
+        .and_then(|voice_state| voice_state.channel_id);
+
+    let connect_to = match channel_id {
+        Some(channel) => channel,
+        None => {
+            ctx.say("Join a voice channel.").await?;
+
+            return Err(anyhow!("User is not connected to a voice channel"));
+        }
+    };
+
+    Ok(connect_to)
 }
 
 fn get_track_name(track: &Track) -> &str {

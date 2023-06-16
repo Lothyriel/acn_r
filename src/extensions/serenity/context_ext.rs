@@ -1,6 +1,9 @@
+use std::sync::Arc;
+
 use anyhow::{anyhow, Error};
 use poise::async_trait;
 use poise::serenity_prelude::{Guild, GuildId};
+use songbird::Songbird;
 
 use crate::{
     application::{infra::songbird::SongbirdCtx, models::dto::user::GuildInfo},
@@ -54,9 +57,7 @@ impl ContextExt for Context<'_> {
 
         let user_id = self.author().id.0;
 
-        let songbird = songbird::get(self.serenity_context())
-            .await
-            .ok_or_else(|| anyhow!("Couldn't get songbird voice client"))?;
+        let songbird = get_songbird_client(self.serenity_context()).await?;
 
         Ok(SongbirdCtx::new(
             guild_id,
@@ -89,4 +90,12 @@ impl ContextExt for Context<'_> {
             })
         })
     }
+}
+
+pub async fn get_songbird_client(
+    ctx: &poise::serenity_prelude::Context,
+) -> Result<Arc<Songbird>, Error> {
+    songbird::get(ctx)
+        .await
+        .ok_or_else(|| anyhow!("Couldn't get songbird voice client"))
 }

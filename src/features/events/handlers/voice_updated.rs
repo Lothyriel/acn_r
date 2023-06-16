@@ -6,9 +6,10 @@ use poise::serenity_prelude::{ChannelId, Context, Http, Member, VoiceState};
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
+        infra::songbird::SongbirdCtx,
         models::{dto::user::UpdateActivityDto, entities::user::Activity},
     },
-    extensions::log_ext::LogExt,
+    extensions::{log_ext::LogExt, serenity::context_ext},
 };
 
 pub async fn handler(
@@ -27,6 +28,7 @@ pub async fn handler(
     let user_services = &data.user_services;
 
     dispatch_deploy(ctx, data);
+
     let user = new.user_id.to_user(ctx).await?;
     let member = new.member.as_ref().ok_or_else(|| {
         anyhow!(
@@ -37,6 +39,10 @@ pub async fn handler(
 
     let nickname = member.display_name().to_string();
     let guild_id = member.guild_id.0;
+
+    if activity == Activity::Moved {
+        dispatch_songbird_reconnect(ctx, member, data, new).await?;
+    }
 
     dispatch_disconnect(guild_id, new, ctx, member);
 
@@ -52,6 +58,41 @@ pub async fn handler(
     };
 
     user_services.update_user_activity(dto).await?;
+
+    Ok(())
+}
+
+async fn dispatch_songbird_reconnect(
+    ctx: &Context,
+    member: &Member,
+    data: &DependencyContainer,
+    state: &VoiceState,
+) -> Result<(), Error> {
+    if state.user_id != data.id {
+        return Ok(());
+    }
+
+    let channel = match state.channel_id {
+        Some(id) => id,
+        None => return Ok(()),
+    };
+
+    let songbird = context_ext::get_songbird_client(ctx).await?;
+    let lava_client = data.lava_client.to_owned();
+    let jukebox_services = data.jukebox_services.to_owned();
+
+    let songbird_ctx = SongbirdCtx::new(
+        member.guild_id.0,
+        member.user.id.0,
+        songbird,
+        lava_client,
+        jukebox_services,
+    );
+
+    tokio::spawn(async move {
+        let _ = songbird_ctx.join_voice_channel(channel).await;
+        songbird_ctx.join_voice_channel(channel).await.log();
+    });
 
     Ok(())
 }
