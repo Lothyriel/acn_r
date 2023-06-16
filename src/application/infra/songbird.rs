@@ -137,6 +137,10 @@ impl SongbirdCtx {
 
                         message_builder.push_line(line);
                     }
+
+                    if node.queue.len() > 10 {
+                        message_builder.push(format!("{} more tracks...", node.queue.len() - 10));
+                    }
                 }
                 true => {
                     message_builder.push_line("EMPTY!!!");
