@@ -71,7 +71,7 @@ impl SongbirdCtx {
     pub async fn shuffle(&self, ctx: Context<'_>) -> Result<(), Error> {
         self.shuffle_playlist().await?;
 
-        ctx.say("Shuffled playlist!").await?;
+        ctx.say("Shuffled queue!").await?;
 
         Ok(())
     }
@@ -89,7 +89,7 @@ impl SongbirdCtx {
 
         node.queue.clear();
 
-        ctx.say("Player stopped! Playlist cleared!").await?;
+        ctx.say("Player stopped! Queue cleared!").await?;
 
         Ok(())
     }
