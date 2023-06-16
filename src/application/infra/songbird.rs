@@ -91,6 +91,8 @@ impl SongbirdCtx {
     pub async fn stop(&self, ctx: Context<'_>) -> Result<(), Error> {
         self.lava_client.stop(self.guild_id).await?;
 
+        self.songbird.remove(self.guild_id).await?;
+
         ctx.say("Player stopped! Playlist cleared!").await?;
 
         Ok(())
