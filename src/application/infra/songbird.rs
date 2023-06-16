@@ -196,20 +196,20 @@ impl SongbirdCtx {
         let query_information = self.lava_client.auto_search_tracks(&query).await?;
 
         match query_information.playlist_info {
-            Some(_) => self.add_multi_tracks(&query_information).await,
-            None => self.add_single_track(query_information, ctx).await,
+            Some(_) => self.add_multi_tracks(ctx, &query_information).await,
+            None => self.add_single_track(ctx, query_information).await,
         }
     }
 
-    async fn add_multi_tracks(&self, query_information: &Tracks) -> Result<(), Error> {
-        for track in query_information.tracks.iter() {
+    async fn add_multi_tracks(&self, ctx: Context<'_>, query_info: &Tracks) -> Result<(), Error> {
+        for track in query_info.tracks.iter() {
             self.add_track_to_queue(&track).await?;
         }
 
         Ok(())
     }
 
-    async fn add_single_track(&self, query_info: Tracks, ctx: Context<'_>) -> Result<(), Error> {
+    async fn add_single_track(&self, ctx: Context<'_>, query_info: Tracks) -> Result<(), Error> {
         match query_info.tracks.first() {
             Some(track) => self.add_to_queue(ctx, track.to_owned()).await,
             None => {
