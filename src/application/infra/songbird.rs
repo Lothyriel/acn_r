@@ -134,7 +134,7 @@ impl SongbirdCtx {
                 false => {
                     message_builder.push_line("Queue: ");
 
-                    for (i, track) in node.queue.iter().enumerate() {
+                    for (i, track) in node.queue.iter().take(10).enumerate() {
                         let track_name = get_track_name(&track.track);
 
                         let requester = track
@@ -142,7 +142,7 @@ impl SongbirdCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let now = if i == 0 { "NOW | " } else { "" };
+                        let now = if i == 0 { "▶️" } else { "" };
 
                         let line = format!("- {} {} | By: {}", now, track_name, requester);
 
