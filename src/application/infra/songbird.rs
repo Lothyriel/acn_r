@@ -67,6 +67,14 @@ impl SongbirdCtx {
         }
     }
 
+    pub async fn stop(&self, ctx: Context<'_>) -> Result<(), Error> {
+        self.lava_client.stop(self.guild_id).await?;
+        
+        ctx.say("Player stopped! Playlist cleared!").await?;
+
+        Ok(())
+    }
+
     pub async fn skip(&self, ctx: Context<'_>) -> Result<(), Error> {
         let message = match self.skip_track().await? {
             Some(track) => format!(
