@@ -76,18 +76,6 @@ impl SongbirdCtx {
         Ok(())
     }
 
-    async fn shuffle_playlist(&self) -> Result<(), Error> {
-        let nodes = self.lava_client.nodes().await;
-
-        let mut node = nodes
-            .get_mut(&self.guild_id)
-            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
-
-        node.queue.shuffle(rand::thread_rng().borrow_mut());
-
-        Ok(())
-    }
-
     pub async fn stop(&self, ctx: Context<'_>) -> Result<(), Error> {
         self.lava_client.stop(self.guild_id).await?;
 
@@ -238,6 +226,18 @@ impl SongbirdCtx {
         }
 
         Ok(skipped_track)
+    }
+
+    async fn shuffle_playlist(&self) -> Result<(), Error> {
+        let nodes = self.lava_client.nodes().await;
+
+        let mut node = nodes
+            .get_mut(&self.guild_id)
+            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+
+        node.queue.shuffle(rand::thread_rng().borrow_mut());
+
+        Ok(())
     }
 
     fn add_jukebox_use(&self, track: &Track) {
