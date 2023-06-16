@@ -44,7 +44,7 @@ pub async fn handler(
         dispatch_songbird_reconnect(ctx, member, data, new).await?;
     }
 
-    dispatch_disconnect(guild_id, new, ctx, member);
+    dispatch_afk_disconnect(guild_id, new, ctx, member);
 
     let guild = ctx.http.get_guild(guild_id).await?;
 
@@ -107,7 +107,7 @@ fn dispatch_deploy(ctx: &Context, data: &DependencyContainer) {
     });
 }
 
-fn dispatch_disconnect(guild_id: u64, new: &VoiceState, ctx: &Context, member: &Member) {
+fn dispatch_afk_disconnect(guild_id: u64, new: &VoiceState, ctx: &Context, member: &Member) {
     let data = Arc::new(DisconnectData {
         guild_id,
         channel_id: new.channel_id,
