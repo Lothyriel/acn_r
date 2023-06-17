@@ -77,19 +77,22 @@ impl SongbirdCtx {
     }
 
     pub async fn stop(&self, ctx: Context<'_>) -> Result<(), Error> {
+        self.stop_player().await?;
+
+        ctx.say("Player stopped! Queue cleared!").await?;
+
+        Ok(())
+    }
+
+    async fn stop_player(&self) -> Result<(), Error> {
         self.lava_client.stop(self.guild_id).await?;
 
         self.songbird.remove(self.guild_id).await?;
 
-        let nodes = self.lava_client.nodes().await;
+        self.lava_client.destroy(self.guild_id).await?;
 
-        let mut node = nodes
-            .get_mut(&self.guild_id)
-            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
-
-        node.queue.clear();
-
-        ctx.say("Player stopped! Queue cleared!").await?;
+        // let nodes = self.lava_client.nodes().await;
+        // nodes.remove(&self.guild_id);
 
         Ok(())
     }
@@ -182,6 +185,7 @@ impl SongbirdCtx {
                 self.lava_client
                     .create_session_with_songbird(&connection_info)
                     .await?;
+                
                 Ok(())
             }
             Err(error) => Err(anyhow!(
@@ -292,6 +296,7 @@ impl SongbirdCtx {
 
 async fn get_author_voice_channel(ctx: Context<'_>) -> Result<ChannelId, Error> {
     let guild = ctx.assure_cached_guild()?;
+
     let channel_id = guild
         .voice_states
         .get(&ctx.author().id)
