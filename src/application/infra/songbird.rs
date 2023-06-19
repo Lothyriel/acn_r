@@ -4,7 +4,7 @@ use anyhow::{anyhow, Error};
 use lavalink_rs::{
     async_trait,
     gateway::LavalinkEventHandler,
-    model::{Track, TrackQueue, Tracks},
+    model::{Track, TrackQueue},
     LavalinkClient,
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
@@ -84,19 +84,6 @@ impl SongbirdCtx {
         Ok(())
     }
 
-    async fn stop_player(&self) -> Result<(), Error> {
-        self.lava_client.stop(self.guild_id).await?;
-
-        self.songbird.remove(self.guild_id).await?;
-
-        self.lava_client.destroy(self.guild_id).await?;
-
-        // let nodes = self.lava_client.nodes().await;
-        // nodes.remove(&self.guild_id);
-
-        Ok(())
-    }
-
     pub async fn skip(&self, ctx: Context<'_>) -> Result<(), Error> {
         let message = match self.skip_track().await? {
             Some(track) => format!(
@@ -159,22 +146,15 @@ impl SongbirdCtx {
     }
 
     pub async fn play(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
-        let channel = get_author_voice_channel(ctx).await?;
-
-        let should_join = match self.songbird.get(self.guild_id) {
-            Some(call) => {
-                let lock = call.lock().await;
-
-                lock.current_connection().is_none()
-            }
-            None => true,
-        };
-
-        if should_join {
-            self.join_voice_channel(channel).await?
-        }
+        self.assure_connected(ctx).await?;
 
         self.queue_music(ctx, query).await
+    }
+
+    pub async fn playlist(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
+        self.assure_connected(ctx).await?;
+
+        self.queue_playlist(ctx, query).await
     }
 
     pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<(), Error> {
@@ -185,7 +165,7 @@ impl SongbirdCtx {
                 self.lava_client
                     .create_session_with_songbird(&connection_info)
                     .await?;
-                
+
                 Ok(())
             }
             Err(error) => Err(anyhow!(
@@ -196,29 +176,42 @@ impl SongbirdCtx {
         }
     }
 
-    async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
-        let query_information = self.lava_client.auto_search_tracks(&query).await?;
+    async fn assure_connected(&self, ctx: Context<'_>) -> Result<(), Error> {
+        let channel = get_author_voice_channel(ctx).await?;
 
-        match query_information.playlist_info {
-            Some(_) => self.add_multi_tracks(ctx, &query_information).await,
-            None => self.add_single_track(ctx, query_information).await,
+        let should_join = match self.songbird.get(self.guild_id) {
+            Some(call) => {
+                let lock = call.lock().await;
+
+                match lock.current_connection() {
+                    Some(current_connection) => {
+                        current_connection.channel_id.map(|c| c.0) == Some(channel.0)
+                    }
+                    None => true,
+                }
+            }
+            None => true,
+        };
+
+        if should_join {
+            self.join_voice_channel(channel).await?
         }
-    }
-
-    async fn add_multi_tracks(&self, ctx: Context<'_>, query_info: &Tracks) -> Result<(), Error> {
-        for track in query_info.tracks.iter() {
-            self.add_track_to_queue(&track).await?;
-        }
-
-        let reply = format!("Added {} tracks to the queue", query_info.tracks.len());
-
-        ctx.say(reply).await?;
 
         Ok(())
     }
 
-    async fn add_single_track(&self, ctx: Context<'_>, query_info: Tracks) -> Result<(), Error> {
-        match query_info.tracks.first() {
+    async fn stop_player(&self) -> Result<(), Error> {
+        self.songbird.remove(self.guild_id).await?;
+
+        self.lava_client.destroy(self.guild_id).await?;
+
+        Ok(())
+    }
+
+    async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
+        let query_information = self.lava_client.auto_search_tracks(&query).await?;
+
+        match query_information.tracks.first() {
             Some(track) => self.add_to_queue(ctx, track.to_owned()).await,
             None => {
                 let reply = "Could not find any video of the search query.";
@@ -228,6 +221,23 @@ impl SongbirdCtx {
                 Ok(())
             }
         }
+    }
+
+    async fn queue_playlist(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
+        let query_information = self.lava_client.auto_search_tracks(&query).await?;
+
+        for track in query_information.tracks.iter() {
+            self.add_track_to_queue(&track).await?;
+        }
+
+        let reply = format!(
+            "Added {} tracks to the queue",
+            query_information.tracks.len()
+        );
+
+        ctx.say(reply).await?;
+
+        Ok(())
     }
 
     async fn add_to_queue(&self, ctx: Context<'_>, track: Track) -> Result<(), Error> {
