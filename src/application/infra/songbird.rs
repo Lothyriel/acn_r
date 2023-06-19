@@ -185,7 +185,7 @@ impl SongbirdCtx {
 
                 match lock.current_connection() {
                     Some(current_connection) => {
-                        current_connection.channel_id.map(|c| c.0) == Some(channel.0)
+                        current_connection.channel_id.map(|c| c.0) != Some(channel.0)
                     }
                     None => true,
                 }
