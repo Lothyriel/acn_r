@@ -312,16 +312,14 @@ async fn get_author_voice_channel(ctx: Context<'_>) -> Result<ChannelId, Error> 
         .get(&ctx.author().id)
         .and_then(|voice_state| voice_state.channel_id);
 
-    let connect_to = match channel_id {
-        Some(channel) => channel,
+    match channel_id {
+        Some(channel) => Ok(channel),
         None => {
             ctx.say("Join a voice channel.").await?;
 
             return Err(anyhow!("User is not connected to a voice channel"));
         }
-    };
-
-    Ok(connect_to)
+    }
 }
 
 fn get_track_name(track: &Track) -> &str {
