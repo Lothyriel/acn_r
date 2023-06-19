@@ -5,6 +5,7 @@ mod queue;
 mod shuffle;
 mod skip;
 mod stop;
+mod playlist;
 
 pub fn jukebox_group<'a>() -> Vec<Command> {
     vec![
@@ -13,5 +14,6 @@ pub fn jukebox_group<'a>() -> Vec<Command> {
         queue::queue(),
         stop::stop(),
         shuffle::shuffle(),
+        playlist::playlist(),
     ]
 }
