@@ -12,6 +12,7 @@ services:
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:latest
     restart: unless-stopped
+    mem_limit: 400m
     ports:
       - 2333:2333
     environment:
