@@ -1,3 +1,5 @@
+use std::cmp::min;
+use chrono::{Utc, DateTime};
 use anyhow::Error;
 use futures::future::join_all;
 use poise::{
@@ -35,10 +37,11 @@ pub async fn stats(
         let name = get_name(guild_id, ctx, f.user_id).await?;
         let seconds_online = f.seconds_online;
         let hours_online = seconds_online / SECONDS_IN_HOUR;
-
+        let average_per_day = get_average_hours_per_day(guild_stats.initial_date, hours_online);
+        
         Ok(format!(
-            "- {} ficou {} segundos online ({} horas)",
-            name, seconds_online, hours_online
+            "- {} ficou {} segundos online ({} hora(s)) - Uma média de {} hora(s) por dia",
+            name, seconds_online, hours_online, average_per_day
         ))
     });
 
@@ -71,4 +74,12 @@ async fn get_name(guild_id: GuildId, ctx: Context<'_>, user_id: u64) -> Result<S
             .await?
             .unwrap_or_else(|| format!("Unknown {user_id}"))),
     }
+}
+
+fn get_average_hours_per_day(initial_date: DateTime<Utc>, hours: i64) -> f64 {
+    let span = Utc::now() - initial_date;
+
+    let total_days = min(span.num_days(), 1); 
+
+    return hours as f64 / total_days as f64;
 }
