@@ -115,14 +115,14 @@ impl StatusManager {
 
         let mut activities = vec![];
 
-        for c in connected {
-            self.connect_user(c);
-            activities.push(c.to_activity(Activity::Connected));
+        for info in connected {
+            self.connect_user(info);
+            activities.push(info.to_activity(Activity::Connected));
         }
 
-        for d in disconnected {
-            self.disconnect_user(d);
-            activities.push(d.to_activity(Activity::Disconnected));
+        for info in disconnected {
+            self.disconnect_user(info);
+            activities.push(info.to_activity(Activity::Disconnected));
         }
 
         activities
