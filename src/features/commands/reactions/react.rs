@@ -9,16 +9,16 @@ pub async fn react(
 ) -> CommandResult {
     let reaction_repository = &ctx.data().repositories.reaction;
 
-    let reaction = reaction_repository
+    let dto = reaction_repository
         .reaction(emotion, ctx.guild_id().map(|g| g.0))
         .await?;
 
     let file = AttachmentType::Bytes {
-        data: reaction.bytes.into(),
-        filename: reaction.file_name,
+        data: dto.bytes.into(),
+        filename: dto.reaction.file.filename,
     };
 
-    ctx.send(|x| x.attachment(file).content(reaction.emotion))
+    ctx.send(|x| x.attachment(file).content(dto.reaction.emotion))
         .await?;
 
     Ok(())
