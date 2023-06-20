@@ -5,12 +5,12 @@ use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 use crate::application::models::entities::{guild::Guild, guild_name::GuildNameChange};
 
 #[derive(Clone)]
-pub struct GuildServices {
+pub struct GuildRepository {
     guilds: Collection<Guild>,
     guild_name_changes: Collection<GuildNameChange>,
 }
 
-impl GuildServices {
+impl GuildRepository {
     pub fn new(database: &Database) -> Self {
         Self {
             guilds: database.collection("Guilds"),

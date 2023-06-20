@@ -12,19 +12,19 @@ use crate::application::{
         dto::user::{AddUserDto, UpdateActivityDto, UpdateNickDto},
         entities::{nickname::NicknameChange, user::User, user_activity::UserActivity},
     },
-    services::guild_services::GuildServices,
+    services::guild_services::GuildRepository,
 };
 
 #[derive(Clone)]
-pub struct UserServices {
+pub struct UserRepository {
     users: Collection<User>,
     user_activity: Collection<UserActivity>,
     nickname_changes: Collection<NicknameChange>,
-    guild_services: GuildServices,
+    guild_services: GuildRepository,
 }
 
-impl UserServices {
-    pub fn new(database: &Database, guild_services: GuildServices) -> Self {
+impl UserRepository {
+    pub fn new(database: &Database, guild_services: GuildRepository) -> Self {
         Self {
             guild_services,
             users: database.collection("Users"),

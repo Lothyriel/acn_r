@@ -17,22 +17,19 @@ use crate::{
 const SECONDS_IN_30_MINUTES: u64 = 30 * 60;
 
 #[derive(Clone)]
-pub struct GithubServices {
+pub struct DeployServices {
     deploy_semaphor: Arc<Semaphore>,
     configurations: Arc<RwLock<AppConfigurations>>,
     client: Arc<GithubClient>,
 }
 
-impl GithubServices {
-    pub fn new(
-        client: Arc<GithubClient>,
-        configurations: Arc<RwLock<AppConfigurations>>,
-    ) -> Result<Self, Error> {
-        Ok(Self {
+impl DeployServices {
+    pub fn new(client: Arc<GithubClient>, configurations: Arc<RwLock<AppConfigurations>>) -> Self {
+        Self {
             client,
             configurations,
             deploy_semaphor: Arc::new(Semaphore::new(1)),
-        })
+        }
     }
 
     pub async fn try_deploy(&self, http: Arc<Http>, cache: Arc<Cache>) -> Result<(), Error> {

@@ -10,11 +10,11 @@ use crate::application::models::{
 };
 
 #[derive(Clone)]
-pub struct StatsServices {
+pub struct StatsRepository {
     user_activity: Collection<UserActivity>,
 }
 
-impl StatsServices {
+impl StatsRepository {
     pub fn new(database: &Database) -> Self {
         Self {
             user_activity: database.collection("UserActivity"),
