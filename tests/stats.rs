@@ -1,14 +1,18 @@
 #[cfg(test)]
 mod stats {
+    use std::collections::HashSet;
+
     use acn_r::{
         application::{
-            dependency_configuration::DependencyContainer,
+            dependency_configuration::RepositoriesContainer,
+            infra::status_monitor::StatusManager,
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
             services::{
-                guild_services::GuildServices, stats_services::StatsServices,
-                user_services::UserServices,
+                guild_services::GuildRepository, stats_services::StatsRepository,
+                user_services::UserRepository,
             },
         },
+        extensions::serenity::guild_ext::UserStatusInfo,
         init_app,
     };
     use anyhow::{anyhow, Error};
@@ -22,8 +26,8 @@ mod stats {
     #[tokio::test]
     async fn should_get_stats() -> Result<(), Error> {
         let settings = init_app()?;
-        let db = DependencyContainer::database(&settings).await?;
-        let stats_services = StatsServices::new(&db);
+        let db = RepositoriesContainer::database(&settings).await?;
+        let stats_services = StatsRepository::new(&db);
 
         populate_test_stats(&db).await?;
 
@@ -69,7 +73,7 @@ mod stats {
     }
 
     async fn populate_test_stats(db: &Database) -> Result<(), Error> {
-        let user_services = UserServices::new(&db, GuildServices::new(&db));
+        let user_services = UserRepository::new(&db, GuildRepository::new(&db));
 
         let mut date = chrono::Utc::now();
 
