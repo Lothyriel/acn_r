@@ -1,12 +1,23 @@
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use anyhow::Error;
+use futures::future::join_all;
+use log::warn;
 use poise::serenity_prelude::{Cache, Http};
 use tokio::{sync::Mutex, time};
 
 use crate::{
-    application::{models::dto::user::UpdateActivityDto, repositories::user::UserRepository},
-    extensions::serenity::guild_ext::{self, UserStatusInfo},
+    application::{
+        models::{
+            dto::user::UpdateActivityDto,
+            entities::{user::Activity, user_activity::UserActivity},
+        },
+        repositories::user::UserRepository,
+    },
+    extensions::{
+        log_ext::LogErrorsExt,
+        serenity::guild_ext::{self, StatusInfo},
+    },
 };
 
 pub struct StatusMonitor {
@@ -45,6 +56,16 @@ impl StatusMonitor {
     }
 
     pub async fn update_user_activity(&self, dto: UpdateActivityDto) -> Result<(), Error> {
+        let mut manager = self.manager.lock().await;
+
+        let user_status = StatusInfo::new(dto.user_id, dto.guild_id);
+
+        match dto.activity {
+            Activity::Connected => manager.connect_user(&user_status),
+            Activity::Disconnected => manager.disconnect_user(&user_status),
+            _ => {}
+        }
+
         self.user_repository.update_user_activity(dto).await?;
 
         Ok(())
@@ -55,61 +76,59 @@ impl StatusMonitor {
 
         let mut manager = self.manager.lock().await;
 
-        let update = manager.get_status_update(new_status);
+        let activities = manager.update_status(new_status);
 
-        for c in update.connected {
-            manager.connect_user(c);
-        }
+        let add_activity_tasks = activities.into_iter().map(|a| {
+            warn!("Added activity mannualy: {:?}", a);
+            self.user_repository.add_activity(a)
+        });
 
-        for d in update.disconnected {
-            manager.disconnect_user(d);
-        }
+        join_all(add_activity_tasks).await.log_errors();
 
         Ok(())
     }
 
-    async fn get_online_users(&self) -> Result<HashSet<UserStatusInfo>, Error> {
+    async fn get_online_users(&self) -> Result<HashSet<StatusInfo>, Error> {
         guild_ext::get_all_online_users(self.http.to_owned(), self.cache.to_owned()).await
     }
 }
 
 pub struct StatusManager {
-    current_status: HashSet<UserStatusInfo>,
+    current_status: HashSet<StatusInfo>,
 }
 
 impl StatusManager {
-    pub fn new(current_status: HashSet<UserStatusInfo>) -> Self {
+    pub fn new(current_status: HashSet<StatusInfo>) -> Self {
         Self { current_status }
     }
 
-    pub fn get_status_update(&self, new_status: HashSet<UserStatusInfo>) -> StatusUpdate {
-        let connected = new_status.difference(&self.current_status).cloned();
+    pub fn update_status(&mut self, new_status: HashSet<StatusInfo>) -> Vec<UserActivity> {
+        let current = self.current_status.to_owned();
 
-        let disconnected = self.current_status.difference(&new_status).cloned();
+        let connected = new_status.difference(&current);
 
-        StatusUpdate::new(connected.collect(), disconnected.collect())
-    }
+        let disconnected = current.difference(&new_status);
 
-    fn disconnect_user(&mut self, user_info: UserStatusInfo) {
-        self.current_status.remove(&user_info);
-    }
+        let mut activities = vec![];
 
-    fn connect_user(&mut self, user_info: UserStatusInfo) {
-        self.current_status.insert(user_info);
-    }
-}
-
-#[derive(Debug)]
-pub struct StatusUpdate {
-    pub connected: HashSet<UserStatusInfo>,
-    pub disconnected: HashSet<UserStatusInfo>,
-}
-
-impl StatusUpdate {
-    fn new(connected: HashSet<UserStatusInfo>, disconnected: HashSet<UserStatusInfo>) -> Self {
-        Self {
-            connected,
-            disconnected,
+        for c in connected {
+            self.connect_user(c);
+            activities.push(c.to_activity(Activity::Connected));
         }
+
+        for d in disconnected {
+            self.disconnect_user(d);
+            activities.push(d.to_activity(Activity::Disconnected));
+        }
+
+        activities
+    }
+
+    fn disconnect_user(&mut self, user_info: &StatusInfo) {
+        self.current_status.remove(user_info);
+    }
+
+    fn connect_user(&mut self, user_info: &StatusInfo) {
+        self.current_status.insert(user_info.to_owned());
     }
 }
