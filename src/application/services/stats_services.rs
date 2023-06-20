@@ -1,20 +1,12 @@
-use std::{collections::HashMap, ops::Not};
+use std::collections::HashMap;
 
 use anyhow::{anyhow, Error};
 use futures::TryStreamExt;
-use log::{error, warn};
-use mongodb::{
-    bson::{doc, oid::ObjectId},
-    Collection, Database,
-};
-use poise::async_trait;
+use mongodb::{bson::doc, Collection, Database};
 
-use crate::{
-    application::models::{
-        dto::stats::{StatsDto, UserStats},
-        entities::{user::Activity, user_activity::UserActivity},
-    },
-    extensions::serenity::{guild_ext, serenity_structs::Context},
+use crate::application::models::{
+    dto::stats::{StatsDto, UserStats},
+    entities::{user::Activity, user_activity::UserActivity},
 };
 
 #[derive(Clone)]

@@ -205,7 +205,7 @@ impl LavalinkCtx {
 
         let nodes = self.lava_client.nodes().await;
         nodes.remove(&self.guild_id);
-        
+
         let loops = self.lava_client.loops().await;
         loops.remove(&self.guild_id);
 
