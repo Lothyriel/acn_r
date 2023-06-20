@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Reaction {
-    #[serde(rename = "_id")]    
+    #[serde(rename = "_id")]
     pub id: ObjectId,
     pub emotion: String,
     pub guild_id: Option<u64>,
