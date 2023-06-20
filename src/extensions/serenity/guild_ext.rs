@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, collections::HashSet};
 
 use anyhow::{anyhow, Error};
 use poise::{
@@ -11,7 +11,7 @@ use crate::extensions::std_ext::VecResultErrorExt;
 #[async_trait]
 pub trait GuildExt {
     async fn say_on_main_text_channel(self, http: &Http, msg: &str) -> Result<(), Error>;
-    fn get_online_users(self, cache: Arc<Cache>) -> Result<Vec<u64>, Error>;
+    fn get_online_users(self, cache: Arc<Cache>) -> Result<HashSet<UserStatusInfo>, Error>;
 }
 
 #[async_trait]
@@ -30,21 +30,24 @@ impl GuildExt for GuildId {
         Ok(())
     }
 
-    fn get_online_users(self, cache: Arc<Cache>) -> Result<Vec<u64>, Error> {
+    fn get_online_users(self, cache: Arc<Cache>) -> Result<HashSet<UserStatusInfo>, Error> {
         let guild = cache.guild(self).ok_or_else(|| anyhow!(""))?;
 
         let online_users = guild
             .voice_states
             .into_values()
             .filter(|v| v.channel_id.is_some())
-            .map(|c| c.user_id.0)
+            .map(|c| UserStatusInfo::new(c.user_id.0, guild.id.0))
             .collect();
 
         Ok(online_users)
     }
 }
 
-pub async fn get_all_online_users(http: Arc<Http>, cache: Arc<Cache>) -> Result<Vec<u64>, Error> {
+pub async fn get_all_online_users(
+    http: Arc<Http>,
+    cache: Arc<Cache>,
+) -> Result<HashSet<UserStatusInfo>, Error> {
     let guilds_info = http.get_guilds(None, None).await?;
 
     let get_online_users_results: Vec<_> = guilds_info
@@ -55,4 +58,16 @@ pub async fn get_all_online_users(http: Arc<Http>, cache: Arc<Cache>) -> Result<
     let all_online_users = get_online_users_results.all_successes()?;
 
     Ok(all_online_users.into_iter().flatten().collect())
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+pub struct UserStatusInfo {
+    pub user_id: u64,
+    pub guild_id: u64,
+}
+
+impl UserStatusInfo {
+    pub fn new(user_id: u64, guild_id: u64) -> Self {
+        Self { user_id, guild_id }
+    }
 }
