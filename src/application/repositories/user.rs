@@ -1,11 +1,7 @@
 use std::borrow::Borrow;
 
-use anyhow::{anyhow, Error};
-use mongodb::{
-    bson::{doc, oid::ObjectId},
-    options::FindOneOptions,
-    Collection, Database,
-};
+use anyhow::Error;
+use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
 use crate::application::{
     models::{
@@ -42,14 +38,11 @@ impl UserRepository {
         Ok(possible_last_change.map(|n| n.nickname))
     }
 
-    pub async fn update_user_activity(
-        &self,
-        update_dto: UpdateActivityDto,
-    ) -> Result<ObjectId, Error> {
+    pub async fn update_user_activity(&self, update_dto: UpdateActivityDto) -> Result<(), Error> {
         self.add_user(update_dto.borrow().into()).await?;
-        let id = self.add_activity(update_dto).await?;
+        self.add_activity(update_dto.borrow().into()).await?;
 
-        Ok(id)
+        Ok(())
     }
 
     pub async fn add_user(&self, add_user_dto: AddUserDto) -> Result<(), Error> {
@@ -114,22 +107,9 @@ impl UserRepository {
         Ok(self.users.find_one(doc, None).await?)
     }
 
-    async fn add_activity(&self, update_dto: UpdateActivityDto) -> Result<ObjectId, Error> {
-        let activity = UserActivity {
-            id: ObjectId::new(),
-            guild_id: update_dto.guild_id,
-            user_id: update_dto.user_id,
-            date: update_dto.date,
-            activity_type: update_dto.activity,
-        };
+    async fn add_activity(&self, activity: UserActivity) -> Result<(), Error> {
+        self.user_activity.insert_one(activity, None).await?;
 
-        let result = self.user_activity.insert_one(activity, None).await?;
-
-        result.inserted_id.as_object_id().ok_or_else(|| {
-            anyhow!(
-                "[IMPOSSIBLE] {} is not a valid ObjectId",
-                result.inserted_id
-            )
-        })
+        Ok(())
     }
 }

@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 
-use crate::application::models::entities::user::Activity;
+use crate::application::models::entities::{user::Activity, user_activity::UserActivity};
 
 pub struct UpdateActivityDto {
     pub user_id: u64,
@@ -40,6 +40,17 @@ impl From<&UpdateActivityDto> for AddUserDto {
             user_id: d.user_id,
             nickname: d.nickname.to_owned(),
             date: d.date,
+        }
+    }
+}
+
+impl From<&UpdateActivityDto> for UserActivity {
+    fn from(d: &UpdateActivityDto) -> Self {
+        Self {
+            guild_id: d.guild_id,
+            user_id: d.user_id,
+            date: d.date,
+            activity_type: d.activity,
         }
     }
 }
