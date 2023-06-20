@@ -15,19 +15,19 @@ mod migrate {
     async fn should_migrate_user_activity() -> Result<(), Error> {
         let settings = init_app()?;
 
-        let collection = create_mongo_client(&settings.mongo_settings)
+        let _collection = create_mongo_client(&settings.mongo_settings)
             .await?
             .database("acn_r")
             .collection::<UserActivity>("UserActivity");
 
-        let data = get_data().await?;
+        // let data = get_data().await?;
 
-        collection.insert_many(data, None).await?;
+        // collection.insert_many(data, None).await?;
 
         Ok(())
     }
 
-    async fn get_data() -> Result<Vec<UserActivity>, Error> {
+    async fn _get_data() -> Result<Vec<UserActivity>, Error> {
         let client = Client::new();
 
         let url = "https://sa-east-1.aws.data.mongodb-api.com/app/data-bsxri/endpoint/data/v1/action/find";
@@ -56,11 +56,11 @@ mod migrate {
 
         #[derive(Deserialize)]
         struct Output {
-            documents: Vec<UserActivity>,
+            _documents: Vec<UserActivity>,
         }
 
         let output: Output = response.json().await?;
 
-        Ok(output.documents)
+        Ok(output._documents)
     }
 }

@@ -9,15 +9,12 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: acn
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-
-  mongo-express:
-    image: mongo-express
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:latest
     restart: unless-stopped
+    mem_limit: 400m
     ports:
-      - 8081:8081
-    depends_on:
-      - mongodb
+      - 2333:2333
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: acn
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASSWORD}
-      ME_CONFIG_MONGODB_SERVER: mongodb
+      SERVER_PORT: 2333
+      LAVALINK_SERVER_PASSWORD: ${LAVALINK_PASSWORD}

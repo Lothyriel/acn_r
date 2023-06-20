@@ -1,22 +1,22 @@
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use poise::serenity_prelude::Context;
-use serenity::{
-    http::{CacheHttp, Http},
-    model::{
-        prelude::{ChannelId, Member},
-        voice::VoiceState,
-    },
-};
+use futures::{future::join_all, TryFutureExt};
+use lavalink_rs::LavalinkClient;
+use poise::serenity_prelude::{Cache, ChannelId, Context, Http, UserId, VoiceState};
+use songbird::Songbird;
 
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
+        infra::deploy_service::DeployServices,
         models::{dto::user::UpdateActivityDto, entities::user::Activity},
+        repositories::jukebox::JukeboxRepository,
     },
-    extensions::log_ext::LogExt,
+    extensions::{serenity::context_ext, std_ext::VecResultErrorExt},
 };
+
+mod dispatches;
 
 pub async fn handler(
     ctx: &Context,
@@ -31,10 +31,10 @@ pub async fn handler(
         None => Activity::Connected,
     };
 
-    let user_services = &data.user_services;
+    let status_monitor = &data.services.status_monitor;
 
-    dispatch_deploy(ctx, data);
     let user = new.user_id.to_user(ctx).await?;
+
     let member = new.member.as_ref().ok_or_else(|| {
         anyhow!(
             "{} VoiceStateUpdate triggered outside a Guild context",
@@ -43,11 +43,10 @@ pub async fn handler(
     })?;
 
     let nickname = member.display_name().to_string();
+
     let guild_id = member.guild_id.0;
 
-    dispatch_disconnect(guild_id, new, ctx, member);
-
-    let guild = ctx.http().get_guild(guild_id).await?;
+    let guild = ctx.http.get_guild(guild_id).await?;
 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
@@ -58,49 +57,56 @@ pub async fn handler(
         date: now,
     };
 
-    user_services.update_user_activity(dto).await?;
+    status_monitor.update_user_activity(dto).await?;
+
+    let dispatch_data = DispatchData {
+        songbird: context_ext::get_songbird_client(ctx).await?,
+        cache: ctx.cache.to_owned(),
+        http: ctx.http.to_owned(),
+        channel_id: new.channel_id,
+        user_id: new.user_id,
+        jukebox_repository: data.repositories.jukebox.to_owned(),
+        deploy_services: data.services.deploy_services.to_owned(),
+        lava_client: data.services.lava_client.to_owned(),
+        id: data.services.id,
+        guild_id,
+        activity,
+    };
+
+    trigger_dispatches(Arc::new(dispatch_data)).await
+}
+
+async fn trigger_dispatches(data: Arc<DispatchData>) -> Result<(), Error> {
+    let tasks = [
+        |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),
+        |c| tokio::spawn(dispatches::deploy::handler(c)),
+        |c| tokio::spawn(dispatches::songbird_reconnect::handler(c)),
+        |c| tokio::spawn(dispatches::songbird_disconnect::handler(c)),
+    ]
+    .into_iter()
+    .map(|c| c(data.to_owned()).map_err(|e| anyhow!(e)));
+
+    let dispatches_results = join_all(tasks).await.all_successes()?;
+
+    dispatches_results.all_successes()?;
 
     Ok(())
 }
 
-fn dispatch_deploy(ctx: &Context, data: &DependencyContainer) {
-    let http = ctx.http.to_owned();
-    let services = data.github_services.to_owned();
-    let cache = ctx.cache.to_owned();
-
-    tokio::spawn(async move {
-        services.try_deploy(http, cache).await.log();
-    });
-}
-
-fn dispatch_disconnect(guild_id: u64, new: &VoiceState, ctx: &Context, member: &Member) {
-    let data = Arc::new(DisconnectData {
-        guild_id,
-        channel_id: new.channel_id,
-        http: ctx.http.to_owned(),
-        member: member.deref().to_owned(),
-    });
-
-    tokio::spawn(async {
-        disconnect_afk(data).await.log();
-    });
-}
-
-struct DisconnectData {
-    guild_id: u64,
-    channel_id: Option<ChannelId>,
+pub struct DispatchData {
+    cache: Arc<Cache>,
     http: Arc<Http>,
-    member: Member,
-}
+    songbird: Arc<Songbird>,
+    lava_client: LavalinkClient,
 
-async fn disconnect_afk(data: Arc<DisconnectData>) -> Result<bool, Error> {
-    let guild = data.http.get_guild(data.guild_id).await?;
-    if guild.afk_channel_id == data.channel_id {
-        data.member.disconnect_from_voice(&data.http).await?;
-        return Ok(true);
-    }
+    jukebox_repository: JukeboxRepository,
+    deploy_services: DeployServices,
+    id: u64,
 
-    Ok(false)
+    user_id: UserId,
+    guild_id: u64,
+    activity: Activity,
+    channel_id: Option<ChannelId>,
 }
 
 fn get_activity(old: &VoiceState, new: &VoiceState) -> Activity {

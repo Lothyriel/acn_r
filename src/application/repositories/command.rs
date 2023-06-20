@@ -6,20 +6,20 @@ use crate::application::{
         dto::{command_use::CommandUseDto, user::AddUserDto},
         entities::command::{CommandError, CommandUse},
     },
-    services::user_services::UserServices,
+    repositories::user::UserRepository,
 };
 
 #[derive(Clone)]
-pub struct CommandServices {
+pub struct CommandRepository {
     commands_use: Collection<CommandUse>,
     commands_errors: Collection<CommandError>,
-    user_services: UserServices,
+    user_repository: UserRepository,
 }
 
-impl CommandServices {
-    pub fn new(database: &Database, user_services: UserServices) -> Self {
+impl CommandRepository {
+    pub fn new(database: &Database, user_repository: UserRepository) -> Self {
         Self {
-            user_services,
+            user_repository,
             commands_use: database.collection("CommandsUse"),
             commands_errors: database.collection("CommandsErrors"),
         }
@@ -43,7 +43,7 @@ impl CommandServices {
             date: command_use_dto.date,
         };
 
-        self.user_services.add_user(add).await?;
+        self.user_repository.add_user(add).await?;
 
         Ok(())
     }

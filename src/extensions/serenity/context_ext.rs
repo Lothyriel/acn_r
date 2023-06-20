@@ -1,14 +1,23 @@
-use serenity::async_trait;
+use std::sync::Arc;
 
-use crate::application::models::dto::user::GuildInfo;
+use anyhow::{anyhow, Error};
+use poise::async_trait;
+use poise::serenity_prelude::{Guild, GuildId};
+use songbird::Songbird;
 
-use super::serenity_structs::Context;
+use crate::{
+    application::{infra::lavalink_ctx::LavalinkCtx, models::dto::user::GuildInfo},
+    extensions::serenity::serenity_structs::Context,
+};
 
 #[async_trait]
 pub trait ContextExt {
     async fn get_author_name(self) -> String;
     async fn get_command_args(self) -> String;
+    async fn get_songbird(self) -> Result<LavalinkCtx, Error>;
     fn get_guild_info(self) -> Option<GuildInfo>;
+    fn assure_cached_guild(self) -> Result<Guild, Error>;
+    fn assure_guild_context(self) -> Result<GuildId, Error>;
 }
 
 #[async_trait]
@@ -28,7 +37,7 @@ impl ContextExt for Context<'_> {
                     .into_iter()
                     .flat_map(|a| {
                         a.value
-                            .to_owned()
+                            .as_ref()
                             .map(|v| format!("{v}").trim_matches('"').to_owned())
                     })
                     .collect();
@@ -39,18 +48,54 @@ impl ContextExt for Context<'_> {
         }
     }
 
+    async fn get_songbird(self) -> Result<LavalinkCtx, Error> {
+        let guild_id = self.assure_guild_context()?.0;
+
+        let lava_client = self.data().services.lava_client.to_owned();
+
+        let jukebox_repository = self.data().repositories.jukebox.to_owned();
+
+        let user_id = self.author().id.0;
+
+        let songbird = get_songbird_client(self.serenity_context()).await?;
+
+        Ok(LavalinkCtx::new(
+            guild_id,
+            user_id,
+            songbird,
+            lava_client,
+            jukebox_repository,
+        ))
+    }
+
+    fn assure_cached_guild(self) -> Result<Guild, Error> {
+        let guild_id = self.assure_guild_context()?;
+        self.guild()
+            .ok_or_else(|| anyhow!("Couldn't get Guild {guild_id} from cache"))
+    }
+
+    fn assure_guild_context(self) -> Result<GuildId, Error> {
+        self.guild_id()
+            .ok_or_else(|| anyhow!("Context doesn't include an Guild"))
+    }
+
     fn get_guild_info(self) -> Option<GuildInfo> {
         let guild_id = self.guild_id().map(|g| g.0);
         let guild_name = self.guild_id().and_then(|g| g.name(self));
 
-        if let Some(id) = guild_id {
-            if let Some(name) = guild_name {
-                return Some(GuildInfo {
-                    guild_id: id,
-                    guild_name: name,
-                });
-            }
-        }
-        None
+        guild_id.and_then(|i| {
+            guild_name.map(|n| GuildInfo {
+                guild_id: i,
+                guild_name: n,
+            })
+        })
     }
+}
+
+pub async fn get_songbird_client(
+    ctx: &poise::serenity_prelude::Context,
+) -> Result<Arc<Songbird>, Error> {
+    songbird::get(ctx)
+        .await
+        .ok_or_else(|| anyhow!("Couldn't get songbird voice client"))
 }
