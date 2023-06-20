@@ -9,21 +9,19 @@ use tokio::sync::RwLock;
 use crate::{
     application::{
         infra::{
+            lavalink_ctx, deploy_service::DeployServices,
             appsettings::{AppConfigurations, AppSettings},
             http_clients::github_client::GithubClient,
             mongo_client::create_mongo_client,
             status_monitor::StatusMonitor,
         },
-        services::{
-            command_services::CommandRepository, github_services::DeployServices,
-            guild_services::GuildRepository, jukebox_services::JukeboxRepository,
-            stats_services::StatsRepository, user_services::UserRepository,
+        repositories::{
+            command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
+            stats::StatsRepository, user::UserRepository,
         },
     },
     extensions::log_ext::LogExt,
 };
-
-use super::infra::lavalink_ctx;
 
 pub struct DependencyContainer {
     pub services: ServicesContainer,

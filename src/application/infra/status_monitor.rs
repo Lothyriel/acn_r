@@ -5,20 +5,20 @@ use poise::serenity_prelude::{Cache, Http};
 use tokio::time;
 
 use crate::{
-    application::services::user_services::UserRepository,
+    application::repositories::user::UserRepository,
     extensions::serenity::guild_ext::{self, UserStatusInfo},
 };
 
 pub struct StatusMonitor {
-    user_services: UserRepository,
+    user_repository: UserRepository,
     http: Arc<Http>,
     cache: Arc<Cache>,
 }
 
 impl StatusMonitor {
-    pub fn new(user_services: UserRepository, http: Arc<Http>, cache: Arc<Cache>) -> Self {
+    pub fn new(user_repository: UserRepository, http: Arc<Http>, cache: Arc<Cache>) -> Self {
         Self {
-            user_services,
+            user_repository,
             http,
             cache,
         }

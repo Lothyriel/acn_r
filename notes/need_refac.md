@@ -4,4 +4,4 @@ UserServices::get_last_name() e GuildServices::get_last_name()
 
 -get_activity()
 
--error! macro on stats_services (kinda wanna return result)
+-error! macro on stats_repository (kinda wanna return result)

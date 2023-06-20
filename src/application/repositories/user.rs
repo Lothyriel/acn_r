@@ -12,7 +12,7 @@ use crate::application::{
         dto::user::{AddUserDto, UpdateActivityDto, UpdateNickDto},
         entities::{nickname::NicknameChange, user::User, user_activity::UserActivity},
     },
-    services::guild_services::GuildRepository,
+    repositories::guild::GuildRepository,
 };
 
 #[derive(Clone)]
@@ -20,13 +20,13 @@ pub struct UserRepository {
     users: Collection<User>,
     user_activity: Collection<UserActivity>,
     nickname_changes: Collection<NicknameChange>,
-    guild_services: GuildRepository,
+    guild_repository: GuildRepository,
 }
 
 impl UserRepository {
-    pub fn new(database: &Database, guild_services: GuildRepository) -> Self {
+    pub fn new(database: &Database, guild_repository: GuildRepository) -> Self {
         Self {
-            guild_services,
+            guild_repository,
             users: database.collection("Users"),
             nickname_changes: database.collection("NicknameChanges"),
             user_activity: database.collection("UserActivity"),
@@ -54,7 +54,7 @@ impl UserRepository {
 
     pub async fn add_user(&self, add_user_dto: AddUserDto) -> Result<(), Error> {
         if let Some(guild_info) = &add_user_dto.guild_info {
-            self.guild_services
+            self.guild_repository
                 .add_guild(
                     guild_info.guild_id,
                     guild_info.guild_name.to_owned(),

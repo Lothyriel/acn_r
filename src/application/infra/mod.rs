@@ -5,3 +5,4 @@ pub mod lavalink_ctx;
 pub mod mongo_client;
 pub mod songbird;
 pub mod status_monitor;
+pub mod deploy_service;

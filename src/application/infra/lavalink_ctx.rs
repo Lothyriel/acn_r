@@ -13,7 +13,7 @@ use songbird::Songbird;
 
 use crate::{
     application::{
-        models::entities::jukebox_use::JukeboxUse, services::jukebox_services::JukeboxRepository,
+        models::entities::jukebox_use::JukeboxUse, repositories::jukebox::JukeboxRepository,
     },
     extensions::{
         log_ext::LogExt,
@@ -47,7 +47,7 @@ pub struct LavalinkCtx {
     user_id: u64,
     songbird: Arc<Songbird>,
     lava_client: LavalinkClient,
-    jukebox_services: JukeboxRepository,
+    jukebox_repository: JukeboxRepository,
 }
 
 impl LavalinkCtx {
@@ -56,14 +56,14 @@ impl LavalinkCtx {
         user_id: u64,
         songbird: Arc<Songbird>,
         lava_client: LavalinkClient,
-        jukebox_services: JukeboxRepository,
+        jukebox_repository: JukeboxRepository,
     ) -> Self {
         Self {
             guild_id,
             user_id,
             songbird,
             lava_client,
-            jukebox_services,
+            jukebox_repository,
         }
     }
 
@@ -301,7 +301,7 @@ impl LavalinkCtx {
     }
 
     fn add_jukebox_use(&self, track: &Track) {
-        let service = self.jukebox_services.to_owned();
+        let service = self.jukebox_repository.to_owned();
 
         let j_use = JukeboxUse::new(self.guild_id, self.user_id, track);
 

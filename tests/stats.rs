@@ -7,9 +7,9 @@ mod stats {
             dependency_configuration::RepositoriesContainer,
             infra::status_monitor::StatusManager,
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
-            services::{
-                guild_services::GuildRepository, stats_services::StatsRepository,
-                user_services::UserRepository,
+            repositories::{
+                guild::GuildRepository, stats::StatsRepository,
+                user::UserRepository,
             },
         },
         extensions::serenity::guild_ext::UserStatusInfo,
@@ -27,11 +27,11 @@ mod stats {
     async fn should_get_stats() -> Result<(), Error> {
         let settings = init_app()?;
         let db = RepositoriesContainer::database(&settings).await?;
-        let stats_services = StatsRepository::new(&db);
+        let stats_repository = StatsRepository::new(&db);
 
         populate_test_stats(&db).await?;
 
-        let guild_stats = stats_services
+        let guild_stats = stats_repository
             .get_guild_stats(LA_PALOMBA_ID, Some(LOTHYRIEL_ID))
             .await?;
 
@@ -73,7 +73,7 @@ mod stats {
     }
 
     async fn populate_test_stats(db: &Database) -> Result<(), Error> {
-        let user_services = UserRepository::new(&db, GuildRepository::new(&db));
+        let user_repository = UserRepository::new(&db, GuildRepository::new(&db));
 
         let mut date = chrono::Utc::now();
 
@@ -86,7 +86,7 @@ mod stats {
                 activity: Activity::Connected,
                 date,
             };
-            user_services.update_user_activity(connected).await?;
+            user_repository.update_user_activity(connected).await?;
 
             date = date + Duration::hours(1);
 
@@ -99,7 +99,7 @@ mod stats {
                 date,
             };
 
-            user_services.update_user_activity(disconnected).await?;
+            user_repository.update_user_activity(disconnected).await?;
 
             date = date + Duration::hours(1);
         }

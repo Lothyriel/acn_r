@@ -26,14 +26,14 @@ async fn dispatch_songbird_reconnect(dispatch_data: Arc<DispatchData>) -> Result
     };
 
     let lava_client = dispatch_data.lava_client.to_owned();
-    let jukebox_services = dispatch_data.jukebox_services.to_owned();
+    let jukebox_repository = dispatch_data.jukebox_repository.to_owned();
 
     let songbird_ctx = LavalinkCtx::new(
         dispatch_data.guild_id,
         dispatch_data.user_id.0,
         dispatch_data.songbird.to_owned(),
         lava_client,
-        jukebox_services,
+        jukebox_repository,
     );
 
     let _ = songbird_ctx.join_voice_channel(channel).await;

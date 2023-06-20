@@ -10,7 +10,7 @@ use crate::{
     application::{
         dependency_configuration::DependencyContainer,
         models::{dto::user::UpdateActivityDto, entities::user::Activity},
-        services::{github_services::DeployServices, jukebox_services::JukeboxRepository},
+        repositories::{jukebox::JukeboxRepository}, infra::deploy_service::DeployServices,
     },
     extensions::{serenity::context_ext, std_ext::VecResultErrorExt},
 };
@@ -64,7 +64,7 @@ pub async fn handler(
         http: ctx.http.to_owned(),
         channel_id: new.channel_id,
         user_id: new.user_id,
-        jukebox_services: data.repositories.jukebox.to_owned(),
+        jukebox_repository: data.repositories.jukebox.to_owned(),
         deploy_services: data.services.deploy_services.to_owned(),
         lava_client: data.services.lava_client.to_owned(),
         id: data.services.id,
@@ -98,7 +98,7 @@ pub struct DispatchData {
     songbird: Arc<Songbird>,
     lava_client: LavalinkClient,
 
-    jukebox_services: JukeboxRepository,
+    jukebox_repository: JukeboxRepository,
     deploy_services: DeployServices,
     id: u64,
 
