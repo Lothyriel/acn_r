@@ -56,14 +56,16 @@ impl StatusMonitor {
     }
 
     pub async fn update_user_activity(&self, dto: UpdateActivityDto) -> Result<(), Error> {
-        let mut manager = self.manager.lock().await;
+        {
+            let mut manager = self.manager.lock().await;
 
-        let user_status = StatusInfo::new(dto.user_id, dto.guild_id);
+            let user_status = StatusInfo::new(dto.user_id, dto.guild_id);
 
-        match dto.activity {
-            Activity::Connected => manager.connect_user(&user_status),
-            Activity::Disconnected => manager.disconnect_user(&user_status),
-            _ => {}
+            match dto.activity {
+                Activity::Connected => manager.connect_user(&user_status),
+                Activity::Disconnected => manager.disconnect_user(&user_status),
+                _ => {}
+            }
         }
 
         self.user_repository.update_user_activity(dto).await?;
