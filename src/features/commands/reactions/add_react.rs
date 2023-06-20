@@ -1,7 +1,10 @@
+use mongodb::bson::oid::ObjectId;
 use poise::{command, serenity_prelude::Attachment};
 
 use crate::{
-    application::models::entities::reaction::Reaction,
+    application::models::{
+        dto::reaction_dto::ReactionDto, entities::reaction::Reaction, db_file::DbFile,
+    },
     extensions::serenity::serenity_structs::{CommandResult, Context},
 };
 
@@ -13,12 +16,17 @@ pub async fn add_react(
 ) -> CommandResult {
     let reaction_repository = &ctx.data().repositories.reaction;
 
-    let reaction = Reaction {
+    let reaction = ReactionDto {
         bytes: file.download().await?,
-        emotion,
-        file_name: file.filename,
-        guild_id: ctx.guild_id().map(|f| f.0),
-        user_id: ctx.author().id.0,
+        reaction: Reaction {
+            emotion,
+            guild_id: ctx.guild_id().map(|f| f.0),
+            user_id: ctx.author().id.0,
+            file: DbFile {
+                filename: file.filename,
+                id: ObjectId::new(),
+            },
+        },
     };
 
     reaction_repository.add_reaction(reaction).await?;
