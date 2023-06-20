@@ -7,11 +7,11 @@ use mongodb::{
 use crate::application::models::entities::reaction::Reaction;
 
 #[derive(Clone)]
-pub struct ReactionServices {
+pub struct ReactionRepository {
     reactions: Collection<Reaction>,
 }
 
-impl ReactionServices {
+impl ReactionRepository {
     pub fn new(db: &Database) -> Self {
         Self {
             reactions: db.collection("Reactions"),
@@ -24,12 +24,12 @@ impl ReactionServices {
         Ok(())
     }
 
-    pub async fn react(&self, emotion: String, guild_id: Option<u64>) -> Result<Reaction, Error> {
+    pub async fn get_reaction(&self, emotion: String, guild_id: Option<u64>) -> Result<Reaction, Error> {
         let pipeline = [
             doc! { "$match": {"emotion": emotion, "guild_id": guild_id.map(|x| x as i64)} },
             doc! { "$sample": { "size": 1 } },
         ];
-        
+
         let mut cursor = self.reactions.aggregate(pipeline, None).await?;
 
         match cursor.advance().await? {

@@ -7,16 +7,19 @@ pub async fn react(
     ctx: Context<'_>,
     #[description = "Describes the images emotion"] emotion: String,
 ) -> CommandResult {
-    let service = &ctx.data().reaction_services;
+    let reaction_repository = &ctx.data().repositories.reaction;
 
-    let reaction = service.react(emotion, ctx.guild_id().map(|g| g.0)).await?;
+    let reaction = reaction_repository
+        .get_reaction(emotion, ctx.guild_id().map(|g| g.0))
+        .await?;
 
     let file = AttachmentType::Bytes {
         data: reaction.bytes.into(),
         filename: reaction.file_name,
     };
 
-    ctx.send(|x| x.attachment(file).content(reaction.emotion)).await?;
+    ctx.send(|x| x.attachment(file).content(reaction.emotion))
+        .await?;
 
     Ok(())
 }
