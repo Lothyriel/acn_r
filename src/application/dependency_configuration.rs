@@ -132,7 +132,7 @@ impl RepositoriesContainer {
             command,
             stats,
             jukebox,
-            reaction
+            reaction,
         }
     }
 

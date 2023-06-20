@@ -24,7 +24,11 @@ impl ReactionRepository {
         Ok(())
     }
 
-    pub async fn get_reaction(&self, emotion: String, guild_id: Option<u64>) -> Result<Reaction, Error> {
+    pub async fn get_reaction(
+        &self,
+        emotion: String,
+        guild_id: Option<u64>,
+    ) -> Result<Reaction, Error> {
         let pipeline = [
             doc! { "$match": {"emotion": emotion, "guild_id": guild_id.map(|x| x as i64)} },
             doc! { "$sample": { "size": 1 } },

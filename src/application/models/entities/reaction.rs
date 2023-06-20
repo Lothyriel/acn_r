@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Reaction {
@@ -6,5 +6,5 @@ pub struct Reaction {
     pub guild_id: Option<u64>,
     pub user_id: u64,
     pub file_name: String,
-    pub bytes: Vec<u8>
+    pub bytes: Vec<u8>,
 }
