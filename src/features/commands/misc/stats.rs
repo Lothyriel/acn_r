@@ -33,7 +33,7 @@ pub async fn stats(
         .get_guild_stats(guild_id.0, target.map(|f| f.id.0), DiscordOnlineStatus(ctx))
         .await?;
 
-    let build_message_lines_tasks = guild_stats.stats.into_iter().map(|f| async move {
+    let build_message_lines_tasks = guild_stats.stats.into_iter().take(10).map(|f| async move {
         let name = get_name(guild_id, ctx, f.user_id).await?;
         let seconds_online = f.seconds_online;
         let hours_online = seconds_online / SECONDS_IN_HOUR;
@@ -53,6 +53,8 @@ pub async fn stats(
         "Dados coletados desde: {}",
         guild_stats.initial_date
     ));
+    
+    message_builder.push_line("Top 10: ");
 
     for line in lines {
         message_builder.push_line(line);

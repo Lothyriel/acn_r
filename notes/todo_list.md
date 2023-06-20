@@ -1,7 +1,5 @@
--stop doesnt clear queue 
 -implement disconnect after queue ends
-
-
+-implement roleta russa on command use
 
 --------------------R34-----------------------------------
 R34Use{id: Guid, guild_id: u64, user_id: u64, date: Date, post_title: String }

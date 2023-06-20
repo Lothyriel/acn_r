@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::Error;
 
 use crate::{
-    application::{infra::songbird::SongbirdCtx, models::entities::user::Activity},
+    application::{infra::lavalink_ctx::LavalinkCtx, models::entities::user::Activity},
     features::events::handlers::voice_updated::DispatchData,
 };
 
@@ -28,7 +28,7 @@ async fn dispatch_songbird_reconnect(dispatch_data: Arc<DispatchData>) -> Result
     let lava_client = dispatch_data.lava_client.to_owned();
     let jukebox_services = dispatch_data.jukebox_services.to_owned();
 
-    let songbird_ctx = SongbirdCtx::new(
+    let songbird_ctx = LavalinkCtx::new(
         dispatch_data.guild_id,
         dispatch_data.user_id.0,
         dispatch_data.songbird.to_owned(),

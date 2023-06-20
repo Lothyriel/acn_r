@@ -1,4 +1,6 @@
 use anyhow::Error;
+use poise::serenity_prelude::GatewayIntents;
+use songbird::{driver::DecodeMode, Config, SerenityInit};
 
 use crate::{
     application::{
@@ -6,7 +8,7 @@ use crate::{
         infra::{
             self,
             appsettings::{self, AppSettings},
-            env,
+            env, lavalink_ctx,
         },
     },
     features::{
@@ -14,9 +16,6 @@ use crate::{
         events::{after, check, error, handlers::invoker},
     },
 };
-
-use poise::serenity_prelude::GatewayIntents;
-use songbird::SerenityInit;
 
 pub mod application;
 pub mod extensions;
@@ -43,12 +42,14 @@ pub async fn start_application() -> Result<(), Error> {
             ..Default::default()
         })
         .token(&token)
-        .client_settings(|c| c.register_songbird())
+        .client_settings(|c| {
+            c.register_songbird_from_config(Config::default().decode_mode(DecodeMode::Decode))
+        })
         .intents(GatewayIntents::all())
         .setup(|ctx, ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                let lava_client = infra::songbird::get_lavalink_client(&token, &settings).await?;
+                let lava_client = lavalink_ctx::get_lavalink_client(&token, &settings).await?;
                 let id = ready.user.id.0;
                 DependencyContainer::build(settings, lava_client, id).await
             })
