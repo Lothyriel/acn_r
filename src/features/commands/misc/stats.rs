@@ -81,7 +81,7 @@ async fn get_name(guild_id: GuildId, ctx: Context<'_>, user_id: u64) -> Result<S
 fn get_average_hours_per_day(initial_date: DateTime<Utc>, hours: i64) -> f64 {
     let span = Utc::now() - initial_date;
 
-    let total_days = min(span.num_days(), 1); 
+    let total_days = max(span.num_days(), 1); 
 
     return hours as f64 / total_days as f64;
 }
