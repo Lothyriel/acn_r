@@ -17,6 +17,7 @@ use crate::{
     extensions::serenity::{guild_ext, serenity_structs::Context},
 };
 
+#[derive(Clone)]
 pub struct StatsServices {
     user_activity: Collection<UserActivity>,
 }
@@ -28,61 +29,11 @@ impl StatsServices {
         }
     }
 
-    pub async fn clean_spoiled_stats(
-        &self,
-        guild_id: u64,
-        status_provider: impl OnlineStatusProvider,
-    ) -> Result<Vec<ObjectId>, Error> {
-        let activities = self.get_activities(guild_id, None).await?;
-
-        let users_online = status_provider.get_status().await?;
-
-        let users_with_discrepancies: Vec<_> = activities
-            .into_iter()
-            .filter(|(id, act)| {
-                let (connects, disconnects): (Vec<_>, Vec<_>) = act
-                    .iter()
-                    .partition(|a| a.activity_type == Activity::Connected);
-
-                match (connects.len() as i32) - (disconnects.len() as i32) {
-                    0 => {
-                        let maybe_last = act.last().ok_or_else(|| {
-                            anyhow!("[IMPOSSIBLE] User {id} got here without any activity")
-                        });
-
-                        match maybe_last {
-                            Ok(last) => last.activity_type == Activity::Connected,
-                            Err(e) => {
-                                error!("{e}");
-                                false
-                            }
-                        }
-                    }
-                    1 => users_online.contains(&id).not(),
-                    _ => true,
-                }
-            })
-            .collect();
-
-        let ids = get_spoiled_ids(users_with_discrepancies);
-
-        self.user_activity
-            .delete_many(doc! { "_id": { "$in": &ids } }, None)
-            .await?;
-
-        Ok(ids)
-    }
-
     pub async fn get_guild_stats(
         &self,
         guild_id: u64,
         target: Option<u64>,
-        status_provider: impl OnlineStatusProvider,
     ) -> Result<StatsDto, Error> {
-        let cleaned_ids = self.clean_spoiled_stats(guild_id, status_provider).await?;
-
-        warn!("Spoiled activities cleaned: {}", cleaned_ids.len());
-
         let activities_by_user = self.get_activities(guild_id, target).await?;
 
         let first_activity_date = activities_by_user
@@ -164,38 +115,5 @@ fn get_user_stat(user_id: u64, activities: Vec<UserActivity>) -> UserStats {
     UserStats {
         user_id,
         seconds_online: time_online,
-    }
-}
-
-fn get_spoiled_ids(user_activities: Vec<(u64, Vec<UserActivity>)>) -> Vec<ObjectId> {
-    let mut spoiled = vec![];
-
-    for (_, activities) in user_activities.into_iter() {
-        let ids = activities
-            .windows(2)
-            .filter(|w| w[0].activity_type == w[1].activity_type)
-            .map(|w| w[1].id);
-
-        for id in ids {
-            spoiled.push(id)
-        }
-    }
-
-    spoiled
-}
-
-#[async_trait]
-pub trait OnlineStatusProvider {
-    async fn get_status(&self) -> Result<Vec<u64>, Error>;
-}
-
-pub struct DiscordOnlineStatus<'a>(pub Context<'a>);
-
-#[async_trait]
-impl OnlineStatusProvider for DiscordOnlineStatus<'_> {
-    async fn get_status(&self) -> Result<Vec<u64>, Error> {
-        let ctx = self.0.serenity_context();
-
-        guild_ext::get_all_online_users(ctx.http.to_owned(), ctx.cache.to_owned()).await
     }
 }
