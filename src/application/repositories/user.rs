@@ -98,6 +98,12 @@ impl UserRepository {
         Ok(())
     }
 
+    pub async fn add_activity(&self, activity: UserActivity) -> Result<(), Error> {
+        self.user_activity.insert_one(activity, None).await?;
+
+        Ok(())
+    }
+
     async fn user_exists(&self, guild_id: u64) -> Result<bool, Error> {
         Ok(self.get_user(guild_id).await?.is_some())
     }
@@ -105,11 +111,5 @@ impl UserRepository {
     async fn get_user(&self, id: u64) -> Result<Option<User>, Error> {
         let doc = doc! {"id": id as i64};
         Ok(self.users.find_one(doc, None).await?)
-    }
-
-    async fn add_activity(&self, activity: UserActivity) -> Result<(), Error> {
-        self.user_activity.insert_one(activity, None).await?;
-
-        Ok(())
     }
 }
