@@ -6,12 +6,15 @@ use poise::{
     serenity_prelude::{Cache, GuildId, Http},
 };
 
-use crate::extensions::std_ext::VecResultErrorExt;
+use crate::{
+    application::models::entities::{user::Activity, user_activity::UserActivity},
+    extensions::std_ext::VecResultErrorExt,
+};
 
 #[async_trait]
 pub trait GuildExt {
     async fn say_on_main_text_channel(self, http: &Http, msg: &str) -> Result<(), Error>;
-    fn get_online_users(self, cache: Arc<Cache>) -> Result<HashSet<UserStatusInfo>, Error>;
+    fn get_online_users(self, cache: Arc<Cache>) -> Result<HashSet<StatusInfo>, Error>;
 }
 
 #[async_trait]
@@ -30,14 +33,14 @@ impl GuildExt for GuildId {
         Ok(())
     }
 
-    fn get_online_users(self, cache: Arc<Cache>) -> Result<HashSet<UserStatusInfo>, Error> {
+    fn get_online_users(self, cache: Arc<Cache>) -> Result<HashSet<StatusInfo>, Error> {
         let guild = cache.guild(self).ok_or_else(|| anyhow!(""))?;
 
         let online_users = guild
             .voice_states
             .into_values()
             .filter(|v| v.channel_id.is_some())
-            .map(|c| UserStatusInfo::new(c.user_id.0, guild.id.0))
+            .map(|c| StatusInfo::new(c.user_id.0, guild.id.0))
             .collect();
 
         Ok(online_users)
@@ -47,7 +50,7 @@ impl GuildExt for GuildId {
 pub async fn get_all_online_users(
     http: Arc<Http>,
     cache: Arc<Cache>,
-) -> Result<HashSet<UserStatusInfo>, Error> {
+) -> Result<HashSet<StatusInfo>, Error> {
     let guilds_info = http.get_guilds(None, None).await?;
 
     let get_online_users_results: Vec<_> = guilds_info
@@ -61,13 +64,22 @@ pub async fn get_all_online_users(
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct UserStatusInfo {
+pub struct StatusInfo {
     pub user_id: u64,
     pub guild_id: u64,
 }
 
-impl UserStatusInfo {
+impl StatusInfo {
     pub fn new(user_id: u64, guild_id: u64) -> Self {
         Self { user_id, guild_id }
+    }
+
+    pub fn to_activity(&self, activity: Activity) -> UserActivity {
+        UserActivity {
+            guild_id: self.guild_id,
+            user_id: self.user_id,
+            date: chrono::Utc::now(),
+            activity_type: activity,
+        }
     }
 }
