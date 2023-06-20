@@ -1,32 +1,28 @@
 use std::borrow::Borrow;
 
-use anyhow::{anyhow, Error};
-use mongodb::{
-    bson::{doc, oid::ObjectId},
-    options::FindOneOptions,
-    Collection, Database,
-};
+use anyhow::Error;
+use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
 use crate::application::{
     models::{
         dto::user::{AddUserDto, UpdateActivityDto, UpdateNickDto},
         entities::{nickname::NicknameChange, user::User, user_activity::UserActivity},
     },
-    services::guild_services::GuildServices,
+    repositories::guild::GuildRepository,
 };
 
 #[derive(Clone)]
-pub struct UserServices {
+pub struct UserRepository {
     users: Collection<User>,
     user_activity: Collection<UserActivity>,
     nickname_changes: Collection<NicknameChange>,
-    guild_services: GuildServices,
+    guild_repository: GuildRepository,
 }
 
-impl UserServices {
-    pub fn new(database: &Database, guild_services: GuildServices) -> Self {
+impl UserRepository {
+    pub fn new(database: &Database, guild_repository: GuildRepository) -> Self {
         Self {
-            guild_services,
+            guild_repository,
             users: database.collection("Users"),
             nickname_changes: database.collection("NicknameChanges"),
             user_activity: database.collection("UserActivity"),
@@ -42,19 +38,16 @@ impl UserServices {
         Ok(possible_last_change.map(|n| n.nickname))
     }
 
-    pub async fn update_user_activity(
-        &self,
-        update_dto: UpdateActivityDto,
-    ) -> Result<ObjectId, Error> {
+    pub async fn update_user_activity(&self, update_dto: UpdateActivityDto) -> Result<(), Error> {
         self.add_user(update_dto.borrow().into()).await?;
-        let id = self.add_activity(update_dto).await?;
+        self.add_activity(update_dto.borrow().into()).await?;
 
-        Ok(id)
+        Ok(())
     }
 
     pub async fn add_user(&self, add_user_dto: AddUserDto) -> Result<(), Error> {
         if let Some(guild_info) = &add_user_dto.guild_info {
-            self.guild_services
+            self.guild_repository
                 .add_guild(
                     guild_info.guild_id,
                     guild_info.guild_name.to_owned(),
@@ -105,6 +98,12 @@ impl UserServices {
         Ok(())
     }
 
+    pub async fn add_activity(&self, activity: UserActivity) -> Result<(), Error> {
+        self.user_activity.insert_one(activity, None).await?;
+
+        Ok(())
+    }
+
     async fn user_exists(&self, guild_id: u64) -> Result<bool, Error> {
         Ok(self.get_user(guild_id).await?.is_some())
     }
@@ -112,24 +111,5 @@ impl UserServices {
     async fn get_user(&self, id: u64) -> Result<Option<User>, Error> {
         let doc = doc! {"id": id as i64};
         Ok(self.users.find_one(doc, None).await?)
-    }
-
-    async fn add_activity(&self, update_dto: UpdateActivityDto) -> Result<ObjectId, Error> {
-        let activity = UserActivity {
-            id: ObjectId::new(),
-            guild_id: update_dto.guild_id,
-            user_id: update_dto.user_id,
-            date: update_dto.date,
-            activity_type: update_dto.activity,
-        };
-
-        let result = self.user_activity.insert_one(activity, None).await?;
-
-        result.inserted_id.as_object_id().ok_or_else(|| {
-            anyhow!(
-                "[IMPOSSIBLE] {} is not a valid ObjectId",
-                result.inserted_id
-            )
-        })
     }
 }

@@ -4,7 +4,7 @@ use songbird::{Event, EventContext, EventHandler};
 struct Receiver;
 
 impl Receiver {
-    pub fn new() -> Self {
+    pub fn _new() -> Self {
         // You can manage state here, such as a buffer of audio packet bytes so
         // you can later store them in intervals.
         Self {}
@@ -21,7 +21,7 @@ impl EventHandler for Receiver {
             EventContext::VoicePacket(_) => todo!(),
             EventContext::RtcpPacket(_) => todo!(),
             EventContext::ClientDisconnect(_) => todo!(),
-            _ => todo!()
+            _ => todo!(),
         }
     }
 }

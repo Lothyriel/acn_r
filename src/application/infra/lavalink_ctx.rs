@@ -13,7 +13,7 @@ use songbird::Songbird;
 
 use crate::{
     application::{
-        models::entities::jukebox_use::JukeboxUse, services::jukebox_services::JukeboxServices,
+        models::entities::jukebox_use::JukeboxUse, repositories::jukebox::JukeboxRepository,
     },
     extensions::{
         log_ext::LogExt,
@@ -27,11 +27,10 @@ struct LavalinkHandler;
 #[async_trait]
 impl LavalinkEventHandler for LavalinkHandler {}
 
-pub async fn get_lavalink_client(
-    token: &str,
-    settings: &AppSettings,
-) -> Result<LavalinkClient, Error> {
-    let app_info = Http::new(token).get_current_application_info().await?;
+pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClient, Error> {
+    let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
+        .get_current_application_info()
+        .await?;
 
     let lava_client = LavalinkClient::builder(app_info.id.0)
         .set_host(&settings.lavalink_settings.url)
@@ -48,7 +47,7 @@ pub struct LavalinkCtx {
     user_id: u64,
     songbird: Arc<Songbird>,
     lava_client: LavalinkClient,
-    jukebox_services: JukeboxServices,
+    jukebox_repository: JukeboxRepository,
 }
 
 impl LavalinkCtx {
@@ -57,14 +56,14 @@ impl LavalinkCtx {
         user_id: u64,
         songbird: Arc<Songbird>,
         lava_client: LavalinkClient,
-        jukebox_services: JukeboxServices,
+        jukebox_repository: JukeboxRepository,
     ) -> Self {
         Self {
             guild_id,
             user_id,
             songbird,
             lava_client,
-            jukebox_services,
+            jukebox_repository,
         }
     }
 
@@ -205,7 +204,7 @@ impl LavalinkCtx {
 
         let nodes = self.lava_client.nodes().await;
         nodes.remove(&self.guild_id);
-        
+
         let loops = self.lava_client.loops().await;
         loops.remove(&self.guild_id);
 
@@ -302,7 +301,7 @@ impl LavalinkCtx {
     }
 
     fn add_jukebox_use(&self, track: &Track) {
-        let service = self.jukebox_services.to_owned();
+        let service = self.jukebox_repository.to_owned();
 
         let j_use = JukeboxUse::new(self.guild_id, self.user_id, track);
 

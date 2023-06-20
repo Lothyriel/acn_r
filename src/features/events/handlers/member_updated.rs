@@ -7,7 +7,7 @@ use crate::application::{
 
 pub async fn handler(new: &Member, data: &DependencyContainer) -> Result<(), Error> {
     let now = chrono::Utc::now();
-    let user_services = &data.user_services;
+    let user_repository = &data.repositories.user;
 
     let dto = UpdateNickDto {
         user_id: new.user.id.0,
@@ -16,7 +16,7 @@ pub async fn handler(new: &Member, data: &DependencyContainer) -> Result<(), Err
         date: now,
     };
 
-    user_services.update_nickname(dto).await?;
+    user_repository.update_nickname(dto).await?;
 
     Ok(())
 }
