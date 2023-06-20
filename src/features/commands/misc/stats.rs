@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::cmp::max;
 use chrono::{Utc, DateTime};
 use anyhow::Error;
 use futures::future::join_all;
