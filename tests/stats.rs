@@ -9,7 +9,7 @@ mod stats {
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
             repositories::{guild::GuildRepository, stats::StatsRepository, user::UserRepository},
         },
-        extensions::serenity::guild_ext::UserStatusInfo,
+        extensions::serenity::guild_ext::StatusInfo,
         init_app,
     };
     use anyhow::{anyhow, Error};
@@ -47,24 +47,22 @@ mod stats {
 
     #[test]
     fn should_get_difference() -> Result<(), Error> {
-        let jx = UserStatusInfo::new(1, 1);
-        let junior = UserStatusInfo::new(2, 1);
+        let jx = StatusInfo::new(1, 1);
+        let junior = StatusInfo::new(2, 1);
 
         let mut current_online = HashSet::new();
         current_online.insert(jx);
 
-        let manager = StatusManager::new(current_online);
+        let mut manager = StatusManager::new(current_online);
 
         let mut new_online = HashSet::new();
         new_online.insert(junior);
 
-        let update = manager.get_status_update(new_online);
+        let update = manager.update_status(new_online);
 
-        println!("{:?}", update.connected);
+        assert!(update[0].activity_type == Activity::Connected);
 
-        assert!(update.connected.contains(&junior));
-
-        assert!(update.disconnected.contains(&jx));
+        assert!(update[1].activity_type == Activity::Disconnected);
 
         Ok(())
     }
