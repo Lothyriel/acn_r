@@ -58,7 +58,7 @@ mod stats {
         let mut new_online = HashSet::new();
         new_online.insert(junior);
 
-        let update = manager.update_status(new_online);
+        let update = manager.get_status_update(new_online);
 
         println!("{:?}", update.connected);
 

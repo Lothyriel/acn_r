@@ -55,7 +55,7 @@ impl StatusMonitor {
 
         let mut manager = self.manager.lock().await;
 
-        let update = manager.update_status(new_status);
+        let update = manager.get_status_update(new_status);
 
         for c in update.connected {
             manager.connect_user(c);
@@ -82,7 +82,7 @@ impl StatusManager {
         Self { current_status }
     }
 
-    pub fn update_status(&self, new_status: HashSet<UserStatusInfo>) -> StatusUpdate {
+    pub fn get_status_update(&self, new_status: HashSet<UserStatusInfo>) -> StatusUpdate {
         let connected = new_status.difference(&self.current_status).cloned();
 
         let disconnected = self.current_status.difference(&new_status).cloned();
