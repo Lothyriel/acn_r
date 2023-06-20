@@ -43,7 +43,7 @@ pub async fn get_lavalink_client(
     Ok(lava_client)
 }
 
-pub struct SongbirdCtx {
+pub struct LavalinkCtx {
     guild_id: u64,
     user_id: u64,
     songbird: Arc<Songbird>,
@@ -51,7 +51,7 @@ pub struct SongbirdCtx {
     jukebox_services: JukeboxServices,
 }
 
-impl SongbirdCtx {
+impl LavalinkCtx {
     pub fn new(
         guild_id: u64,
         user_id: u64,

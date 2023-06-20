@@ -48,7 +48,7 @@ pub async fn start_application() -> Result<(), Error> {
         .setup(|ctx, ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                let lava_client = infra::songbird::get_lavalink_client(&token, &settings).await?;
+                let lava_client = infra::lavalink_ctx::get_lavalink_client(&token, &settings).await?;
                 let id = ready.user.id.0;
                 DependencyContainer::build(settings, lava_client, id).await
             })
