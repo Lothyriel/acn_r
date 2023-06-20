@@ -10,7 +10,7 @@ use crate::{
     application::{
         dependency_configuration::DependencyContainer,
         models::{dto::user::UpdateActivityDto, entities::user::Activity},
-        services::{github_services::GithubServices, jukebox_services::JukeboxServices},
+        services::{github_services::DeployServices, jukebox_services::JukeboxRepository},
     },
     extensions::{serenity::context_ext, std_ext::VecResultErrorExt},
 };
@@ -30,7 +30,7 @@ pub async fn handler(
         None => Activity::Connected,
     };
 
-    let user_services = &data.user_services;
+    let user_repository = &data.repositories.user;
 
     let user = new.user_id.to_user(ctx).await?;
 
@@ -56,7 +56,7 @@ pub async fn handler(
         date: now,
     };
 
-    user_services.update_user_activity(dto).await?;
+    user_repository.update_user_activity(dto).await?;
 
     let dispatch_data = DispatchData {
         songbird: context_ext::get_songbird_client(ctx).await?,
@@ -64,10 +64,10 @@ pub async fn handler(
         http: ctx.http.to_owned(),
         channel_id: new.channel_id,
         user_id: new.user_id,
-        jukebox_services: data.jukebox_services.to_owned(),
-        github_services: data.github_services.to_owned(),
-        lava_client: data.lava_client.to_owned(),
-        id: data.id,
+        jukebox_services: data.repositories.jukebox.to_owned(),
+        deploy_services: data.services.deploy_services.to_owned(),
+        lava_client: data.services.lava_client.to_owned(),
+        id: data.services.id,
         guild_id,
         activity,
     };
@@ -98,8 +98,8 @@ pub struct DispatchData {
     songbird: Arc<Songbird>,
     lava_client: LavalinkClient,
 
-    jukebox_services: JukeboxServices,
-    github_services: GithubServices,
+    jukebox_services: JukeboxRepository,
+    deploy_services: DeployServices,
     id: u64,
 
     user_id: UserId,
