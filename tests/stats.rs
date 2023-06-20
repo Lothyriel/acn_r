@@ -61,8 +61,10 @@ mod stats {
         let update = manager.update_status(new_online);
 
         assert!(update[0].activity_type == Activity::Connected);
+        assert!(update[0].user_id == 2);
 
         assert!(update[1].activity_type == Activity::Disconnected);
+        assert!(update[1].user_id == 1);
 
         Ok(())
     }
