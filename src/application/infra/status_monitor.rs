@@ -81,7 +81,7 @@ impl StatusMonitor {
         let activities = manager.update_status(new_status);
 
         let add_activity_tasks = activities.into_iter().map(|a| {
-            warn!("Added activity mannualy: {:?}", a);
+            warn!("Added activity manually: {:?}", a);
             self.user_repository.add_activity(a)
         });
 
