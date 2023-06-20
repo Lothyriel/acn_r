@@ -11,7 +11,7 @@ use crate::{
 async fn after(ctx: Context<'_>) -> Result<(), Error> {
     let now = chrono::Utc::now();
 
-    let command_services = &ctx.data().command_services;
+    let command_repository = &ctx.data().repositories.command;
 
     let guild_info = ctx.get_guild_info();
 
@@ -28,7 +28,7 @@ async fn after(ctx: Context<'_>) -> Result<(), Error> {
         args: ctx.get_command_args().await,
     };
 
-    command_services.add_command_use(dto).await?;
+    command_repository.add_command_use(dto).await?;
 
     Ok(())
 }

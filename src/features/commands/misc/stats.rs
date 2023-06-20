@@ -22,11 +22,11 @@ pub async fn stats(
     ctx: Context<'_>,
     #[description = "Usuário para filtrar estatísticas"] target: Option<User>,
 ) -> CommandResult {
-    let service = &ctx.data().stats_services;
+    let repository = &ctx.data().repositories.stats;
 
     let guild_id = ctx.assure_guild_context()?;
 
-    let guild_stats = service
+    let guild_stats = repository
         .get_guild_stats(guild_id.0, target.map(|f| f.id.0))
         .await?;
 
@@ -64,11 +64,11 @@ pub async fn stats(
 
 async fn get_name(guild_id: GuildId, ctx: Context<'_>, user_id: u64) -> Result<String, Error> {
     let member_result = guild_id.member(ctx, user_id).await;
-    let user_services = &ctx.data().user_services;
+    let user_repository = &ctx.data().repositories.user;
 
     match member_result {
         Ok(m) => Ok(m.display_name().into_owned()),
-        Err(_) => Ok(user_services
+        Err(_) => Ok(user_repository
             .get_last_name(user_id)
             .await?
             .unwrap_or_else(|| format!("Unknown {user_id}"))),

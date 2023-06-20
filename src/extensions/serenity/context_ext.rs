@@ -51,9 +51,9 @@ impl ContextExt for Context<'_> {
     async fn get_songbird(self) -> Result<LavalinkCtx, Error> {
         let guild_id = self.assure_guild_context()?.0;
 
-        let lava_client = self.data().lava_client.to_owned();
+        let lava_client = self.data().services.lava_client.to_owned();
 
-        let jukebox_services = self.data().jukebox_services.to_owned();
+        let jukebox_repository = self.data().repositories.jukebox.to_owned();
 
         let user_id = self.author().id.0;
 
@@ -64,7 +64,7 @@ impl ContextExt for Context<'_> {
             user_id,
             songbird,
             lava_client,
-            jukebox_services,
+            jukebox_repository,
         ))
     }
 

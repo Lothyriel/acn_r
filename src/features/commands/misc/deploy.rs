@@ -11,7 +11,7 @@ use crate::extensions::serenity::serenity_structs::{CommandResult, Context, OWNE
 )]
 pub async fn deploy(ctx: Context<'_>) -> CommandResult {
     let option = {
-        let mut configurations = ctx.data().app_configurations.write().await;
+        let mut configurations = ctx.data().services.app_configurations.write().await;
 
         configurations.deploy_ready = !configurations.deploy_ready;
 
@@ -31,9 +31,9 @@ pub async fn deploy(ctx: Context<'_>) -> CommandResult {
 
 async fn try_deploy(ctx: Context<'_>) -> Result<(), Error> {
     let s_ctx = ctx.serenity_context();
-    let github_service = &ctx.data().github_services;
+    let deploy_services = &ctx.data().services.deploy_services;
 
-    github_service
+    deploy_services
         .try_deploy(s_ctx.http.to_owned(), s_ctx.cache.to_owned())
         .await
 }
