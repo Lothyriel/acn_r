@@ -167,10 +167,10 @@ fn get_user_stat(user_id: u64, activities: Vec<UserActivity>) -> UserStats {
     }
 }
 
-fn get_spoiled_ids(discrepancy: Vec<(u64, Vec<UserActivity>)>) -> Vec<ObjectId> {
+fn get_spoiled_ids(user_activities: Vec<(u64, Vec<UserActivity>)>) -> Vec<ObjectId> {
     let mut spoiled = vec![];
 
-    for (_, activities) in discrepancy.into_iter() {
+    for (_, activities) in user_activities.into_iter() {
         let ids = activities
             .windows(2)
             .filter(|w| w[0].activity_type == w[1].activity_type)
