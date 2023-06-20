@@ -2,10 +2,10 @@ use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use anyhow::Error;
 use poise::serenity_prelude::{Cache, Http};
-use tokio::time;
+use tokio::{sync::Mutex, time};
 
 use crate::{
-    application::repositories::user::UserRepository,
+    application::{models::dto::user::UpdateActivityDto, repositories::user::UserRepository},
     extensions::serenity::guild_ext::{self, UserStatusInfo},
 };
 
@@ -13,29 +13,59 @@ pub struct StatusMonitor {
     user_repository: UserRepository,
     http: Arc<Http>,
     cache: Arc<Cache>,
+    manager: Arc<Mutex<StatusManager>>,
 }
 
 impl StatusMonitor {
-    pub fn new(user_repository: UserRepository, http: Arc<Http>, cache: Arc<Cache>) -> Self {
-        Self {
+    pub async fn new(
+        user_repository: UserRepository,
+        http: Arc<Http>,
+        cache: Arc<Cache>,
+    ) -> Result<Self, Error> {
+        let manager = Arc::new(Mutex::new(StatusManager::new(
+            guild_ext::get_all_online_users(http.to_owned(), cache.to_owned()).await?,
+        )));
+
+        Ok(Self {
             user_repository,
             http,
             cache,
-        }
+            manager,
+        })
     }
 
     pub async fn monitor_status_loop(&self) -> Result<(), Error> {
         let mut interval = time::interval(Duration::from_secs(60));
 
-        let manager = StatusManager::new(self.get_online_users().await?);
-
         loop {
             interval.tick().await;
 
-            let new_status = self.get_online_users().await?;
-
-            let update = manager.update_status(new_status);
+            self.update_status().await?;
         }
+    }
+
+    pub async fn update_user_activity(&self, dto: UpdateActivityDto) -> Result<(), Error> {
+        self.user_repository.update_user_activity(dto).await?;
+
+        Ok(())
+    }
+
+    async fn update_status(&self) -> Result<(), Error> {
+        let new_status = self.get_online_users().await?;
+
+        let mut manager = self.manager.lock().await;
+
+        let update = manager.update_status(new_status);
+
+        for c in update.connected {
+            manager.connect_user(c);
+        }
+
+        for d in update.disconnected {
+            manager.disconnect_user(d);
+        }
+
+        Ok(())
     }
 
     async fn get_online_users(&self) -> Result<HashSet<UserStatusInfo>, Error> {
@@ -60,11 +90,11 @@ impl StatusManager {
         StatusUpdate::new(connected.collect(), disconnected.collect())
     }
 
-    fn disconnect_user(mut self, user_info: UserStatusInfo) {
+    fn disconnect_user(&mut self, user_info: UserStatusInfo) {
         self.current_status.remove(&user_info);
     }
 
-    fn connect_user(mut self, user_info: UserStatusInfo) {
+    fn connect_user(&mut self, user_info: UserStatusInfo) {
         self.current_status.insert(user_info);
     }
 }

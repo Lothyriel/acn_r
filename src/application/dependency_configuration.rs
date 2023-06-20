@@ -9,9 +9,10 @@ use tokio::sync::RwLock;
 use crate::{
     application::{
         infra::{
-            lavalink_ctx, deploy_service::DeployServices,
             appsettings::{AppConfigurations, AppSettings},
+            deploy_service::DeployServices,
             http_clients::github_client::GithubClient,
+            lavalink_ctx,
             mongo_client::create_mongo_client,
             status_monitor::StatusMonitor,
         },
@@ -72,11 +73,14 @@ impl ServicesContainer {
 
         let deploy_services = DeployServices::new(github_client, app_configurations.to_owned());
 
-        let status_monitor = Arc::new(StatusMonitor::new(
-            repositories.user.to_owned(),
-            http.to_owned(),
-            cache.to_owned(),
-        ));
+        let status_monitor = Arc::new(
+            StatusMonitor::new(
+                repositories.user.to_owned(),
+                http.to_owned(),
+                cache.to_owned(),
+            )
+            .await?,
+        );
 
         let create_loop_task =
             |a: Arc<StatusMonitor>| async move { a.monitor_status_loop().await.log() };
