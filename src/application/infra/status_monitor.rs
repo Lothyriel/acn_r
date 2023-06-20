@@ -40,7 +40,7 @@ impl StatusMonitor {
         loop {
             interval.tick().await;
 
-            self.update_status().await?;
+            self.update_pending_status().await?;
         }
     }
 
@@ -50,7 +50,7 @@ impl StatusMonitor {
         Ok(())
     }
 
-    async fn update_status(&self) -> Result<(), Error> {
+    async fn update_pending_status(&self) -> Result<(), Error> {
         let new_status = self.get_online_users().await?;
 
         let mut manager = self.manager.lock().await;
