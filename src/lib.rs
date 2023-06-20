@@ -42,7 +42,9 @@ pub async fn start_application() -> Result<(), Error> {
             ..Default::default()
         })
         .token(&token)
-        .client_settings(|c| c.register_songbird())
+        .client_settings(|c| {
+            c.register_songbird_from_config(Config::default().decode_mode(DecodeMode::Decode))
+        })
         .intents(GatewayIntents::all())
         .setup(|ctx, ready, framework| {
             Box::pin(async move {
