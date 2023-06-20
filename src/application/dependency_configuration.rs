@@ -78,9 +78,10 @@ impl ServicesContainer {
             cache.to_owned(),
         ));
 
-        let task = |a: Arc<StatusMonitor>| async move { a.monitor_status_loop().await.log() };
+        let create_loop_task =
+            |a: Arc<StatusMonitor>| async move { a.monitor_status_loop().await.log() };
 
-        tokio::spawn(task(status_monitor.to_owned()));
+        tokio::spawn(create_loop_task(status_monitor.to_owned()));
 
         Ok(Self {
             deploy_services,
