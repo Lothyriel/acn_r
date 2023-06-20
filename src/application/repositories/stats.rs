@@ -6,18 +6,20 @@ use mongodb::{bson::doc, Collection, Database};
 
 use crate::application::models::{
     dto::stats::{StatsDto, UserStats},
-    entities::{user::Activity, user_activity::UserActivity},
+    entities::{russian_roulette::RussianRoulette, user::Activity, user_activity::UserActivity},
 };
 
 #[derive(Clone)]
 pub struct StatsRepository {
     user_activity: Collection<UserActivity>,
+    russian_roulette: Collection<RussianRoulette>,
 }
 
 impl StatsRepository {
     pub fn new(database: &Database) -> Self {
         Self {
             user_activity: database.collection("UserActivity"),
+            russian_roulette: database.collection("RussianRoulette"),
         }
     }
 
@@ -79,6 +81,12 @@ impl StatsRepository {
             });
 
         Ok(stats_by_user)
+    }
+
+    pub async fn add_russian_roulette(&self, attempt: RussianRoulette) -> Result<(), Error> {
+        self.russian_roulette.insert_one(attempt, None).await?;
+
+        Ok(())
     }
 }
 
