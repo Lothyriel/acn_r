@@ -1,4 +1,4 @@
-use std::{sync::Arc, collections::HashSet};
+use std::{collections::HashSet, sync::Arc};
 
 use anyhow::{anyhow, Error};
 use poise::{

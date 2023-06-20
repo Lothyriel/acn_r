@@ -29,7 +29,7 @@ pub async fn handler(
 
 async fn send_greetings(ctx: &Context, id: u64, message: &String) -> Result<(), Error> {
     let user = ctx.http.get_user(id).await?;
-    
+
     let channel = user.create_dm_channel(&ctx.http).await?;
 
     channel

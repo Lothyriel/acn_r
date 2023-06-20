@@ -7,10 +7,7 @@ mod stats {
             dependency_configuration::RepositoriesContainer,
             infra::status_monitor::StatusManager,
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
-            repositories::{
-                guild::GuildRepository, stats::StatsRepository,
-                user::UserRepository,
-            },
+            repositories::{guild::GuildRepository, stats::StatsRepository, user::UserRepository},
         },
         extensions::serenity::guild_ext::UserStatusInfo,
         init_app,

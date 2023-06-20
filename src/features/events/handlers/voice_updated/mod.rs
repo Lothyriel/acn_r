@@ -9,8 +9,9 @@ use songbird::Songbird;
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
+        infra::deploy_service::DeployServices,
         models::{dto::user::UpdateActivityDto, entities::user::Activity},
-        repositories::{jukebox::JukeboxRepository}, infra::deploy_service::DeployServices,
+        repositories::jukebox::JukeboxRepository,
     },
     extensions::{serenity::context_ext, std_ext::VecResultErrorExt},
 };
