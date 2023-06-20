@@ -30,7 +30,7 @@ pub async fn handler(
         None => Activity::Connected,
     };
 
-    let user_repository = &data.repositories.user;
+    let status_monitor = &data.services.status_monitor;
 
     let user = new.user_id.to_user(ctx).await?;
 
@@ -56,7 +56,7 @@ pub async fn handler(
         date: now,
     };
 
-    user_repository.update_user_activity(dto).await?;
+    status_monitor.update_user_activity(dto).await?;
 
     let dispatch_data = DispatchData {
         songbird: context_ext::get_songbird_client(ctx).await?,
