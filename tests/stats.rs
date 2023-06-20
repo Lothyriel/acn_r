@@ -44,6 +44,30 @@ mod stats {
         Ok(())
     }
 
+    #[test]
+    fn should_get_difference() -> Result<(), Error> {
+        let jx = UserStatusInfo::new(1, 1);
+        let junior = UserStatusInfo::new(2, 1);
+
+        let mut current_online = HashSet::new();
+        current_online.insert(jx);
+
+        let manager = StatusManager::new(current_online);
+
+        let mut new_online = HashSet::new();
+        new_online.insert(junior);
+
+        let update = manager.update_status(new_online);
+
+        println!("{:?}", update.connected);
+
+        assert!(update.connected.contains(&junior));
+
+        assert!(update.disconnected.contains(&jx));
+
+        Ok(())
+    }
+
     async fn populate_test_stats(db: &Database) -> Result<(), Error> {
         let user_services = UserServices::new(&db, GuildServices::new(&db));
 
