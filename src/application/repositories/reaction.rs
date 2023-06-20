@@ -27,11 +27,11 @@ impl ReactionRepository {
     }
 
     pub async fn add_reaction(&self, dto: ReactionDto) -> Result<(), Error> {
-        let id = Bson::ObjectId(dto.reaction.file.id);
+        let id = Bson::ObjectId(dto.reaction.id);
 
-        let mut stream =
-            self.bucket
-                .open_upload_stream_with_id(id, &dto.reaction.file.filename, None);
+        let mut stream = self
+            .bucket
+            .open_upload_stream_with_id(id, &dto.reaction.filename, None);
 
         stream.write_all(&dto.bytes).await?;
 
@@ -49,10 +49,11 @@ impl ReactionRepository {
 
         let mut stream = self
             .bucket
-            .open_download_stream(Bson::ObjectId(reaction.file.id))
+            .open_download_stream(Bson::ObjectId(reaction.id))
             .await?;
 
         let mut buffer = vec![];
+
         stream.read_to_end(&mut buffer).await?;
 
         Ok(ReactionDto {

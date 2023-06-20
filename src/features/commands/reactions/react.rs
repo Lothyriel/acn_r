@@ -15,7 +15,7 @@ pub async fn react(
 
     let file = AttachmentType::Bytes {
         data: dto.bytes.into(),
-        filename: dto.reaction.file.filename,
+        filename: dto.reaction.filename,
     };
 
     ctx.send(|x| x.attachment(file).content(dto.reaction.emotion))
