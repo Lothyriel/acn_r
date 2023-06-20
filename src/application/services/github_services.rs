@@ -4,7 +4,7 @@ use poise::serenity_prelude::{Cache, Http};
 use std::{sync::Arc, time::Duration};
 use tokio::{
     sync::{RwLock, Semaphore},
-    time::sleep,
+    time,
 };
 
 use crate::{
@@ -60,7 +60,7 @@ impl GithubServices {
             true => Ok(()),
             false => {
                 warn!("Deploying in {SECONDS_IN_30_MINUTES} seconds");
-                sleep(Duration::from_secs(SECONDS_IN_30_MINUTES)).await;
+                time::sleep(Duration::from_secs(SECONDS_IN_30_MINUTES)).await;
                 match is_someone_online(http, cache).await? {
                     true => {
                         warn!("Deploy cancelled");
