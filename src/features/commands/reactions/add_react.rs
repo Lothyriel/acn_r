@@ -20,7 +20,7 @@ pub async fn add_react(
     let dto = AddReactionDto {
         bytes: Cursor::new(file.download().await?),
         date: now,
-        emotion: emotion.to_owned(),
+        emotion: emotion.to_lowercase(),
         guild_id: ctx.guild_id().map(|f| f.0),
         user_id: ctx.author().id.0,
         filename: file.filename,
@@ -28,7 +28,7 @@ pub async fn add_react(
 
     reaction_repository.add_reaction(dto).await?;
 
-    ctx.say(format!("Salvo: {emotion}")).await?;
+    ctx.say(format!("Salvo: {}", emotion.to_lowercase())).await?;
 
     Ok(())
 }
