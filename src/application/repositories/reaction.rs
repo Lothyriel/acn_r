@@ -55,10 +55,11 @@ impl ReactionRepository {
 
         let mut stream = self.bucket.open_download_stream(reaction.id).await?;
 
-        let bytes = stream
-            .next()
-            .await
-            .ok_or_else(|| anyhow!("Error downloading file"))?;
+        let mut bytes = vec![];
+
+        while let Some(chunk) = stream.next().await {
+            bytes.extend_from_slice(&chunk);
+        }
 
         Ok((reaction, bytes))
     }
