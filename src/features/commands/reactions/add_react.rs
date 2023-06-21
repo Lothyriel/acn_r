@@ -1,8 +1,9 @@
-use mongodb::bson::oid::ObjectId;
+use std::io::Cursor;
+
 use poise::{command, serenity_prelude::Attachment};
 
 use crate::{
-    application::models::{dto::reaction_dto::ReactionDto, entities::reaction::Reaction},
+    application::models::dto::reaction_dto::AddReactionDto,
     extensions::serenity::serenity_structs::{CommandResult, Context},
 };
 
@@ -12,20 +13,17 @@ pub async fn add_react(
     #[description = "File to examine"] file: Attachment,
     emotion: String,
 ) -> CommandResult {
-    let reaction_repository = &ctx.data().repositories.reaction;
+    let mut reaction_repository = ctx.data().repositories.reaction.to_owned();
 
     let now = chrono::Utc::now();
 
-    let dto = ReactionDto {
-        bytes: file.download().await?,
-        reaction: Reaction {
-            date: now,
-            emotion,
-            guild_id: ctx.guild_id().map(|f| f.0),
-            user_id: ctx.author().id.0,
-            filename: file.filename,
-            id: ObjectId::new(),
-        },
+    let dto = AddReactionDto {
+        bytes: Cursor::new(file.download().await?),
+        date: now,
+        emotion,
+        guild_id: ctx.guild_id().map(|f| f.0),
+        user_id: ctx.author().id.0,
+        filename: file.filename,
     };
 
     reaction_repository.add_reaction(dto).await?;
