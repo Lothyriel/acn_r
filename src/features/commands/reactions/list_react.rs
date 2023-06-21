@@ -11,7 +11,7 @@ pub async fn list_react(ctx: Context<'_>) -> CommandResult {
         .await?;
 
     let mut message_builder = MessageBuilder::new();
-    
+
     message_builder.push_line("Reações: ");
 
     for reaction in reactions {
