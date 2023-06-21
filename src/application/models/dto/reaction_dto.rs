@@ -1,6 +1,12 @@
-use crate::application::models::entities::reaction::Reaction;
+use std::io::Cursor;
 
-pub struct ReactionDto {
-    pub reaction: Reaction,
-    pub bytes: Vec<u8>,
+use chrono::{DateTime, Utc};
+
+pub struct AddReactionDto {
+    pub date: DateTime<Utc>,
+    pub emotion: String,
+    pub guild_id: Option<u64>,
+    pub user_id: u64,
+    pub filename: String,
+    pub bytes: Cursor<Vec<u8>>,
 }
