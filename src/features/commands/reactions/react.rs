@@ -5,7 +5,8 @@ use crate::extensions::serenity::serenity_structs::{CommandResult, Context};
 #[command(prefix_command, slash_command, category = "reactions")]
 pub async fn react(
     ctx: Context<'_>,
-    #[description = "Describes the images emotion"] emotion: String,
+    #[rest]
+    #[description = "Describes the images emotion"] emotion: Option<String>,
 ) -> CommandResult {
     let reaction_repository = &ctx.data().repositories.reaction;
 
