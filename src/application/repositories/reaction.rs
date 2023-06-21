@@ -63,6 +63,17 @@ impl ReactionRepository {
         Ok((reaction, bytes))
     }
 
+    pub async fn list(&self, guild: Option<u64>) -> Result<Vec<String>, Error> {
+        let emotions = self
+            .reactions
+            .distinct("emotion", doc! {"guild_id": guild.map(|g| g as i64)}, None)
+            .await?;
+
+        Ok(emotions
+            .into_iter()
+            .map(|emotion| emotion.to_string())
+            .collect())
+    }
 
     async fn get_reaction(
         &self,
