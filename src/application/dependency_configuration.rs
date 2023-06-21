@@ -18,7 +18,7 @@ use crate::{
         },
         repositories::{
             command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
-            stats::StatsRepository, user::UserRepository,
+            reaction::ReactionRepository, stats::StatsRepository, user::UserRepository,
         },
     },
     extensions::log_ext::LogExt,
@@ -104,6 +104,7 @@ pub struct RepositoriesContainer {
     pub guild: GuildRepository,
     pub stats: StatsRepository,
     pub jukebox: JukeboxRepository,
+    pub reaction: ReactionRepository,
 }
 
 impl RepositoriesContainer {
@@ -123,12 +124,15 @@ impl RepositoriesContainer {
 
         let jukebox = JukeboxRepository::new(&db);
 
+        let reaction = ReactionRepository::new(&db);
+
         Self {
             user,
             guild,
             command,
             stats,
             jukebox,
+            reaction,
         }
     }
 

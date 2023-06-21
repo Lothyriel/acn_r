@@ -7,7 +7,7 @@ mod shuffle;
 mod skip;
 mod stop;
 
-pub fn jukebox_group<'a>() -> Vec<Command> {
+pub fn group() -> Vec<Command> {
     vec![
         play::play(),
         skip::skip(),

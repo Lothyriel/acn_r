@@ -8,7 +8,9 @@ use crate::extensions::{
 #[command(prefix_command, slash_command, guild_only)]
 pub async fn playlist(
     ctx: Context<'_>,
-    #[description = "A song URL or YouTube search query"] query: String,
+    #[rest]
+    #[description = "A song URL or YouTube search query"]
+    query: String,
 ) -> CommandResult {
     let songbird = ctx.get_songbird().await?;
 

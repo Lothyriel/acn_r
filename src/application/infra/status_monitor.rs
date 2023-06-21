@@ -74,16 +74,18 @@ impl StatusMonitor {
     }
 
     async fn update_pending_status(&self) -> Result<(), Error> {
-        let new_status = self.get_online_users().await?;
+        let add_activity_tasks = {
+            let new_status = self.get_online_users().await?;
 
-        let mut manager = self.manager.lock().await;
+            let mut manager = self.manager.lock().await;
 
-        let activities = manager.update_status(new_status);
+            let activities = manager.update_status(new_status);
 
-        let add_activity_tasks = activities.into_iter().map(|a| {
-            warn!("Added activity mannualy: {:?}", a);
-            self.user_repository.add_activity(a)
-        });
+            activities.into_iter().map(|a| {
+                warn!("Added activity manually: {:?}", a);
+                self.user_repository.add_activity(a)
+            })
+        };
 
         join_all(add_activity_tasks).await.log_errors();
 
@@ -113,14 +115,14 @@ impl StatusManager {
 
         let mut activities = vec![];
 
-        for c in connected {
-            self.connect_user(c);
-            activities.push(c.to_activity(Activity::Connected));
+        for info in connected {
+            self.connect_user(info);
+            activities.push(info.to_activity(Activity::Connected));
         }
 
-        for d in disconnected {
-            self.disconnect_user(d);
-            activities.push(d.to_activity(Activity::Disconnected));
+        for info in disconnected {
+            self.disconnect_user(info);
+            activities.push(info.to_activity(Activity::Disconnected));
         }
 
         activities

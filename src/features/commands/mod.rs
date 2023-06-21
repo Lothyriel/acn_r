@@ -3,3 +3,4 @@ mod help;
 mod jukebox;
 mod misc;
 mod r34;
+mod reactions;
