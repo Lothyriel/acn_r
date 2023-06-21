@@ -48,7 +48,7 @@ impl ReactionRepository {
 
     pub async fn reaction(
         &self,
-        emotion: String,
+        emotion: Option<String>,
         guild: Option<u64>,
     ) -> Result<(Reaction, Vec<u8>), Error> {
         let reaction = self.get_reaction(emotion, guild).await?;
@@ -63,9 +63,20 @@ impl ReactionRepository {
         Ok((reaction, bytes))
     }
 
-    async fn get_reaction(&self, emotion: String, guild: Option<u64>) -> Result<Reaction, Error> {
+
+    async fn get_reaction(
+        &self,
+        emotion: Option<String>,
+        guild: Option<u64>,
+    ) -> Result<Reaction, Error> {
+        let mut filter = doc! { "guild_id": guild.map(|x| x as i64)};
+
+        if let Some(emotion) = emotion {
+            filter.insert("emotion", emotion);
+        }
+
         let pipeline = [
-            doc! { "$match": {"emotion": emotion, "guild_id": guild.map(|x| x as i64)} },
+            doc! { "$match": filter, },
             doc! { "$sample": { "size": 1 } },
         ];
 
