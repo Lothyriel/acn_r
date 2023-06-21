@@ -14,6 +14,7 @@ dependencies = [
  "lavalink-rs",
  "log",
  "mongodb",
+ "mongodb-gridfs",
  "poise",
  "rand",
  "reqwest",
@@ -1287,6 +1288,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mongodb-gridfs"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ffd222eac7a4030b551fcb59c7d5309c0be80f4b0d95f1ca495988e3dd1593a"
+dependencies = [
+ "bson",
+ "md-5",
+ "mongodb",
+ "tokio",
+ "tokio-stream",
+ "typed-builder",
+]
+
+[[package]]
 name = "nanorand"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2414,6 +2429,17 @@ dependencies = [
  "rustls",
  "tokio",
  "webpki",
+]
+
+[[package]]
+name = "tokio-stream"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "397c988d37662c7dda6d2208364a706264bf3d6138b11d436cbac0ad38832842"
+dependencies = [
+ "futures-core",
+ "pin-project-lite",
+ "tokio",
 ]
 
 [[package]]
