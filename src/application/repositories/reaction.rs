@@ -1,41 +1,47 @@
 use anyhow::{anyhow, Error};
-use futures::{AsyncReadExt, AsyncWriteExt};
+use futures::StreamExt;
 use mongodb::{
-    bson::{doc, from_document, Bson},
-    options::GridFsBucketOptions,
-    Collection, Database, GridFsBucket,
+    bson::{doc, from_document},
+    Collection, Database,
 };
+use mongodb_gridfs::{options::GridFSBucketOptions, GridFSBucket};
 
-use crate::application::models::{dto::reaction_dto::ReactionDto, entities::reaction::Reaction};
+use crate::application::models::{dto::reaction_dto::AddReactionDto, entities::reaction::Reaction};
 
 #[derive(Clone)]
 pub struct ReactionRepository {
     reactions: Collection<Reaction>,
-    bucket: GridFsBucket,
+    bucket: GridFSBucket,
 }
 
 impl ReactionRepository {
     pub fn new(db: &Database) -> Self {
-        let bucket_options = GridFsBucketOptions::builder()
+        let bucket_options = GridFSBucketOptions::builder()
             .bucket_name("Reactions".to_owned())
             .build();
 
         Self {
             reactions: db.collection("Reactions"),
-            bucket: db.gridfs_bucket(bucket_options),
+            bucket: GridFSBucket::new(db.to_owned(), Some(bucket_options)),
         }
     }
 
-    pub async fn add_reaction(&self, dto: ReactionDto) -> Result<(), Error> {
-        let id = Bson::ObjectId(dto.reaction.id);
-
-        let mut stream = self
+    pub async fn add_reaction(&mut self, dto: AddReactionDto) -> Result<(), Error> {
+        let id = self
             .bucket
-            .open_upload_stream_with_id(id, &dto.reaction.filename, None);
+            .upload_from_stream(dto.filename.as_str(), dto.bytes, None)
+            .await?;
 
-        stream.write_all(&dto.bytes).await?;
+        let reactions = Reaction {
+            id,
+            date: chrono::Utc::now(),
+            emotion: dto.emotion,
+            guild_id: dto.guild_id,
+            user_id: dto.user_id,
+            filename: dto.filename,
+        };
 
-        self.reactions.insert_one(dto.reaction, None).await?;
+        self.reactions.insert_one(&reactions, None).await?;
 
         Ok(())
     }
@@ -44,22 +50,17 @@ impl ReactionRepository {
         &self,
         emotion: String,
         guild: Option<u64>,
-    ) -> Result<ReactionDto, Error> {
+    ) -> Result<(Reaction, Vec<u8>), Error> {
         let reaction = self.get_reaction(emotion, guild).await?;
 
-        let mut stream = self
-            .bucket
-            .open_download_stream(Bson::ObjectId(reaction.id))
-            .await?;
+        let mut stream = self.bucket.open_download_stream(reaction.id).await?;
 
-        let mut buffer = vec![];
+        let bytes = stream
+            .next()
+            .await
+            .ok_or_else(|| anyhow!("Error downloading file"))?;
 
-        stream.read_to_end(&mut buffer).await?;
-
-        Ok(ReactionDto {
-            reaction,
-            bytes: buffer,
-        })
+        Ok((reaction, bytes))
     }
 
     async fn get_reaction(&self, emotion: String, guild: Option<u64>) -> Result<Reaction, Error> {
