@@ -109,6 +109,20 @@ pub struct DispatchData {
     channel_id: Option<ChannelId>,
 }
 
+impl DispatchData {
+    pub async fn get_lavalink_ctx(&self) -> LavalinkCtx {
+        let lava_client = self.lava_client.to_owned();
+        let jukebox_repository = self.jukebox_repository.to_owned();
+
+        LavalinkCtx::new(
+            self.guild_id.0,
+            self.user_id.0,
+            self.songbird.to_owned(),
+            lava_client,
+            jukebox_repository,
+        )
+    }
+}
 fn get_activity(old: &VoiceState, new: &VoiceState) -> Activity {
     if old.channel_id != new.channel_id {
         match new.channel_id {
