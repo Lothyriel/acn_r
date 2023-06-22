@@ -14,7 +14,7 @@ use crate::{
 pub trait ContextExt {
     async fn get_author_name(self) -> String;
     async fn get_command_args(self) -> String;
-    async fn get_songbird(self) -> Result<LavalinkCtx, Error>;
+    async fn get_lavalink(self) -> Result<LavalinkCtx, Error>;
     fn get_guild_info(self) -> Option<GuildInfo>;
     fn assure_cached_guild(self) -> Result<Guild, Error>;
     fn assure_guild_context(self) -> Result<GuildId, Error>;
@@ -48,7 +48,7 @@ impl ContextExt for Context<'_> {
         }
     }
 
-    async fn get_songbird(self) -> Result<LavalinkCtx, Error> {
+    async fn get_lavalink(self) -> Result<LavalinkCtx, Error> {
         let guild_id = self.assure_guild_context()?.0;
 
         let lava_client = self.data().services.lava_client.to_owned();
