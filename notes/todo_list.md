@@ -1,5 +1,7 @@
 -implement disconnect after queue ends
 
+-mostrar timestamp da musica no !queue
+
 --------------------R34-----------------------------------
 R34Use{id: Guid, guild_id: u64, user_id: u64, date: Date, post_title: String }
 Implementar comandos:
