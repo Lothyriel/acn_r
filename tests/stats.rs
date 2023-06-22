@@ -9,11 +9,11 @@ mod stats {
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
             repositories::{guild::GuildRepository, stats::StatsRepository, user::UserRepository},
         },
-        extensions::serenity::guild_ext::StatusInfo,
+        extensions::{serenity::guild_ext::StatusInfo, std_ext},
         init_app,
     };
     use anyhow::{anyhow, Error};
-    use chrono::Duration;
+    use chrono::{Duration, Days};
     use mongodb::Database;
 
     const LA_PALOMBA_ID: u64 = 244922266050232321;
@@ -69,10 +69,20 @@ mod stats {
         Ok(())
     }
 
+    #[test]
+    fn get_average_hours_per_day_test() {
+        let initial = chrono::Utc::now().checked_sub_days(Days::new(2)).unwrap();
+        let hours = 17;
+
+        let avg = std_ext::get_average_hours_per_day(initial, hours);
+
+        assert!(8.5 == avg)
+    }
+
     async fn populate_test_stats(db: &Database) -> Result<(), Error> {
         let user_repository = UserRepository::new(&db, GuildRepository::new(&db));
 
-        let mut date = chrono::Utc::now();
+        let mut date = chrono::Utc::now().checked_sub_days(Days::new(2)).unwrap();
 
         for _ in 0..10 {
             let connected = UpdateActivityDto {
