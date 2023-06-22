@@ -9,7 +9,7 @@ mod stats {
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
             repositories::{guild::GuildRepository, stats::StatsRepository, user::UserRepository},
         },
-        extensions::{serenity::guild_ext::StatusInfo, std_ext},
+        extensions::serenity::guild_ext::StatusInfo,
         init_app,
     };
     use anyhow::{anyhow, Error};
