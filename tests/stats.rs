@@ -13,7 +13,7 @@ mod stats {
         init_app,
     };
     use anyhow::{anyhow, Error};
-    use chrono::Duration;
+    use chrono::{Days, Duration};
     use mongodb::Database;
 
     const LA_PALOMBA_ID: u64 = 244922266050232321;
@@ -72,7 +72,7 @@ mod stats {
     async fn populate_test_stats(db: &Database) -> Result<(), Error> {
         let user_repository = UserRepository::new(&db, GuildRepository::new(&db));
 
-        let mut date = chrono::Utc::now();
+        let mut date = chrono::Utc::now().checked_sub_days(Days::new(2)).unwrap();
 
         for _ in 0..10 {
             let connected = UpdateActivityDto {
