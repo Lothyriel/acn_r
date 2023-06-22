@@ -1,11 +1,9 @@
 use anyhow::Error;
-use chrono::{DateTime, Utc};
 use futures::future::join_all;
 use poise::{
     command,
     serenity_prelude::{GuildId, MessageBuilder, User},
 };
-use std::cmp::max;
 
 use crate::extensions::{
     log_ext::LogErrorsExt,
@@ -13,6 +11,7 @@ use crate::extensions::{
         context_ext::ContextExt,
         serenity_structs::{CommandResult, Context},
     },
+    std_ext,
 };
 
 const SECONDS_IN_HOUR: i64 = 60 * 60;
@@ -34,7 +33,8 @@ pub async fn stats(
         let name = get_name(guild_id, ctx, f.user_id).await?;
         let seconds_online = f.seconds_online;
         let hours_online = seconds_online / SECONDS_IN_HOUR;
-        let average_per_day = get_average_hours_per_day(guild_stats.initial_date, hours_online);
+        let average_per_day =
+            std_ext::get_average_hours_per_day(guild_stats.initial_date, hours_online);
 
         Ok(format!(
             "- {} ficou {} segundos online ({} hora(s)) - Uma média de {} hora(s) por dia",
@@ -73,12 +73,4 @@ async fn get_name(guild_id: GuildId, ctx: Context<'_>, user_id: u64) -> Result<S
             .await?
             .unwrap_or_else(|| format!("Unknown {user_id}"))),
     }
-}
-
-fn get_average_hours_per_day(initial_date: DateTime<Utc>, hours: i64) -> f64 {
-    let span = Utc::now() - initial_date;
-
-    let total_days = max(span.num_days(), 1);
-
-    return hours as f64 / total_days as f64;
 }
