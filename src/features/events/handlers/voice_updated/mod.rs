@@ -3,13 +3,13 @@ use std::sync::Arc;
 use anyhow::{anyhow, Error};
 use futures::{future::join_all, TryFutureExt};
 use lavalink_rs::LavalinkClient;
-use poise::serenity_prelude::{Cache, ChannelId, Context, Http, UserId, VoiceState};
+use poise::serenity_prelude::{Cache, ChannelId, Context, GuildId, Http, UserId, VoiceState};
 use songbird::Songbird;
 
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::deploy_service::DeployServices,
+        infra::{deploy_service::DeployServices, lavalink_ctx::LavalinkCtx},
         models::{dto::user::UpdateActivityDto, entities::user::Activity},
         repositories::jukebox::JukeboxRepository,
     },
@@ -44,13 +44,13 @@ pub async fn handler(
 
     let nickname = member.display_name().to_string();
 
-    let guild_id = member.guild_id.0;
+    let guild_id = member.guild_id;
 
-    let guild = ctx.http.get_guild(guild_id).await?;
+    let guild = ctx.http.get_guild(guild_id.0).await?;
 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
-        guild_id: guild_id,
+        guild_id: guild_id.0,
         guild_name: guild.name,
         nickname,
         activity,
@@ -68,7 +68,7 @@ pub async fn handler(
         jukebox_repository: data.repositories.jukebox.to_owned(),
         deploy_services: data.services.deploy_services.to_owned(),
         lava_client: data.services.lava_client.to_owned(),
-        id: data.services.id,
+        bot_id: data.services.bot_id,
         guild_id,
         activity,
     };
@@ -101,12 +101,27 @@ pub struct DispatchData {
 
     jukebox_repository: JukeboxRepository,
     deploy_services: DeployServices,
-    id: u64,
+    bot_id: u64,
 
     user_id: UserId,
-    guild_id: u64,
+    guild_id: GuildId,
     activity: Activity,
     channel_id: Option<ChannelId>,
+}
+
+impl DispatchData {
+    pub async fn get_lavalink_ctx(&self) -> LavalinkCtx {
+        let lava_client = self.lava_client.to_owned();
+        let jukebox_repository = self.jukebox_repository.to_owned();
+
+        LavalinkCtx::new(
+            self.guild_id.0,
+            self.user_id.0,
+            self.songbird.to_owned(),
+            lava_client,
+            jukebox_repository,
+        )
+    }
 }
 
 fn get_activity(old: &VoiceState, new: &VoiceState) -> Activity {
