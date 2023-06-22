@@ -10,7 +10,7 @@ pub async fn handler(data: Arc<DispatchData>) -> Result<(), Error> {
 }
 
 async fn disconnect(data: Arc<DispatchData>) -> Result<bool, Error> {
-    let guild = data.http.get_guild(data.guild_id).await?;
+    let guild = data.http.get_guild(data.guild_id.0).await?;
     if guild.afk_channel_id == data.channel_id {
         guild
             .id
