@@ -16,7 +16,7 @@ pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
 }
 
 async fn dispatch_songbird_reconnect(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
-    if dispatch_data.user_id != dispatch_data.id {
+    if dispatch_data.user_id != dispatch_data.bot_id {
         return Ok(());
     }
 

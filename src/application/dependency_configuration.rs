@@ -48,7 +48,7 @@ impl DependencyContainer {
 }
 
 pub struct ServicesContainer {
-    pub id: u64,
+    pub bot_id: u64,
     pub allowed_ids: Vec<u64>,
     pub app_configurations: Arc<RwLock<AppConfigurations>>,
     pub lava_client: LavalinkClient,
@@ -60,7 +60,7 @@ impl ServicesContainer {
     async fn build(
         repositories: &RepositoriesContainer,
         settings: AppSettings,
-        id: u64,
+        bot_id: u64,
         http: Arc<Http>,
         cache: Arc<Cache>,
     ) -> Result<Self, Error> {
@@ -90,7 +90,7 @@ impl ServicesContainer {
         Ok(Self {
             deploy_services,
             lava_client,
-            id,
+            bot_id,
             allowed_ids: settings.allowed_ids,
             app_configurations,
             status_monitor,

@@ -68,7 +68,7 @@ pub async fn handler(
         jukebox_repository: data.repositories.jukebox.to_owned(),
         deploy_services: data.services.deploy_services.to_owned(),
         lava_client: data.services.lava_client.to_owned(),
-        id: data.services.id,
+        bot_id: data.services.bot_id,
         guild_id,
         activity,
     };
@@ -101,7 +101,7 @@ pub struct DispatchData {
 
     jukebox_repository: JukeboxRepository,
     deploy_services: DeployServices,
-    id: u64,
+    bot_id: u64,
 
     user_id: UserId,
     guild_id: u64,
