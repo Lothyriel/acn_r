@@ -8,15 +8,11 @@ use crate::{
 };
 
 pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
-    if dispatch_data.activity == Activity::Moved {
-        dispatch_songbird_reconnect(dispatch_data).await?;
+    if dispatch_data.user_id != dispatch_data.bot_id {
+        return Ok(());
     }
 
-    Ok(())
-}
-
-async fn dispatch_songbird_reconnect(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
-    if dispatch_data.user_id != dispatch_data.bot_id {
+    if dispatch_data.activity != Activity::Moved {
         return Ok(());
     }
 
