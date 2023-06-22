@@ -13,7 +13,7 @@ mod stats {
         init_app,
     };
     use anyhow::{anyhow, Error};
-    use chrono::{Duration, Days};
+    use chrono::{Days, Duration};
     use mongodb::Database;
 
     const LA_PALOMBA_ID: u64 = 244922266050232321;
