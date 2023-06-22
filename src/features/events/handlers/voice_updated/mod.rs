@@ -3,13 +3,13 @@ use std::sync::Arc;
 use anyhow::{anyhow, Error};
 use futures::{future::join_all, TryFutureExt};
 use lavalink_rs::LavalinkClient;
-use poise::serenity_prelude::{Cache, ChannelId, Context, Http, UserId, VoiceState};
+use poise::serenity_prelude::{Cache, ChannelId, Context, GuildId, Http, UserId, VoiceState};
 use songbird::Songbird;
 
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::deploy_service::DeployServices,
+        infra::{deploy_service::DeployServices, lavalink_ctx::LavalinkCtx},
         models::{dto::user::UpdateActivityDto, entities::user::Activity},
         repositories::jukebox::JukeboxRepository,
     },
@@ -44,13 +44,13 @@ pub async fn handler(
 
     let nickname = member.display_name().to_string();
 
-    let guild_id = member.guild_id.0;
+    let guild_id = member.guild_id;
 
-    let guild = ctx.http.get_guild(guild_id).await?;
+    let guild = ctx.http.get_guild(guild_id.0).await?;
 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
-        guild_id: guild_id,
+        guild_id: guild_id.0,
         guild_name: guild.name,
         nickname,
         activity,
@@ -104,7 +104,7 @@ pub struct DispatchData {
     bot_id: u64,
 
     user_id: UserId,
-    guild_id: u64,
+    guild_id: GuildId,
     activity: Activity,
     channel_id: Option<ChannelId>,
 }
@@ -123,6 +123,7 @@ impl DispatchData {
         )
     }
 }
+
 fn get_activity(old: &VoiceState, new: &VoiceState) -> Activity {
     if old.channel_id != new.channel_id {
         match new.channel_id {
