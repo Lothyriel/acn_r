@@ -3,12 +3,14 @@ use std::sync::Arc;
 use anyhow::Error;
 
 use crate::{
-    extensions::serenity::guild_ext::GuildExt,
+    application::models::entities::user::Activity, extensions::serenity::guild_ext::GuildExt,
     features::events::handlers::voice_updated::DispatchData,
 };
 
 pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
-    if dispatch_data.user_id == dispatch_data.bot_id {
+    if dispatch_data.user_id == dispatch_data.bot_id
+        || dispatch_data.activity != Activity::Disconnected
+    {
         return Ok(());
     }
 
