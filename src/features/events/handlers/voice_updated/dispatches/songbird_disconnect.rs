@@ -8,9 +8,11 @@ use crate::{
 };
 
 pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
-    if dispatch_data.user_id == dispatch_data.bot_id
-        || dispatch_data.activity != Activity::Disconnected
-    {
+    if dispatch_data.user_id == dispatch_data.bot_id {
+        return Ok(());
+    }
+
+    if dispatch_data.activity != Activity::Disconnected {
         return Ok(());
     }
 
