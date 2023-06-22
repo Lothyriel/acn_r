@@ -4,7 +4,7 @@ use anyhow::{anyhow, Error};
 use lavalink_rs::{
     async_trait,
     gateway::LavalinkEventHandler,
-    model::{Track, TrackQueue},
+    model::{Track, TrackFinish, TrackQueue},
     LavalinkClient,
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
@@ -22,12 +22,42 @@ use crate::{
     infra::{appsettings::AppSettings, env},
 };
 
-struct LavalinkHandler;
+struct LavalinkHandler(pub Arc<Songbird>);
 
 #[async_trait]
-impl LavalinkEventHandler for LavalinkHandler {}
+impl LavalinkEventHandler for LavalinkHandler {
+    async fn track_finish(&self, client: LavalinkClient, event: TrackFinish) {
+        track_finish_handler(self.0.to_owned(), client, event).await.log();
+    }
+}
 
-pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClient, Error> {
+async fn track_finish_handler(songbird: Arc<Songbird>, client: LavalinkClient, event: TrackFinish) -> Result<(), Error> {
+    let finished_playing = {
+        let nodes = client.nodes().await;
+
+        let node = nodes
+            .get(&event.guild_id.0)
+            .ok_or_else(|| anyhow!("Couldn't get node for {}", event.guild_id))?;
+
+        node.queue.is_empty()
+    };
+
+    if finished_playing {
+        songbird.remove(event.guild_id.0).await?;
+
+        let nodes = client.nodes().await;
+        nodes.remove(&event.guild_id.0);
+
+        let loops = client.loops().await;
+        loops.remove(&event.guild_id.0);
+
+        client.destroy(event.guild_id.0).await?;
+    }
+
+    Ok(())
+}
+
+pub async fn get_lavalink_client(settings: &AppSettings, songbird: Arc<Songbird>) -> Result<LavalinkClient, Error> {
     let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
         .get_current_application_info()
         .await?;
@@ -36,7 +66,7 @@ pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClien
         .set_host(&settings.lavalink_settings.url)
         .set_port(settings.lavalink_settings.port)
         .set_password(env::get("LAVALINK_PASSWORD")?)
-        .build(LavalinkHandler)
+        .build(LavalinkHandler(songbird))
         .await?;
 
     Ok(lava_client)
@@ -199,7 +229,7 @@ impl LavalinkCtx {
         Ok(())
     }
 
-    async fn stop_player(&self) -> Result<(), Error> {
+    pub async fn stop_player(&self) -> Result<(), Error> {
         self.songbird.remove(self.guild_id).await?;
 
         let nodes = self.lava_client.nodes().await;
