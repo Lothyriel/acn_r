@@ -56,7 +56,7 @@ pub async fn start_application() -> Result<(), Error> {
                     ready.user.id.0,
                     ctx.http.to_owned(),
                     ctx.cache.to_owned(),
-                    songbird
+                    songbird,
                 )
                 .await
             })

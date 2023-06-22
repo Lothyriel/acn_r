@@ -27,11 +27,17 @@ struct LavalinkHandler(pub Arc<Songbird>);
 #[async_trait]
 impl LavalinkEventHandler for LavalinkHandler {
     async fn track_finish(&self, client: LavalinkClient, event: TrackFinish) {
-        track_finish_handler(self.0.to_owned(), client, event).await.log();
+        track_finish_handler(self.0.to_owned(), client, event)
+            .await
+            .log();
     }
 }
 
-async fn track_finish_handler(songbird: Arc<Songbird>, client: LavalinkClient, event: TrackFinish) -> Result<(), Error> {
+async fn track_finish_handler(
+    songbird: Arc<Songbird>,
+    client: LavalinkClient,
+    event: TrackFinish,
+) -> Result<(), Error> {
     let finished_playing = {
         let nodes = client.nodes().await;
 
@@ -57,7 +63,10 @@ async fn track_finish_handler(songbird: Arc<Songbird>, client: LavalinkClient, e
     Ok(())
 }
 
-pub async fn get_lavalink_client(settings: &AppSettings, songbird: Arc<Songbird>) -> Result<LavalinkClient, Error> {
+pub async fn get_lavalink_client(
+    settings: &AppSettings,
+    songbird: Arc<Songbird>,
+) -> Result<LavalinkClient, Error> {
     let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
         .get_current_application_info()
         .await?;

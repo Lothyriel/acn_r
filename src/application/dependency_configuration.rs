@@ -36,11 +36,12 @@ impl DependencyContainer {
         id: u64,
         http: Arc<Http>,
         cache: Arc<Cache>,
-        songbird: Arc<Songbird>
+        songbird: Arc<Songbird>,
     ) -> Result<Self, Error> {
         let repositories = RepositoriesContainer::build(&settings).await?;
 
-        let services = ServicesContainer::build(&repositories, settings, id, http, cache, songbird).await?;
+        let services =
+            ServicesContainer::build(&repositories, settings, id, http, cache, songbird).await?;
 
         Ok(Self {
             services,
@@ -65,7 +66,7 @@ impl ServicesContainer {
         bot_id: u64,
         http: Arc<Http>,
         cache: Arc<Cache>,
-        songbird: Arc<Songbird>
+        songbird: Arc<Songbird>,
     ) -> Result<Self, Error> {
         let http_client = Client::new();
         let lava_client = lavalink_ctx::get_lavalink_client(&settings, songbird).await?;
