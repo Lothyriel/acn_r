@@ -36,11 +36,3 @@ impl<T> VecResultErrorExt<T> for Vec<Result<T, Error>> {
         }
     }
 }
-
-pub fn get_average_hours_per_day(initial_date: DateTime<Utc>, hours: i64) -> f64 {
-    let span = Utc::now() - initial_date;
-
-    let total_days = max(span.num_days(), 1);
-
-    return hours as f64 / total_days as f64;
-}
