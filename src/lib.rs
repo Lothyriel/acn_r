@@ -1,5 +1,6 @@
 use anyhow::Error;
 use application::dependency_configuration::DependencyContainer;
+use extensions::serenity::context_ext;
 use poise::serenity_prelude::GatewayIntents;
 use songbird::{driver::DecodeMode, Config, SerenityInit};
 
@@ -48,11 +49,14 @@ pub async fn start_application() -> Result<(), Error> {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
+                let songbird = context_ext::get_songbird_client(ctx).await?;
+
                 DependencyContainer::build(
                     settings,
                     ready.user.id.0,
                     ctx.http.to_owned(),
                     ctx.cache.to_owned(),
+                    songbird
                 )
                 .await
             })
