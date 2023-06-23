@@ -46,7 +46,7 @@ impl StatusMonitor {
     }
 
     pub async fn monitor_status_loop(&self) -> Result<(), Error> {
-        let mut interval = time::interval(Duration::from_secs(60));
+        let mut interval = time::interval(Duration::from_secs(10));
 
         loop {
             interval.tick().await;
