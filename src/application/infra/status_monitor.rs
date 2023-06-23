@@ -128,6 +128,17 @@ impl StatusManager {
         activities
     }
 
+    pub fn is_updated(&self, activity: &UserActivity) -> bool {
+        let info = StatusInfo::new(activity.user_id, activity.guild_id);
+        let contains = self.current_status.contains(&info);
+
+        match activity.activity_type {
+            Activity::Connected => contains,
+            Activity::Disconnected => !contains,
+            _ => true,
+        }
+    }
+
     fn disconnect_user(&mut self, user_info: &StatusInfo) {
         self.current_status.remove(user_info);
     }
