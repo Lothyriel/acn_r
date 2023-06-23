@@ -28,7 +28,7 @@ pub async fn add_react(
 
     reaction_repository.add_reaction(dto).await?;
 
-    ctx.say(format!("Salvo: {}", emotion.to_lowercase()))
+    ctx.say(format!("Registrada emoção: \"{}\"", emotion.to_lowercase()))
         .await?;
 
     Ok(())
