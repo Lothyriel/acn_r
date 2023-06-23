@@ -91,7 +91,7 @@ impl StatusMonitor {
                 .into_iter()
                 .filter_map(|a| match manager.is_updated(&a) {
                     false => {
-                        warn!("Added activity manually: {:?}", a);
+                        warn!("Added pending activity: {:?}", a);
                         Some(self.user_repository.add_activity(a))
                     }
                     true => None,
