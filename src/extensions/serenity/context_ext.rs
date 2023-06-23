@@ -7,7 +7,7 @@ use songbird::Songbird;
 
 use crate::{
     application::{infra::lavalink_ctx::LavalinkCtx, models::dto::user::GuildInfo},
-    extensions::serenity::serenity_structs::Context,
+    extensions::serenity::Context,
 };
 
 #[async_trait]

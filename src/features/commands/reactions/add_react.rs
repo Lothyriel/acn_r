@@ -4,7 +4,7 @@ use poise::{command, serenity_prelude::Attachment};
 
 use crate::{
     application::models::dto::reaction_dto::AddReactionDto,
-    extensions::serenity::serenity_structs::{CommandResult, Context},
+    extensions::serenity::{CommandResult, Context},
 };
 
 #[command(prefix_command, slash_command, category = "reactions")]

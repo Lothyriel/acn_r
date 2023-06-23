@@ -9,7 +9,7 @@ use crate::{
     },
     extensions::{
         log_ext::LogExt,
-        serenity::{context_ext::ContextExt, serenity_structs::Context},
+        serenity::{context_ext::ContextExt, Context},
     },
 };
 

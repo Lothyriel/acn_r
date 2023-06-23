@@ -5,7 +5,7 @@ use crate::extensions::{
     log_ext::LogErrorsExt,
     serenity::{
         guild_ext::GuildExt,
-        serenity_structs::{CommandResult, Context, OWNERS_ONLY},
+        {CommandResult, Context, OWNERS_ONLY},
     },
 };
 

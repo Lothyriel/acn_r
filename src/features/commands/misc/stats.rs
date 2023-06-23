@@ -11,7 +11,7 @@ use crate::extensions::{
     log_ext::LogErrorsExt,
     serenity::{
         context_ext::ContextExt,
-        serenity_structs::{CommandResult, Context},
+        {CommandResult, Context},
     },
 };
 

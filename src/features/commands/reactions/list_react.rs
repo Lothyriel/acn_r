@@ -1,6 +1,6 @@
 use poise::{command, serenity_prelude::MessageBuilder};
 
-use crate::extensions::serenity::serenity_structs::{CommandResult, Context};
+use crate::extensions::serenity::{CommandResult, Context};
 
 #[command(prefix_command, slash_command, category = "reactions")]
 pub async fn list_react(ctx: Context<'_>) -> CommandResult {
