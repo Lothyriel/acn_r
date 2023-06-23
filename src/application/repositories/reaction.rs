@@ -96,7 +96,7 @@ impl ReactionRepository {
 
         match cursor.advance().await? {
             true => Ok(from_document(cursor.deserialize_current()?)?),
-            false => Err(anyhow!("não tem reaçao com essa emoção man.")),
+            false => Err(anyhow!("Sem emoções correspondentes registradas")),
         }
     }
 }
