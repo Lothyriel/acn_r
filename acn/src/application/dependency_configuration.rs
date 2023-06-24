@@ -1,3 +1,21 @@
+use std::sync::Arc;
+
+use anyhow::Error;
+use lavalink_rs::LavalinkClient;
+use lib::{application::{
+    dependency_configuration::RepositoriesContainer,
+    infra::{
+        appsettings::AppConfigurations, deploy_service::DeployServices,
+        http_clients::github_client::GithubClient, status_monitor::StatusMonitor,
+    },
+}, extensions::log_ext::LogExt};
+use poise::serenity_prelude::{Cache, Http, UserId};
+use reqwest::Client;
+use tokio::sync::RwLock;
+
+use crate::AppSettings;
+
+use super::lavalink_ctx;
 
 pub struct DependencyContainer {
     pub services: ServicesContainer,
@@ -11,7 +29,7 @@ impl DependencyContainer {
         http: Arc<Http>,
         cache: Arc<Cache>,
     ) -> Result<Self, Error> {
-        let repositories = RepositoriesContainer::build(&settings).await?;
+        let repositories = RepositoriesContainer::build(&settings.mongo_settings).await?;
 
         let services = ServicesContainer::build(&repositories, settings, id, http, cache).await?;
 
@@ -40,7 +58,7 @@ impl ServicesContainer {
         cache: Arc<Cache>,
     ) -> Result<Self, Error> {
         let http_client = Client::new();
-        let lava_client = lavalink_ctx::get_lavalink_client(&settings).await?;
+        let lava_client = lavalink_ctx::get_lavalink_client(&settings.lavalink_settings).await?;
 
         let github_client = Arc::new(GithubClient::new(http_client, settings.github_settings));
 

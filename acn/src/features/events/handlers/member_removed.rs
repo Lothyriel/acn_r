@@ -1,7 +1,6 @@
 use anyhow::Error;
+use lib::extensions::serenity::guild_ext::GuildExt;
 use poise::serenity_prelude::{Context, GuildId, Member, User};
-
-use crate::extensions::serenity::guild_ext::GuildExt;
 
 pub async fn handler(
     ctx: &Context,

@@ -1,13 +1,8 @@
 use futures::future::join_all;
+use lib::extensions::{serenity::{OWNERS_ONLY, guild_ext::GuildExt}, log_ext::LogErrorsExt};
 use poise::{command, serenity_prelude::CacheHttp};
 
-use crate::extensions::{
-    log_ext::LogErrorsExt,
-    serenity::{
-        guild_ext::GuildExt,
-        {CommandResult, Context, OWNERS_ONLY},
-    },
-};
+use crate::application::{CommandResult, Context};
 
 #[command(
     prefix_command,

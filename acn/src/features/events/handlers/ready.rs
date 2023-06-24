@@ -1,10 +1,11 @@
 use anyhow::Error;
 use futures::future::join_all;
+use lib::extensions::log_ext::LogErrorsExt;
 use log::warn;
 use poise::serenity_prelude::Context;
 
 use crate::{
-    application::dependency_configuration::DependencyContainer, extensions::log_ext::LogErrorsExt,
+    application::dependency_configuration::DependencyContainer,
 };
 
 pub async fn handler(

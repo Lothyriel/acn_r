@@ -1,17 +1,10 @@
 use anyhow::Error;
 use chrono::{DateTime, Utc};
+use lib::{application::models::{dto::command_use::CommandUseDto, entities::russian_roulette::RussianRoulette}, extensions::{serenity::context_ext::ContextExt, log_ext::LogExt}};
 use poise::serenity_prelude::Mentionable;
 use rand::Rng;
 
-use crate::{
-    application::models::{
-        dto::command_use::CommandUseDto, entities::russian_roulette::RussianRoulette,
-    },
-    extensions::{
-        log_ext::LogExt,
-        serenity::{context_ext::ContextExt, Context},
-    },
-};
+use crate::application::Context;
 
 async fn after(ctx: Context<'_>) -> Result<(), Error> {
     let now = chrono::Utc::now();
@@ -30,7 +23,7 @@ async fn after(ctx: Context<'_>) -> Result<(), Error> {
         user_id: ctx.author().id.0,
         user_nickname: nickname,
         command: command_name,
-        args: ctx.get_command_args().await,
+        args: ctx.get_command_args(),
     };
 
     ctx.data().repositories.command.add_command_use(dto).await?;

@@ -1,4 +1,4 @@
-use crate::extensions::serenity::Command;
+use crate::application::Command;
 
 mod random;
 

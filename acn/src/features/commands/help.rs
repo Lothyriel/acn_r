@@ -1,6 +1,6 @@
 use poise::command;
 
-use crate::extensions::serenity::{CommandResult, Context};
+use crate::application::{CommandResult, Context};
 
 #[command(prefix_command, slash_command)]
 pub async fn help(

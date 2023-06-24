@@ -1,15 +1,7 @@
 use anyhow::{anyhow, Error};
+use lib::{application::models::dto::command_use::CommandUseDto, extensions::{serenity::context_ext::ContextExt, log_ext::LogExt}};
 
-use crate::{
-    application::models::dto::command_use::CommandUseDto,
-    extensions::{
-        log_ext::LogExt,
-        serenity::{
-            context_ext::ContextExt,
-            {Context, FrameworkError},
-        },
-    },
-};
+use crate::application::{Context, FrameworkError};
 
 async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
     match err {
@@ -32,7 +24,7 @@ async fn handle_command_error(ctx: Context<'_>, error: Error) -> Result<(), Erro
         user_id: ctx.author().id.0,
         guild_info: ctx.get_guild_info(),
         user_nickname: ctx.get_author_name().await,
-        args: ctx.get_command_args().await,
+        args: ctx.get_command_args(),
     };
 
     let command_repository = &ctx.data().repositories.command;

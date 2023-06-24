@@ -3,18 +3,11 @@ use std::sync::Arc;
 use anyhow::{anyhow, Error};
 use futures::{future::join_all, TryFutureExt};
 use lavalink_rs::LavalinkClient;
+use lib::{application::{models::{entities::user::Activity, dto::user::UpdateActivityDto}, infra::deploy_service::DeployServices, repositories::jukebox::JukeboxRepository}, extensions::{serenity::context_ext, std_ext::VecResultErrorExt}};
 use poise::serenity_prelude::{Cache, ChannelId, Context, GuildId, Http, UserId, VoiceState};
 use songbird::Songbird;
 
-use crate::{
-    application::{
-        dependency_configuration::DependencyContainer,
-        infra::{deploy_service::DeployServices, lavalink_ctx::LavalinkCtx},
-        models::{dto::user::UpdateActivityDto, entities::user::Activity},
-        repositories::jukebox::JukeboxRepository,
-    },
-    extensions::{serenity::context_ext, std_ext::VecResultErrorExt},
-};
+use crate::application::{dependency_configuration::DependencyContainer, lavalink_ctx::LavalinkCtx};
 
 mod dispatches;
 

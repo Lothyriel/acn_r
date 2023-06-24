@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
+use lib::{extensions::serenity::guild_ext::GuildExt, application::models::entities::user::Activity};
 
 use crate::{
-    application::models::entities::user::Activity, extensions::serenity::guild_ext::GuildExt,
     features::events::handlers::voice_updated::DispatchData,
 };
 

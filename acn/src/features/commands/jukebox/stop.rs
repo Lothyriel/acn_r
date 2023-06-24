@@ -1,9 +1,6 @@
 use poise::command;
 
-use crate::extensions::serenity::{
-    context_ext::ContextExt,
-    {CommandResult, Context},
-};
+use crate::application::{CommandResult, Context, AppContextExt};
 
 #[command(prefix_command, slash_command, guild_only, category = "Jukebox")]
 pub async fn stop(ctx: Context<'_>) -> CommandResult {

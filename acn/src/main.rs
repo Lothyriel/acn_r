@@ -1,19 +1,30 @@
+use anyhow::Error;
+use application::dependency_configuration::DependencyContainer;
+use features::events::{after, check, error, handlers::invoker};
 use poise::serenity_prelude::GatewayIntents;
+use serde::Deserialize;
 use songbird::{driver::DecodeMode, Config, SerenityInit};
 
-use lib::extensions::log_ext::LogExt;
+use lib::{
+    application::infra::{
+        appsettings::{self, GithubSettings, LavalinkSettings, MongoSettings},
+        env,
+    },
+    extensions::log_ext::LogExt,
+};
+
+use crate::features::commands::groups_configuration;
+
+mod application;
+mod features;
 
 #[tokio::main]
 async fn main() {
-    lib::start_application().await.log()
-}
-
-pub fn get_app_settings() -> Result<AppSettings, Error> {
-    appsettings::load()
+    start_application().await.log()
 }
 
 pub async fn start_application() -> Result<(), Error> {
-    let settings = get_app_settings()?;
+    let settings: AppSettings = appsettings::load()?;
     let token = env::get("TOKEN_BOT")?;
 
     let framework = poise::Framework::builder()

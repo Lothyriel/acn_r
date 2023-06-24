@@ -1,6 +1,6 @@
 use poise::command;
 
-use crate::extensions::serenity::{CommandResult, Context};
+use crate::application::{CommandResult, Context};
 
 #[command(prefix_command, slash_command, category = "R34")]
 pub async fn random(

@@ -1,7 +1,6 @@
 use anyhow::Error;
+use lib::extensions::serenity::guild_ext::GuildExt;
 use poise::serenity_prelude::{Context, Member, Mentionable};
-
-use crate::extensions::serenity::guild_ext::GuildExt;
 
 pub async fn handler(ctx: &Context, new_member: &Member) -> Result<(), Error> {
     let response = format!("Novo random detectado: {}", new_member.mention());

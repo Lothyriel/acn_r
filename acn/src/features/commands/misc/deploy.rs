@@ -1,7 +1,8 @@
 use anyhow::Error;
+use lib::extensions::serenity::OWNERS_ONLY;
 use poise::command;
 
-use crate::extensions::serenity::{CommandResult, Context, OWNERS_ONLY};
+use crate::application::{CommandResult, Context};
 
 #[command(
     prefix_command,

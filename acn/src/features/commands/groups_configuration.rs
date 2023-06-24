@@ -1,6 +1,6 @@
 use crate::{
-    extensions::serenity::Command,
-    features::commands::{help::help, jukebox, misc, r34, reactions},
+    application::Command,
+    features::commands::{help, jukebox, misc, r34, reactions},
 };
 
 fn register_groups() -> Vec<Vec<Command>> {
@@ -13,7 +13,7 @@ fn register_groups() -> Vec<Vec<Command>> {
 }
 
 pub fn register_commands() -> Vec<Command> {
-    let mut commands = vec![help()];
+    let mut commands = vec![help::help()];
 
     for mut command in register_groups() {
         commands.append(command.as_mut());

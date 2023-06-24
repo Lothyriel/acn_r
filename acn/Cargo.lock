@@ -6,7 +6,17 @@ version = 3
 name = "acn"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "chrono",
+ "futures",
+ "lavalink-rs",
  "lib",
+ "log",
+ "poise",
+ "rand",
+ "reqwest",
+ "serde",
+ "songbird",
  "tokio",
 ]
 

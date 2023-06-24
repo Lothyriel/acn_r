@@ -1,11 +1,9 @@
 use std::io::Cursor;
 
+use lib::{application::models::dto::reaction_dto::AddReactionDto, extensions::serenity::context_ext::ContextExt};
 use poise::{command, serenity_prelude::Attachment};
 
-use crate::{
-    application::models::dto::reaction_dto::AddReactionDto,
-    extensions::serenity::{context_ext::ContextExt, CommandResult, Context},
-};
+use crate::application::{CommandResult, Context};
 
 #[command(prefix_command, guild_only, slash_command, category = "Reactions")]
 pub async fn add_react(

@@ -1,17 +1,12 @@
 use anyhow::Error;
 use futures::future::join_all;
+use lib::extensions::{serenity::context_ext::ContextExt, log_ext::LogErrorsExt};
 use poise::{
     command,
     serenity_prelude::{GuildId, MessageBuilder, User},
 };
 
-use crate::extensions::{
-    log_ext::LogErrorsExt,
-    serenity::{
-        context_ext::ContextExt,
-        {CommandResult, Context},
-    },
-};
+use crate::application::{CommandResult, Context};
 
 const MINUTES_IN_DAY: f64 = 60.0 * 24.0;
 const SECONDS_IN_HOUR: f64 = 60.0 * 60.0;
