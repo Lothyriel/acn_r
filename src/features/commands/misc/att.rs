@@ -27,5 +27,8 @@ pub async fn att(
 
     join_all(tasks).await.log_errors();
 
+    ctx.say(format!("Message sent to {} guilds", guilds.len()))
+        .await?;
+
     Ok(())
 }
