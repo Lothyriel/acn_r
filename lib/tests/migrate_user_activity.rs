@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod migrate {
+    use anyhow::Error;
+    use chrono::Utc;
     use lib::{
         application::{
             infra::mongo_client::create_mongo_client,
@@ -7,8 +9,6 @@ mod migrate {
         },
         get_test_settings,
     };
-    use anyhow::Error;
-    use chrono::Utc;
     use serde::Deserialize;
 
     #[tokio::test]
