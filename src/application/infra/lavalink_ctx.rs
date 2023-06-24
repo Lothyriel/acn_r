@@ -215,7 +215,20 @@ impl LavalinkCtx {
     }
 
     async fn assure_connected(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let channel = get_author_voice_channel(ctx).await?;
+        let guild = ctx.assure_cached_guild()?;
+
+        let channel_id = guild
+            .voice_states
+            .get(&ctx.author().id)
+            .and_then(|voice_state| voice_state.channel_id);
+
+        let channel = match channel_id {
+            Some(channel) => channel,
+            None => {
+                ctx.say("Join a voice channel.").await?;
+                return Ok(());
+            }
+        };
 
         let should_join = match self.songbird.get(self.guild_id) {
             Some(call) => {
@@ -345,24 +358,6 @@ impl LavalinkCtx {
         let j_use = JukeboxUse::new(self.guild_id, self.user_id, track);
 
         tokio::spawn(async move { service.add_jukebox_use(j_use).await.log() });
-    }
-}
-
-async fn get_author_voice_channel(ctx: Context<'_>) -> Result<ChannelId, Error> {
-    let guild = ctx.assure_cached_guild()?;
-
-    let channel_id = guild
-        .voice_states
-        .get(&ctx.author().id)
-        .and_then(|voice_state| voice_state.channel_id);
-
-    match channel_id {
-        Some(channel) => Ok(channel),
-        None => {
-            ctx.say("Join a voice channel.").await?;
-
-            return Err(anyhow!("User is not connected to a voice channel"));
-        }
     }
 }
 
