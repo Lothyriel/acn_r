@@ -34,10 +34,10 @@ impl ReactionRepository {
 
         let reactions = Reaction {
             id,
-            date: chrono::Utc::now(),
+            date_added: chrono::Utc::now(),
             emotion: dto.emotion,
             guild_id: dto.guild_id,
-            user_id: dto.user_id,
+            creator_id: dto.user_id,
             filename: dto.filename,
         };
 
