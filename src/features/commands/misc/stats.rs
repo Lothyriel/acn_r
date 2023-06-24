@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use anyhow::Error;
 use futures::future::join_all;
 use poise::{
