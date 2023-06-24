@@ -28,9 +28,11 @@ mod migrate {
     }
 
     async fn get_data() -> Result<Vec<UserActivity>, Error> {
-        let filename = "acn_r.UserActivity.json";
+        let path = "./acn_r.UserActivity.json";
 
-        let settings_path = std::fs::read_to_string(filename)?;
+        let settings_path = std::fs::read_to_string(path)?;
+
+        std::fs::remove_file(path)?;
 
         #[derive(Deserialize)]
         struct Long {
