@@ -1,15 +1,17 @@
 use anyhow::Error;
-use application::dependency_configuration::DependencyContainer;
-use extensions::serenity::context_ext;
 use poise::serenity_prelude::GatewayIntents;
 use songbird::{driver::DecodeMode, Config, SerenityInit};
 
 use crate::{
-    application::infra::{
-        self,
-        appsettings::{self, AppSettings},
-        env,
+    application::{
+        dependency_configuration::DependencyContainer,
+        infra::{
+            self,
+            appsettings::{self, AppSettings},
+            env,
+        },
     },
+    extensions::serenity::context_ext,
     features::{
         commands::groups_configuration,
         events::{after, check, error, handlers::invoker},
