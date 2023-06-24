@@ -1,6 +1,11 @@
 use anyhow::Error;
 use chrono::{DateTime, Utc};
-use lib::{application::models::{dto::command_use::CommandUseDto, entities::russian_roulette::RussianRoulette}, extensions::{serenity::context_ext::ContextExt, log_ext::LogExt}};
+use lib::{
+    application::models::{
+        dto::command_use::CommandUseDto, entities::russian_roulette::RussianRoulette,
+    },
+    extensions::{log_ext::LogExt, serenity::context_ext::ContextExt},
+};
 use poise::serenity_prelude::Mentionable;
 use rand::Rng;
 

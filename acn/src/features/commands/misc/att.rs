@@ -1,5 +1,8 @@
 use futures::future::join_all;
-use lib::extensions::{serenity::{OWNERS_ONLY, guild_ext::GuildExt}, log_ext::LogErrorsExt};
+use lib::extensions::{
+    log_ext::LogErrorsExt,
+    serenity::{guild_ext::GuildExt, OWNERS_ONLY},
+};
 use poise::{command, serenity_prelude::CacheHttp};
 
 use crate::application::{CommandResult, Context};
@@ -22,8 +25,11 @@ pub async fn att(
 
     let errors_count = join_all(tasks).await.log_errors().errors_count;
 
-    ctx.say(format!("Message sent to {} guilds", guilds.len() - errors_count))
-        .await?;
+    ctx.say(format!(
+        "Message sent to {} guilds",
+        guilds.len() - errors_count
+    ))
+    .await?;
 
     Ok(())
 }

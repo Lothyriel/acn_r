@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use lib::{extensions::serenity::guild_ext::GuildExt, application::models::entities::user::Activity};
-
-use crate::{
-    features::events::handlers::voice_updated::DispatchData,
+use lib::{
+    application::models::entities::user::Activity, extensions::serenity::guild_ext::GuildExt,
 };
+
+use crate::features::events::handlers::voice_updated::DispatchData;
 
 pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
     if dispatch_data.user_id == dispatch_data.bot_id {

@@ -2,13 +2,16 @@ use std::sync::Arc;
 
 use anyhow::Error;
 use lavalink_rs::LavalinkClient;
-use lib::{application::{
-    dependency_configuration::RepositoriesContainer,
-    infra::{
-        appsettings::AppConfigurations, deploy_service::DeployServices,
-        http_clients::github_client::GithubClient, status_monitor::StatusMonitor,
+use lib::{
+    application::{
+        dependency_configuration::RepositoriesContainer,
+        infra::{
+            appsettings::AppConfigurations, deploy_service::DeployServices,
+            http_clients::github_client::GithubClient, status_monitor::StatusMonitor,
+        },
     },
-}, extensions::log_ext::LogExt};
+    extensions::log_ext::LogExt,
+};
 use poise::serenity_prelude::{Cache, Http, UserId};
 use reqwest::Client;
 use tokio::sync::RwLock;

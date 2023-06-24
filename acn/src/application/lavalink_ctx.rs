@@ -7,12 +7,15 @@ use lavalink_rs::{
     model::{Track, TrackQueue},
     LavalinkClient,
 };
-use lib::{application::{
-    infra::{appsettings::LavalinkSettings, env, songbird::Receiver},
-    models::entities::jukebox_use::JukeboxUse,
-    repositories::jukebox::JukeboxRepository,
-}, extensions::{log_ext::LogExt, serenity::context_ext::ContextExt}};
-use poise::serenity_prelude::{ChannelId, Http, MessageBuilder, Mentionable};
+use lib::{
+    application::{
+        infra::{appsettings::LavalinkSettings, env, songbird::Receiver},
+        models::entities::jukebox_use::JukeboxUse,
+        repositories::jukebox::JukeboxRepository,
+    },
+    extensions::{log_ext::LogExt, serenity::context_ext::ContextExt},
+};
+use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
 use rand::seq::SliceRandom;
 use songbird::{CoreEvent, Songbird};
 

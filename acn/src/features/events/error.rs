@@ -1,5 +1,8 @@
 use anyhow::{anyhow, Error};
-use lib::{application::models::dto::command_use::CommandUseDto, extensions::{serenity::context_ext::ContextExt, log_ext::LogExt}};
+use lib::{
+    application::models::dto::command_use::CommandUseDto,
+    extensions::{log_ext::LogExt, serenity::context_ext::ContextExt},
+};
 
 use crate::application::{Context, FrameworkError};
 

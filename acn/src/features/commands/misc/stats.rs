@@ -1,6 +1,6 @@
 use anyhow::Error;
 use futures::future::join_all;
-use lib::extensions::{serenity::context_ext::ContextExt, log_ext::LogErrorsExt};
+use lib::extensions::{log_ext::LogErrorsExt, serenity::context_ext::ContextExt};
 use poise::{
     command,
     serenity_prelude::{GuildId, MessageBuilder, User},

@@ -4,9 +4,7 @@ use lib::extensions::log_ext::LogErrorsExt;
 use log::warn;
 use poise::serenity_prelude::Context;
 
-use crate::{
-    application::dependency_configuration::DependencyContainer,
-};
+use crate::application::dependency_configuration::DependencyContainer;
 
 pub async fn handler(
     ctx: &Context,
