@@ -1,9 +1,12 @@
-use std::{collections::HashSet, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use anyhow::{anyhow, Error};
 use poise::{
     async_trait,
-    serenity_prelude::{Cache, GuildId, Http},
+    serenity_prelude::{Cache, GuildId, Http, UserId, VoiceState},
 };
 
 use crate::{
@@ -15,6 +18,7 @@ use crate::{
 pub trait GuildExt {
     async fn say_on_main_text_channel(self, http: &Http, msg: &str) -> Result<(), Error>;
     fn get_online_users(self, cache: Arc<Cache>) -> Result<HashSet<StatusInfo>, Error>;
+    fn get_voice_states(self, cache: Arc<Cache>) -> Result<HashMap<UserId, VoiceState>, Error>;
 }
 
 #[async_trait]
@@ -34,16 +38,23 @@ impl GuildExt for GuildId {
     }
 
     fn get_online_users(self, cache: Arc<Cache>) -> Result<HashSet<StatusInfo>, Error> {
-        let guild = cache.guild(self).ok_or_else(|| anyhow!(""))?;
+        let voice_states = self.get_voice_states(cache)?;
 
-        let online_users = guild
-            .voice_states
+        let online_users = voice_states
             .into_values()
             .filter(|v| v.channel_id.is_some())
-            .map(|c| StatusInfo::new(c.user_id.0, guild.id.0))
+            .map(|c| StatusInfo::new(c.user_id.0, self.0))
             .collect();
 
         Ok(online_users)
+    }
+
+    fn get_voice_states(self, cache: Arc<Cache>) -> Result<HashMap<UserId, VoiceState>, Error> {
+        let guild = cache
+            .guild(self)
+            .ok_or_else(|| anyhow!("Couldn't get guild {} from cache", self.0))?;
+
+        Ok(guild.voice_states)
     }
 }
 
