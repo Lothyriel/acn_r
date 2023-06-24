@@ -1,7 +1,7 @@
 use anyhow::Error;
 use lavalink_rs::LavalinkClient;
 use mongodb::Database;
-use poise::serenity_prelude::{Cache, Http};
+use poise::serenity_prelude::{Cache, Http, UserId};
 use reqwest::Client;
 use songbird::Songbird;
 use std::sync::Arc;
@@ -33,7 +33,7 @@ pub struct DependencyContainer {
 impl DependencyContainer {
     pub async fn build(
         settings: AppSettings,
-        id: u64,
+        id: UserId,
         http: Arc<Http>,
         cache: Arc<Cache>,
         songbird: Arc<Songbird>,
@@ -51,7 +51,7 @@ impl DependencyContainer {
 }
 
 pub struct ServicesContainer {
-    pub bot_id: u64,
+    pub bot_id: UserId,
     pub allowed_ids: Vec<u64>,
     pub app_configurations: Arc<RwLock<AppConfigurations>>,
     pub lava_client: LavalinkClient,
@@ -63,7 +63,7 @@ impl ServicesContainer {
     async fn build(
         repositories: &RepositoriesContainer,
         settings: AppSettings,
-        bot_id: u64,
+        bot_id: UserId,
         http: Arc<Http>,
         cache: Arc<Cache>,
         songbird: Arc<Songbird>,

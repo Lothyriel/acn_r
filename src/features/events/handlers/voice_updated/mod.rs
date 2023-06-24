@@ -101,7 +101,7 @@ pub struct DispatchData {
 
     jukebox_repository: JukeboxRepository,
     deploy_services: DeployServices,
-    bot_id: u64,
+    bot_id: UserId,
 
     user_id: UserId,
     guild_id: GuildId,

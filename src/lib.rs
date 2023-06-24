@@ -55,7 +55,7 @@ pub async fn start_application() -> Result<(), Error> {
 
                 DependencyContainer::build(
                     settings,
-                    ready.user.id.0,
+                    ready.user.id,
                     ctx.http.to_owned(),
                     ctx.cache.to_owned(),
                     songbird,
