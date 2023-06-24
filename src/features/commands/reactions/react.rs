@@ -12,7 +12,7 @@ pub async fn react(
     let reaction_repository = &ctx.data().repositories.reaction;
 
     let (reaction, bytes) = reaction_repository
-        .reaction(emotion, ctx.guild_id().map(|g| g.0))
+        .reaction(emotion, ctx.guild_id().map(|g| g.0), ctx.author().id.0)
         .await?;
 
     let file = AttachmentType::Bytes {
