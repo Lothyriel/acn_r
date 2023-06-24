@@ -12,3 +12,10 @@ pub struct Reaction {
     pub creator_id: u64,
     pub filename: String,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct ReactionUse {
+    pub reaction_id: ObjectId,
+    pub date: DateTime<Utc>,
+    pub user_id: u64,
+}
