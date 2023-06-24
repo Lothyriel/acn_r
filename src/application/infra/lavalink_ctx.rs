@@ -144,7 +144,7 @@ impl LavalinkCtx {
 
             let node = nodes
                 .get(&self.guild_id)
-                .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+                .ok_or_else(|| anyhow!("[Queue] Couldn't get node for {}", self.guild_id))?;
 
             let mut message_builder = MessageBuilder::new();
 
@@ -340,7 +340,7 @@ impl LavalinkCtx {
 
             let node = nodes
                 .get(&self.guild_id)
-                .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+                .ok_or_else(|| anyhow!("[Skip] Couldn't get node for {}", self.guild_id))?;
 
             if node.queue.is_empty() {
                 self.lava_client.stop(self.guild_id).await?;
@@ -355,7 +355,7 @@ impl LavalinkCtx {
 
         let mut node = nodes
             .get_mut(&self.guild_id)
-            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+            .ok_or_else(|| anyhow!("[Shuffle] Couldn't get node for {}", self.guild_id))?;
 
         let now_playing = node.queue.remove(0);
 
