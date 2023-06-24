@@ -44,7 +44,7 @@ pub async fn stats(
         ))
     });
 
-    let lines = join_all(build_message_lines_tasks).await.log_errors();
+    let lines = join_all(build_message_lines_tasks).await.log_errors().successes;
 
     let mut message_builder = MessageBuilder::new();
 
