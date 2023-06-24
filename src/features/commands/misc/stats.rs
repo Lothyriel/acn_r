@@ -15,6 +15,7 @@ use crate::extensions::{
     },
 };
 
+const MINUTES_IN_DAY: f64 = 60.0 * 24.0;
 const SECONDS_IN_HOUR: i64 = 60 * 60;
 
 #[command(guild_only, prefix_command, slash_command, category = "Misc")]
@@ -31,7 +32,7 @@ pub async fn stats(
         .await?;
 
     let timespan = chrono::Utc::now() - guild_stats.initial_date;
-    let total_days = max(timespan.num_days(), 1) as f64;
+    let total_days = timespan.num_minutes() as f64 / MINUTES_IN_DAY;
 
     let build_message_lines_tasks = guild_stats.stats.into_iter().take(10).map(|f| async move {
         let name = get_name(guild_id, ctx, f.user_id).await?;
