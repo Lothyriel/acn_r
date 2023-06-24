@@ -2,7 +2,7 @@
 mod stats {
     use std::collections::HashSet;
 
-    use acn_r::{
+    use acn_r_lib::{
         application::{
             dependency_configuration::RepositoriesContainer,
             infra::status_monitor::StatusManager,

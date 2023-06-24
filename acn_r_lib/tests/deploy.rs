@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod deploy {
-    use acn_r::{application::infra::http_clients::github_client::GithubClient, init_app};
+    use acn_r_lib::{application::infra::http_clients::github_client::GithubClient, init_app};
     use anyhow::Error;
     use reqwest::Client;
 

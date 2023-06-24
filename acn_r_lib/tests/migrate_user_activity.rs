@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod migrate {
-    use acn_r::{
+    use acn_r_lib::{
         application::{
             infra::mongo_client::create_mongo_client,
             models::entities::{user::Activity, user_activity::UserActivity},

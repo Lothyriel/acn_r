@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "acn_r"
+name = "acn_r_lib"
 version = "0.1.0"
 dependencies = [
  "anyhow",
