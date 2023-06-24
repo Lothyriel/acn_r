@@ -12,7 +12,6 @@ pub mod lavalink_ctx;
 pub type Context<'a> = poise::Context<'a, DependencyContainer, Error>;
 pub type Command = poise::Command<DependencyContainer, Error>;
 pub type CommandResult = Result<(), Error>;
-pub type FrameworkContext<'a> = poise::FrameworkContext<'a, DependencyContainer, Error>;
 pub type FrameworkError<'a> = poise::FrameworkError<'a, DependencyContainer, Error>;
 
 #[async_trait]
