@@ -50,7 +50,7 @@ async fn handle_command_error(ctx: Context<'_>, error: Error) -> Result<(), Erro
         .add_command_error(dto, message.to_owned())
         .await?;
 
-    Err(anyhow!("{}", message))
+    Err(anyhow!(message))
 }
 
 pub async fn handler(err: FrameworkError<'_>) {

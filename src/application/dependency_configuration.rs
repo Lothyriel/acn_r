@@ -1,9 +1,8 @@
 use anyhow::Error;
 use lavalink_rs::LavalinkClient;
 use mongodb::Database;
-use poise::serenity_prelude::{Cache, Http};
+use poise::serenity_prelude::{Cache, Http, UserId};
 use reqwest::Client;
-use songbird::Songbird;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -33,15 +32,13 @@ pub struct DependencyContainer {
 impl DependencyContainer {
     pub async fn build(
         settings: AppSettings,
-        id: u64,
+        id: UserId,
         http: Arc<Http>,
         cache: Arc<Cache>,
-        songbird: Arc<Songbird>,
     ) -> Result<Self, Error> {
         let repositories = RepositoriesContainer::build(&settings).await?;
 
-        let services =
-            ServicesContainer::build(&repositories, settings, id, http, cache, songbird).await?;
+        let services = ServicesContainer::build(&repositories, settings, id, http, cache).await?;
 
         Ok(Self {
             services,
@@ -51,7 +48,7 @@ impl DependencyContainer {
 }
 
 pub struct ServicesContainer {
-    pub bot_id: u64,
+    pub bot_id: UserId,
     pub allowed_ids: Vec<u64>,
     pub app_configurations: Arc<RwLock<AppConfigurations>>,
     pub lava_client: LavalinkClient,
@@ -63,13 +60,12 @@ impl ServicesContainer {
     async fn build(
         repositories: &RepositoriesContainer,
         settings: AppSettings,
-        bot_id: u64,
+        bot_id: UserId,
         http: Arc<Http>,
         cache: Arc<Cache>,
-        songbird: Arc<Songbird>,
     ) -> Result<Self, Error> {
         let http_client = Client::new();
-        let lava_client = lavalink_ctx::get_lavalink_client(&settings, songbird).await?;
+        let lava_client = lavalink_ctx::get_lavalink_client(&settings).await?;
 
         let github_client = Arc::new(GithubClient::new(http_client, settings.github_settings));
 

@@ -33,9 +33,10 @@ impl StatusMonitor {
         http: Arc<Http>,
         cache: Arc<Cache>,
     ) -> Result<Self, Error> {
-        let manager = Arc::new(Mutex::new(StatusManager::new(
-            guild_ext::get_all_online_users(http.to_owned(), cache.to_owned()).await?,
-        )));
+        let initial_status =
+            guild_ext::get_all_online_users(http.to_owned(), cache.to_owned()).await?;
+
+        let manager = Arc::new(Mutex::new(StatusManager::new(initial_status)));
 
         Ok(Self {
             user_repository,

@@ -4,16 +4,17 @@ use anyhow::{anyhow, Error};
 use lavalink_rs::{
     async_trait,
     gateway::LavalinkEventHandler,
-    model::{Track, TrackFinish, TrackQueue},
+    model::{Track, TrackQueue},
     LavalinkClient,
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
 use rand::seq::SliceRandom;
-use songbird::Songbird;
+use songbird::{CoreEvent, Songbird};
 
 use crate::{
     application::{
-        models::entities::jukebox_use::JukeboxUse, repositories::jukebox::JukeboxRepository,
+        infra::songbird::Receiver, models::entities::jukebox_use::JukeboxUse,
+        repositories::jukebox::JukeboxRepository,
     },
     extensions::{
         log_ext::LogExt,
@@ -22,51 +23,12 @@ use crate::{
     infra::{appsettings::AppSettings, env},
 };
 
-struct LavalinkHandler(pub Arc<Songbird>);
+struct LavalinkHandler;
 
 #[async_trait]
-impl LavalinkEventHandler for LavalinkHandler {
-    async fn track_finish(&self, client: LavalinkClient, event: TrackFinish) {
-        track_finish_handler(self.0.to_owned(), client, event)
-            .await
-            .log();
-    }
-}
+impl LavalinkEventHandler for LavalinkHandler {}
 
-async fn track_finish_handler(
-    songbird: Arc<Songbird>,
-    client: LavalinkClient,
-    event: TrackFinish,
-) -> Result<(), Error> {
-    let finished_playing = {
-        let nodes = client.nodes().await;
-
-        let node = nodes
-            .get(&event.guild_id.0)
-            .ok_or_else(|| anyhow!("Couldn't get node for {}", event.guild_id))?;
-
-        node.queue.is_empty()
-    };
-
-    if finished_playing {
-        songbird.remove(event.guild_id.0).await?;
-
-        let nodes = client.nodes().await;
-        nodes.remove(&event.guild_id.0);
-
-        let loops = client.loops().await;
-        loops.remove(&event.guild_id.0);
-
-        client.destroy(event.guild_id.0).await?;
-    }
-
-    Ok(())
-}
-
-pub async fn get_lavalink_client(
-    settings: &AppSettings,
-    songbird: Arc<Songbird>,
-) -> Result<LavalinkClient, Error> {
+pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClient, Error> {
     let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
         .get_current_application_info()
         .await?;
@@ -75,7 +37,7 @@ pub async fn get_lavalink_client(
         .set_host(&settings.lavalink_settings.url)
         .set_port(settings.lavalink_settings.port)
         .set_password(env::get("LAVALINK_PASSWORD")?)
-        .build(LavalinkHandler(songbird))
+        .build(LavalinkHandler)
         .await?;
 
     Ok(lava_client)
@@ -143,7 +105,7 @@ impl LavalinkCtx {
 
             let node = nodes
                 .get(&self.guild_id)
-                .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+                .ok_or_else(|| anyhow!("[Queue] Couldn't get node for {}", self.guild_id))?;
 
             let mut message_builder = MessageBuilder::new();
 
@@ -196,13 +158,26 @@ impl LavalinkCtx {
     }
 
     pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<(), Error> {
-        let (_, handler) = self.songbird.join_gateway(self.guild_id, channel_id).await;
+        let (handler_lock, info) = self.songbird.join_gateway(self.guild_id, channel_id).await;
 
-        match handler {
+        match info {
             Ok(connection_info) => {
                 self.lava_client
                     .create_session_with_songbird(&connection_info)
                     .await?;
+
+                {
+                    let mut handler = handler_lock.lock().await;
+
+                    handler
+                        .add_global_event(CoreEvent::SpeakingStateUpdate.into(), Receiver::new());
+
+                    handler.add_global_event(CoreEvent::SpeakingUpdate.into(), Receiver::new());
+
+                    handler.add_global_event(CoreEvent::VoicePacket.into(), Receiver::new());
+
+                    handler.add_global_event(CoreEvent::ClientDisconnect.into(), Receiver::new());
+                }
 
                 Ok(())
             }
@@ -215,7 +190,20 @@ impl LavalinkCtx {
     }
 
     async fn assure_connected(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let channel = get_author_voice_channel(ctx).await?;
+        let guild = ctx.assure_cached_guild()?;
+
+        let channel_id = guild
+            .voice_states
+            .get(&ctx.author().id)
+            .and_then(|voice_state| voice_state.channel_id);
+
+        let channel = match channel_id {
+            Some(channel) => channel,
+            None => {
+                ctx.say("Join a voice channel.").await?;
+                return Ok(());
+            }
+        };
 
         let should_join = match self.songbird.get(self.guild_id) {
             Some(call) => {
@@ -313,7 +301,7 @@ impl LavalinkCtx {
 
             let node = nodes
                 .get(&self.guild_id)
-                .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+                .ok_or_else(|| anyhow!("[Skip] Couldn't get node for {}", self.guild_id))?;
 
             if node.queue.is_empty() {
                 self.lava_client.stop(self.guild_id).await?;
@@ -328,7 +316,7 @@ impl LavalinkCtx {
 
         let mut node = nodes
             .get_mut(&self.guild_id)
-            .ok_or_else(|| anyhow!("Couldn't get node for {}", self.guild_id))?;
+            .ok_or_else(|| anyhow!("[Shuffle] Couldn't get node for {}", self.guild_id))?;
 
         let now_playing = node.queue.remove(0);
 
@@ -345,24 +333,6 @@ impl LavalinkCtx {
         let j_use = JukeboxUse::new(self.guild_id, self.user_id, track);
 
         tokio::spawn(async move { service.add_jukebox_use(j_use).await.log() });
-    }
-}
-
-async fn get_author_voice_channel(ctx: Context<'_>) -> Result<ChannelId, Error> {
-    let guild = ctx.assure_cached_guild()?;
-
-    let channel_id = guild
-        .voice_states
-        .get(&ctx.author().id)
-        .and_then(|voice_state| voice_state.channel_id);
-
-    match channel_id {
-        Some(channel) => Ok(channel),
-        None => {
-            ctx.say("Join a voice channel.").await?;
-
-            return Err(anyhow!("User is not connected to a voice channel"));
-        }
     }
 }
 

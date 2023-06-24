@@ -2,7 +2,7 @@ use poise::{command, serenity_prelude::AttachmentType};
 
 use crate::extensions::serenity::{context_ext::ContextExt, CommandResult, Context};
 
-#[command(prefix_command, guild_only, slash_command, category = "reactions")]
+#[command(prefix_command, guild_only, slash_command, category = "Reactions")]
 pub async fn react(
     ctx: Context<'_>,
     #[rest]

@@ -11,7 +11,6 @@ use crate::{
             env,
         },
     },
-    extensions::serenity::context_ext,
     features::{
         commands::groups_configuration,
         events::{after, check, error, handlers::invoker},
@@ -51,14 +50,11 @@ pub async fn start_application() -> Result<(), Error> {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
-                let songbird = context_ext::get_songbird_client(ctx).await?;
-
                 DependencyContainer::build(
                     settings,
-                    ready.user.id.0,
+                    ready.user.id,
                     ctx.http.to_owned(),
                     ctx.cache.to_owned(),
-                    songbird,
                 )
                 .await
             })
