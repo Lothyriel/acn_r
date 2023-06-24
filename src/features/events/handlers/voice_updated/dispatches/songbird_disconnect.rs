@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::Error;
+use anyhow::{anyhow, Error};
 
 use crate::{
     application::models::entities::user::Activity, extensions::serenity::guild_ext::GuildExt,
@@ -20,19 +20,21 @@ pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
         .guild_id
         .get_voice_states(dispatch_data.cache.to_owned())?;
 
-    let state = match voice_states.get(&dispatch_data.user_id) {
+    let state = match voice_states.get(&dispatch_data.bot_id) {
         Some(v) => v,
         None => return Ok(()),
     };
 
-    let channel = match state.channel_id {
-        Some(c) => c,
-        None => return Ok(()),
-    };
+    let channel = state
+        .channel_id
+        .ok_or_else(|| anyhow!("Voice state should have a channel id"))?;
 
-    let someone_online = voice_states.values().any(|v| v.channel_id == Some(channel));
+    let online_count = voice_states
+        .values()
+        .filter(|v| v.channel_id == Some(channel))
+        .count();
 
-    if !someone_online {
+    if online_count == 1 {
         let lava = dispatch_data.get_lavalink_ctx().await;
         lava.stop_player().await?;
     }
