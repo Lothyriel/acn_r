@@ -4,10 +4,10 @@ use poise::{command, serenity_prelude::Attachment};
 
 use crate::{
     application::models::dto::reaction_dto::AddReactionDto,
-    extensions::serenity::{CommandResult, Context},
+    extensions::serenity::{CommandResult, Context, context_ext::ContextExt},
 };
 
-#[command(prefix_command, slash_command, category = "reactions")]
+#[command(prefix_command, guild_only, slash_command, category = "reactions")]
 pub async fn add_react(
     ctx: Context<'_>,
     #[description = "File to examine"] file: Attachment,
@@ -21,7 +21,7 @@ pub async fn add_react(
         bytes: Cursor::new(file.download().await?),
         date: now,
         emotion: emotion.to_lowercase(),
-        guild_id: ctx.guild_id().map(|f| f.0),
+        guild_id: ctx.assure_guild_context()?.0,
         user_id: ctx.author().id.0,
         filename: file.filename,
     };

@@ -8,7 +8,7 @@ pub struct Reaction {
     pub id: ObjectId,
     pub date_added: DateTime<Utc>,
     pub emotion: String,
-    pub guild_id: Option<u64>,
+    pub guild_id: u64,
     pub creator_id: u64,
     pub filename: String,
 }

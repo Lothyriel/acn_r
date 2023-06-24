@@ -54,10 +54,10 @@ impl ReactionRepository {
     pub async fn reaction(
         &self,
         emotion: Option<String>,
-        guild: Option<u64>,
+        guild_id: u64,
         user_id: u64,
     ) -> Result<(Reaction, Vec<u8>), Error> {
-        let reaction = self.get_reaction(emotion, guild).await?;
+        let reaction = self.get_reaction(emotion, guild_id).await?;
 
         let reaction_use = ReactionUse {
             reaction_id: reaction.id,
@@ -78,10 +78,10 @@ impl ReactionRepository {
         Ok((reaction, bytes))
     }
 
-    pub async fn list(&self, guild: Option<u64>) -> Result<Vec<String>, Error> {
+    pub async fn list(&self, guild_id: u64) -> Result<Vec<String>, Error> {
         let emotions = self
             .reactions
-            .distinct("emotion", doc! {"guild_id": guild.map(|g| g as i64)}, None)
+            .distinct("emotion", doc! {"guild_id": guild_id as i64}, None)
             .await?;
 
         Ok(emotions
@@ -93,9 +93,9 @@ impl ReactionRepository {
     async fn get_reaction(
         &self,
         emotion: Option<String>,
-        guild: Option<u64>,
+        guild_id: u64,
     ) -> Result<Reaction, Error> {
-        let mut filter = doc! { "guild_id": guild.map(|x| x as i64)};
+        let mut filter = doc! { "guild_id": guild_id as i64};
 
         if let Some(emotion) = emotion {
             filter.insert("emotion", emotion);
