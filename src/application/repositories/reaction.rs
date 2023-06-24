@@ -6,11 +6,15 @@ use mongodb::{
 };
 use mongodb_gridfs::{options::GridFSBucketOptions, GridFSBucket};
 
-use crate::application::models::{dto::reaction_dto::AddReactionDto, entities::reaction::Reaction};
+use crate::application::models::{
+    dto::reaction_dto::AddReactionDto,
+    entities::reaction::{Reaction, ReactionUse},
+};
 
 #[derive(Clone)]
 pub struct ReactionRepository {
     reactions: Collection<Reaction>,
+    reactions_use: Collection<ReactionUse>,
     bucket: GridFSBucket,
 }
 
@@ -21,6 +25,7 @@ impl ReactionRepository {
             .build();
 
         Self {
+            reactions_use: db.collection("ReactionsUse"),
             reactions: db.collection("Reactions"),
             bucket: GridFSBucket::new(db.to_owned(), Some(bucket_options)),
         }
@@ -50,8 +55,17 @@ impl ReactionRepository {
         &self,
         emotion: Option<String>,
         guild: Option<u64>,
+        user_id: u64,
     ) -> Result<(Reaction, Vec<u8>), Error> {
         let reaction = self.get_reaction(emotion, guild).await?;
+
+        let reaction_use = ReactionUse {
+            reaction_id: reaction.id,
+            date: chrono::Utc::now(),
+            user_id,
+        };
+
+        self.reactions_use.insert_one(reaction_use, None).await?;
 
         let mut stream = self.bucket.open_download_stream(reaction.id).await?;
 
