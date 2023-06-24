@@ -42,9 +42,10 @@ async fn track_finish_handler(
     let finished_playing = {
         let nodes = client.nodes().await;
 
-        let node = nodes
-            .get(&event.guild_id.0)
-            .ok_or_else(|| anyhow!("Couldn't get node for {}", event.guild_id))?;
+        let node = match nodes.get(&event.guild_id.0) {
+            Some(node) => node,
+            None => return Ok(()),
+        };
 
         node.queue.is_empty()
     };
