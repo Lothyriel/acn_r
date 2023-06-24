@@ -9,11 +9,12 @@ use lavalink_rs::{
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
 use rand::seq::SliceRandom;
-use songbird::Songbird;
+use songbird::{CoreEvent, Songbird};
 
 use crate::{
     application::{
-        models::entities::jukebox_use::JukeboxUse, repositories::jukebox::JukeboxRepository,
+        infra::songbird::Receiver, models::entities::jukebox_use::JukeboxUse,
+        repositories::jukebox::JukeboxRepository,
     },
     extensions::{
         log_ext::LogExt,
@@ -196,13 +197,26 @@ impl LavalinkCtx {
     }
 
     pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<(), Error> {
-        let (_, handler) = self.songbird.join_gateway(self.guild_id, channel_id).await;
+        let (handler_lock, handler) = self.songbird.join_gateway(self.guild_id, channel_id).await;
 
         match handler {
             Ok(connection_info) => {
                 self.lava_client
                     .create_session_with_songbird(&connection_info)
                     .await?;
+
+                {
+                    let mut handler = handler_lock.lock().await;
+
+                    handler
+                        .add_global_event(CoreEvent::SpeakingStateUpdate.into(), Receiver::new());
+
+                    handler.add_global_event(CoreEvent::SpeakingUpdate.into(), Receiver::new());
+
+                    handler.add_global_event(CoreEvent::VoicePacket.into(), Receiver::new());
+
+                    handler.add_global_event(CoreEvent::ClientDisconnect.into(), Receiver::new());
+                }
 
                 Ok(())
             }
