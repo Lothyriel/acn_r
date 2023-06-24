@@ -40,7 +40,7 @@ pub async fn stats(
         let avg = hours_online as f64 / total_days;
 
         Ok(format!(
-            "- {} ficou {} segundos online ({} hora(s)) - Uma média de {} hora(s) por dia",
+            "- {} ficou {} segundos online ({} hora(s)) - Uma média de {:.2} hora(s) por dia",
             name, seconds_online, hours_online, avg
         ))
     });
