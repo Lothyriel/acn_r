@@ -2,6 +2,8 @@
 mod stats {
     use std::collections::HashSet;
 
+    use anyhow::{anyhow, Error};
+    use chrono::{Days, Duration};
     use lib::{
         application::{
             dependency_configuration::RepositoriesContainer,
@@ -12,8 +14,6 @@ mod stats {
         extensions::serenity::guild_ext::StatusInfo,
         get_test_settings,
     };
-    use anyhow::{anyhow, Error};
-    use chrono::{Days, Duration};
     use mongodb::Database;
 
     const LA_PALOMBA_ID: u64 = 244922266050232321;

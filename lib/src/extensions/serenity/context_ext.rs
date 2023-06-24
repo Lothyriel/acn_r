@@ -5,23 +5,19 @@ use poise::async_trait;
 use poise::serenity_prelude::{Guild, GuildId};
 use songbird::Songbird;
 
-use crate::{
-    application::{infra::lavalink_ctx::LavalinkCtx, models::dto::user::GuildInfo},
-    extensions::serenity::Context,
-};
+use crate::application::models::dto::user::GuildInfo;
 
 #[async_trait]
 pub trait ContextExt {
     async fn get_author_name(self) -> String;
-    async fn get_command_args(self) -> String;
-    async fn get_lavalink(self) -> Result<LavalinkCtx, Error>;
+    fn get_command_args(self) -> String;
     fn get_guild_info(self) -> Option<GuildInfo>;
     fn assure_cached_guild(self) -> Result<Guild, Error>;
     fn assure_guild_context(self) -> Result<GuildId, Error>;
 }
 
 #[async_trait]
-impl ContextExt for Context<'_> {
+impl<T: Sync> ContextExt for poise::Context<'_, T, Error> {
     async fn get_author_name(self) -> String {
         self.author_member()
             .await
@@ -29,7 +25,7 @@ impl ContextExt for Context<'_> {
             .unwrap_or_else(|| self.author().name.to_owned())
     }
 
-    async fn get_command_args(self) -> String {
+    fn get_command_args(self) -> String {
         match self {
             poise::Context::Application(ctx) => {
                 let args: Vec<_> = ctx
@@ -46,26 +42,6 @@ impl ContextExt for Context<'_> {
             }
             poise::Context::Prefix(ctx) => ctx.args.to_owned(),
         }
-    }
-
-    async fn get_lavalink(self) -> Result<LavalinkCtx, Error> {
-        let guild_id = self.assure_guild_context()?.0;
-
-        let lava_client = self.data().services.lava_client.to_owned();
-
-        let jukebox_repository = self.data().repositories.jukebox.to_owned();
-
-        let user_id = self.author().id.0;
-
-        let songbird = get_songbird_client(self.serenity_context()).await?;
-
-        Ok(LavalinkCtx::new(
-            guild_id,
-            user_id,
-            songbird,
-            lava_client,
-            jukebox_repository,
-        ))
     }
 
     fn assure_cached_guild(self) -> Result<Guild, Error> {

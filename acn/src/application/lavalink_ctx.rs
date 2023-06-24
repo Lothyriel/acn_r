@@ -7,7 +7,7 @@ use lavalink_rs::{
     model::{Track, TrackQueue},
     LavalinkClient,
 };
-use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
+use poise::serenity_prelude::{ChannelId, Http, MessageBuilder};
 use rand::seq::SliceRandom;
 use songbird::{CoreEvent, Songbird};
 
@@ -16,26 +16,25 @@ use crate::{
         infra::songbird::Receiver, models::entities::jukebox_use::JukeboxUse,
         repositories::jukebox::JukeboxRepository,
     },
-    extensions::{
-        log_ext::LogExt,
-        serenity::{context_ext::ContextExt, Context},
-    },
-    infra::{appsettings::AppSettings, env},
+    extensions::{log_ext::LogExt, serenity::Context},
+    infra::env,
 };
+
+use super::appsettings::LavalinkSettings;
 
 struct LavalinkHandler;
 
 #[async_trait]
 impl LavalinkEventHandler for LavalinkHandler {}
 
-pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClient, Error> {
+pub async fn get_lavalink_client(settings: &LavalinkSettings) -> Result<LavalinkClient, Error> {
     let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
         .get_current_application_info()
         .await?;
 
     let lava_client = LavalinkClient::builder(app_info.id.0)
-        .set_host(&settings.lavalink_settings.url)
-        .set_port(settings.lavalink_settings.port)
+        .set_host(&settings.url)
+        .set_port(settings.port)
         .set_password(env::get("LAVALINK_PASSWORD")?)
         .build(LavalinkHandler)
         .await?;
