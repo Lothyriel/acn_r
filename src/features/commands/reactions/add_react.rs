@@ -4,10 +4,10 @@ use poise::{command, serenity_prelude::Attachment};
 
 use crate::{
     application::models::dto::reaction_dto::AddReactionDto,
-    extensions::serenity::serenity_structs::{CommandResult, Context},
+    extensions::serenity::{context_ext::ContextExt, CommandResult, Context},
 };
 
-#[command(prefix_command, slash_command, category = "reactions")]
+#[command(prefix_command, guild_only, slash_command, category = "reactions")]
 pub async fn add_react(
     ctx: Context<'_>,
     #[description = "File to examine"] file: Attachment,
@@ -21,14 +21,14 @@ pub async fn add_react(
         bytes: Cursor::new(file.download().await?),
         date: now,
         emotion: emotion.to_lowercase(),
-        guild_id: ctx.guild_id().map(|f| f.0),
+        guild_id: ctx.assure_guild_context()?.0,
         user_id: ctx.author().id.0,
         filename: file.filename,
     };
 
     reaction_repository.add_reaction(dto).await?;
 
-    ctx.say(format!("Salvo: {}", emotion.to_lowercase()))
+    ctx.say(format!("Registrada emoção: \"{}\"", emotion.to_lowercase()))
         .await?;
 
     Ok(())

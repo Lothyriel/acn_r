@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use anyhow::Error;
 use futures::future::join_all;
 use poise::{
@@ -11,11 +9,12 @@ use crate::extensions::{
     log_ext::LogErrorsExt,
     serenity::{
         context_ext::ContextExt,
-        serenity_structs::{CommandResult, Context},
+        {CommandResult, Context},
     },
 };
 
-const SECONDS_IN_HOUR: i64 = 60 * 60;
+const MINUTES_IN_DAY: f64 = 60.0 * 24.0;
+const SECONDS_IN_HOUR: f64 = 60.0 * 60.0;
 
 #[command(guild_only, prefix_command, slash_command, category = "Misc")]
 pub async fn stats(
@@ -31,21 +30,24 @@ pub async fn stats(
         .await?;
 
     let timespan = chrono::Utc::now() - guild_stats.initial_date;
-    let total_days = max(timespan.num_days(), 1) as f64;
+    let total_days = timespan.num_minutes() as f64 / MINUTES_IN_DAY;
 
     let build_message_lines_tasks = guild_stats.stats.into_iter().take(10).map(|f| async move {
         let name = get_name(guild_id, ctx, f.user_id).await?;
-        let seconds_online = f.seconds_online;
+        let seconds_online = f.seconds_online as f64;
         let hours_online = seconds_online / SECONDS_IN_HOUR;
-        let avg = hours_online as f64 / total_days;
+        let avg = hours_online / total_days;
 
         Ok(format!(
-            "- {} ficou {} segundos online ({} hora(s)) - Uma média de {} hora(s) por dia",
+            "- {} ficou {} segundos online ({:.2} hora(s)) - Uma média de {:.2} hora(s) por dia",
             name, seconds_online, hours_online, avg
         ))
     });
 
-    let lines = join_all(build_message_lines_tasks).await.log_errors();
+    let lines = join_all(build_message_lines_tasks)
+        .await
+        .log_errors()
+        .successes;
 
     let mut message_builder = MessageBuilder::new();
 

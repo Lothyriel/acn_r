@@ -5,7 +5,7 @@ use crate::extensions::{
     log_ext::LogErrorsExt,
     serenity::{
         guild_ext::GuildExt,
-        serenity_structs::{CommandResult, Context, OWNERS_ONLY},
+        {CommandResult, Context, OWNERS_ONLY},
     },
 };
 
@@ -25,7 +25,10 @@ pub async fn att(
         .iter()
         .map(|x| x.id.say_on_main_text_channel(ctx.http(), &message));
 
-    join_all(tasks).await.log_errors();
+    let errors_count = join_all(tasks).await.log_errors().errors_count;
+
+    ctx.say(format!("Message sent to {} guilds", guilds.len() - errors_count))
+        .await?;
 
     Ok(())
 }

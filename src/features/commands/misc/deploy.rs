@@ -1,7 +1,7 @@
 use anyhow::Error;
 use poise::command;
 
-use crate::extensions::serenity::serenity_structs::{CommandResult, Context, OWNERS_ONLY};
+use crate::extensions::serenity::{CommandResult, Context, OWNERS_ONLY};
 
 #[command(
     prefix_command,

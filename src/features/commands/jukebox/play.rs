@@ -2,7 +2,7 @@ use poise::command;
 
 use crate::extensions::{
     serenity::context_ext::ContextExt,
-    serenity::serenity_structs::{CommandResult, Context},
+    serenity::{CommandResult, Context},
 };
 
 #[command(prefix_command, slash_command, guild_only)]

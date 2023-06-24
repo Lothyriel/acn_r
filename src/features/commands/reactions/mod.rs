@@ -1,4 +1,4 @@
-use crate::extensions::serenity::serenity_structs::Command;
+use crate::extensions::serenity::Command;
 
 mod add_react;
 mod list_react;

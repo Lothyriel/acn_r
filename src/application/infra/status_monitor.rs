@@ -46,7 +46,7 @@ impl StatusMonitor {
     }
 
     pub async fn monitor_status_loop(&self) -> Result<(), Error> {
-        let mut interval = time::interval(Duration::from_secs(60));
+        let mut interval = time::interval(Duration::from_secs(10));
 
         loop {
             interval.tick().await;
@@ -74,20 +74,32 @@ impl StatusMonitor {
     }
 
     async fn update_pending_status(&self) -> Result<(), Error> {
-        let add_activity_tasks = {
+        let pending_activities = {
             let new_status = self.get_online_users().await?;
 
             let mut manager = self.manager.lock().await;
 
-            let activities = manager.update_status(new_status);
-
-            activities.into_iter().map(|a| {
-                warn!("Added activity manually: {:?}", a);
-                self.user_repository.add_activity(a)
-            })
+            manager.update_status(new_status)
         };
 
-        join_all(add_activity_tasks).await.log_errors();
+        tokio::time::sleep(Duration::from_secs(3)).await;
+
+        let checked_add_activity_tasks: Vec<_> = {
+            let manager = self.manager.lock().await;
+
+            pending_activities
+                .into_iter()
+                .filter_map(|a| match manager.is_updated(&a) {
+                    false => {
+                        warn!("Added pending activity: {:?}", a);
+                        Some(self.user_repository.add_activity(a))
+                    }
+                    true => None,
+                })
+                .collect()
+        };
+
+        join_all(checked_add_activity_tasks).await.log_errors();
 
         Ok(())
     }
@@ -126,6 +138,17 @@ impl StatusManager {
         }
 
         activities
+    }
+
+    pub fn is_updated(&self, activity: &UserActivity) -> bool {
+        let info = StatusInfo::new(activity.user_id, activity.guild_id);
+        let contains = self.current_status.contains(&info);
+
+        match activity.activity_type {
+            Activity::Connected => contains,
+            Activity::Disconnected => !contains,
+            _ => true,
+        }
     }
 
     fn disconnect_user(&mut self, user_info: &StatusInfo) {

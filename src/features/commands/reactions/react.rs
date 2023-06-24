@@ -1,8 +1,8 @@
 use poise::{command, serenity_prelude::AttachmentType};
 
-use crate::extensions::serenity::serenity_structs::{CommandResult, Context};
+use crate::extensions::serenity::{context_ext::ContextExt, CommandResult, Context};
 
-#[command(prefix_command, slash_command, category = "reactions")]
+#[command(prefix_command, guild_only, slash_command, category = "reactions")]
 pub async fn react(
     ctx: Context<'_>,
     #[rest]
@@ -12,7 +12,7 @@ pub async fn react(
     let reaction_repository = &ctx.data().repositories.reaction;
 
     let (reaction, bytes) = reaction_repository
-        .reaction(emotion, ctx.guild_id().map(|g| g.0))
+        .reaction(emotion, ctx.assure_guild_context()?.0, ctx.author().id.0)
         .await?;
 
     let file = AttachmentType::Bytes {

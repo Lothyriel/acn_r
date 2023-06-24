@@ -6,11 +6,15 @@ use mongodb::{
 };
 use mongodb_gridfs::{options::GridFSBucketOptions, GridFSBucket};
 
-use crate::application::models::{dto::reaction_dto::AddReactionDto, entities::reaction::Reaction};
+use crate::application::models::{
+    dto::reaction_dto::AddReactionDto,
+    entities::reaction::{Reaction, ReactionUse},
+};
 
 #[derive(Clone)]
 pub struct ReactionRepository {
     reactions: Collection<Reaction>,
+    reactions_use: Collection<ReactionUse>,
     bucket: GridFSBucket,
 }
 
@@ -21,6 +25,7 @@ impl ReactionRepository {
             .build();
 
         Self {
+            reactions_use: db.collection("ReactionsUse"),
             reactions: db.collection("Reactions"),
             bucket: GridFSBucket::new(db.to_owned(), Some(bucket_options)),
         }
@@ -34,10 +39,10 @@ impl ReactionRepository {
 
         let reactions = Reaction {
             id,
-            date: chrono::Utc::now(),
+            date_added: chrono::Utc::now(),
             emotion: dto.emotion,
             guild_id: dto.guild_id,
-            user_id: dto.user_id,
+            creator_id: dto.user_id,
             filename: dto.filename,
         };
 
@@ -49,9 +54,18 @@ impl ReactionRepository {
     pub async fn reaction(
         &self,
         emotion: Option<String>,
-        guild: Option<u64>,
+        guild_id: u64,
+        user_id: u64,
     ) -> Result<(Reaction, Vec<u8>), Error> {
-        let reaction = self.get_reaction(emotion, guild).await?;
+        let reaction = self.get_reaction(emotion, guild_id).await?;
+
+        let reaction_use = ReactionUse {
+            reaction_id: reaction.id,
+            date: chrono::Utc::now(),
+            user_id,
+        };
+
+        self.reactions_use.insert_one(reaction_use, None).await?;
 
         let mut stream = self.bucket.open_download_stream(reaction.id).await?;
 
@@ -64,10 +78,10 @@ impl ReactionRepository {
         Ok((reaction, bytes))
     }
 
-    pub async fn list(&self, guild: Option<u64>) -> Result<Vec<String>, Error> {
+    pub async fn list(&self, guild_id: u64) -> Result<Vec<String>, Error> {
         let emotions = self
             .reactions
-            .distinct("emotion", doc! {"guild_id": guild.map(|g| g as i64)}, None)
+            .distinct("emotion", doc! {"guild_id": guild_id as i64}, None)
             .await?;
 
         Ok(emotions
@@ -79,9 +93,9 @@ impl ReactionRepository {
     async fn get_reaction(
         &self,
         emotion: Option<String>,
-        guild: Option<u64>,
+        guild_id: u64,
     ) -> Result<Reaction, Error> {
-        let mut filter = doc! { "guild_id": guild.map(|x| x as i64)};
+        let mut filter = doc! { "guild_id": guild_id as i64};
 
         if let Some(emotion) = emotion {
             filter.insert("emotion", emotion);
@@ -96,7 +110,7 @@ impl ReactionRepository {
 
         match cursor.advance().await? {
             true => Ok(from_document(cursor.deserialize_current()?)?),
-            false => Err(anyhow!("não tem reaçao com essa emoção man.")),
+            false => Err(anyhow!("Sem emoções correspondentes registradas")),
         }
     }
 }
