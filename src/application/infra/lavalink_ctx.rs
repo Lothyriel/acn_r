@@ -4,7 +4,7 @@ use anyhow::{anyhow, Error};
 use lavalink_rs::{
     async_trait,
     gateway::LavalinkEventHandler,
-    model::{Track, TrackFinish, TrackQueue},
+    model::{Track, TrackQueue},
     LavalinkClient,
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
@@ -23,52 +23,12 @@ use crate::{
     infra::{appsettings::AppSettings, env},
 };
 
-struct LavalinkHandler(pub Arc<Songbird>);
+struct LavalinkHandler;
 
 #[async_trait]
-impl LavalinkEventHandler for LavalinkHandler {
-    async fn track_finish(&self, client: LavalinkClient, event: TrackFinish) {
-        track_finish_handler(self.0.to_owned(), client, event)
-            .await
-            .log();
-    }
-}
+impl LavalinkEventHandler for LavalinkHandler {}
 
-async fn track_finish_handler(
-    songbird: Arc<Songbird>,
-    client: LavalinkClient,
-    event: TrackFinish,
-) -> Result<(), Error> {
-    let finished_playing = {
-        let nodes = client.nodes().await;
-
-        let node = match nodes.get(&event.guild_id.0) {
-            Some(node) => node,
-            None => return Ok(()),
-        };
-
-        node.queue.is_empty()
-    };
-
-    if finished_playing {
-        songbird.remove(event.guild_id.0).await?;
-
-        let nodes = client.nodes().await;
-        nodes.remove(&event.guild_id.0);
-
-        let loops = client.loops().await;
-        loops.remove(&event.guild_id.0);
-
-        client.destroy(event.guild_id.0).await?;
-    }
-
-    Ok(())
-}
-
-pub async fn get_lavalink_client(
-    settings: &AppSettings,
-    songbird: Arc<Songbird>,
-) -> Result<LavalinkClient, Error> {
+pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClient, Error> {
     let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
         .get_current_application_info()
         .await?;
@@ -77,7 +37,7 @@ pub async fn get_lavalink_client(
         .set_host(&settings.lavalink_settings.url)
         .set_port(settings.lavalink_settings.port)
         .set_password(env::get("LAVALINK_PASSWORD")?)
-        .build(LavalinkHandler(songbird))
+        .build(LavalinkHandler)
         .await?;
 
     Ok(lava_client)
