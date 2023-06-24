@@ -158,9 +158,9 @@ impl LavalinkCtx {
     }
 
     pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<(), Error> {
-        let (handler_lock, handler) = self.songbird.join_gateway(self.guild_id, channel_id).await;
+        let (handler_lock, info) = self.songbird.join_gateway(self.guild_id, channel_id).await;
 
-        match handler {
+        match info {
             Ok(connection_info) => {
                 self.lava_client
                     .create_session_with_songbird(&connection_info)
