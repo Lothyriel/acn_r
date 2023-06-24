@@ -2,7 +2,7 @@
 mod stats {
     use std::collections::HashSet;
 
-    use acn_r_lib::{
+    use lib::{
         application::{
             dependency_configuration::RepositoriesContainer,
             infra::status_monitor::StatusManager,
@@ -10,7 +10,7 @@ mod stats {
             repositories::{guild::GuildRepository, stats::StatsRepository, user::UserRepository},
         },
         extensions::serenity::guild_ext::StatusInfo,
-        init_app,
+        get_test_settings,
     };
     use anyhow::{anyhow, Error};
     use chrono::{Days, Duration};
@@ -22,8 +22,8 @@ mod stats {
 
     #[tokio::test]
     async fn should_get_stats() -> Result<(), Error> {
-        let settings = init_app()?;
-        let db = RepositoriesContainer::database(&settings).await?;
+        let settings = get_test_settings()?;
+        let db = RepositoriesContainer::database(&settings.mongo_settings).await?;
         let stats_repository = StatsRepository::new(&db);
 
         populate_test_stats(&db).await?;

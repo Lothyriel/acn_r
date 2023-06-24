@@ -9,7 +9,7 @@ use tokio::sync::RwLock;
 use crate::{
     application::{
         infra::{
-            appsettings::{AppConfigurations, AppSettings},
+            appsettings::{AppConfigurations, AppSettings, MongoSettings},
             deploy_service::DeployServices,
             http_clients::github_client::GithubClient,
             lavalink_ctx,
@@ -109,7 +109,7 @@ pub struct RepositoriesContainer {
 
 impl RepositoriesContainer {
     pub async fn build(settings: &AppSettings) -> Result<Self, Error> {
-        let db = Self::database(settings).await?;
+        let db = Self::database(&settings.mongo_settings).await?;
         Ok(Self::build_with_db(db))
     }
 
@@ -136,9 +136,7 @@ impl RepositoriesContainer {
         }
     }
 
-    pub async fn database(settings: &AppSettings) -> Result<Database, Error> {
-        Ok(create_mongo_client(&settings.mongo_settings)
-            .await?
-            .database("acn_r"))
+    pub async fn database(settings: &MongoSettings) -> Result<Database, Error> {
+        Ok(create_mongo_client(&settings).await?.database("acn_r"))
     }
 }

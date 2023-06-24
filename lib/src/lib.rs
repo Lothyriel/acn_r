@@ -7,6 +7,7 @@ use crate::{
         dependency_configuration::DependencyContainer,
         infra::{
             self,
+            appsettings::TestSettings,
             appsettings::{self, AppSettings},
             env,
         },
@@ -21,8 +22,16 @@ pub mod application;
 pub mod extensions;
 pub mod features;
 
+pub fn get_test_settings() -> Result<TestSettings, Error> {
+    appsettings::load()
+}
+
+pub fn get_app_settings() -> Result<AppSettings, Error> {
+    appsettings::load()
+}
+
 pub async fn start_application() -> Result<(), Error> {
-    let settings = init_app()?;
+    let settings = get_app_settings()?;
     let token = env::get("TOKEN_BOT")?;
 
     let framework = poise::Framework::builder()
@@ -63,9 +72,4 @@ pub async fn start_application() -> Result<(), Error> {
     framework.run().await?;
 
     Ok(())
-}
-
-pub fn init_app() -> Result<AppSettings, Error> {
-    env::init()?;
-    appsettings::load()
 }

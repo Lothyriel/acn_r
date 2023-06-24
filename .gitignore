@@ -1,7 +1,7 @@
 .env
 
-acn_r_lib/target
-acn_r/target
+lib/target
+acn/target
 escuitad_r/target
 
-acn_r_lib/acn_r.UserActivity.json
+lib/acn_r.UserActivity.json
