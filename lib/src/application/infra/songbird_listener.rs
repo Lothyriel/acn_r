@@ -1,9 +1,6 @@
 use anyhow::{anyhow, Error};
 use chrono::{DateTime, Utc};
-use dashmap::{
-    mapref::one::{Ref, RefMut},
-    DashMap,
-};
+use dashmap::{mapref::one::Ref, DashMap};
 use lavalink_rs::async_trait;
 use log::warn;
 use songbird::{
@@ -32,7 +29,7 @@ pub struct VoiceController {
     repository: VoiceRepository,
 }
 
-const ONE_HUNDRED_KILOBYTES: usize = 100_000;
+const LIMIT: usize = 100_000;
 
 impl VoiceController {
     pub fn new(repository: VoiceRepository) -> Self {
@@ -53,7 +50,9 @@ impl VoiceController {
 
         let snippet = self.get_snippet(data.ssrc)?;
 
-        if snippet.bytes.len() >= ONE_HUNDRED_KILOBYTES {
+        println!("{:?}", snippet.bytes.len());
+
+        if snippet.bytes.len() >= LIMIT {
             let id = snippet
                 .mapping
                 .ok_or_else(|| anyhow!("Buffer overflow without mapping"))?;
@@ -70,17 +69,22 @@ impl VoiceController {
             .ok_or_else(|| anyhow!("Couldn't get Snippet after SpeakingUpdate"))
     }
 
-    fn get_mut_snippet(&self, key: u32) -> Result<RefMut<'_, u32, Snippet>, Error> {
-        self.accumulator
-            .get_mut(&key)
-            .ok_or_else(|| anyhow!("Couldn't get Snippet after SpeakingUpdate"))
-    }
-
     fn handle_speaking_state_update(&self, data: &Speaking) -> Result<(), Error> {
         match data.user_id {
             Some(_) => {
-                let mut snippet = self.get_mut_snippet(data.ssrc)?;
-                snippet.mapping = data.user_id;
+                match self.accumulator.get_mut(&data.ssrc) {
+                    Some(mut snippet) => snippet.mapping = data.user_id,
+                    None => {
+                        self.accumulator.insert(
+                            data.ssrc,
+                            Snippet {
+                                bytes: vec![],
+                                date: chrono::Utc::now(),
+                                mapping: data.user_id,
+                            },
+                        );
+                    }
+                };
             }
             None => {
                 warn!("Isso acontece muito?")
