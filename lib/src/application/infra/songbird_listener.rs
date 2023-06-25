@@ -1,19 +1,39 @@
+use std::sync::Arc;
+
 use anyhow::{anyhow, Error};
-//use dashmap::DashMap;
+use chrono::{DateTime, Utc};
+use dashmap::DashMap;
 use lavalink_rs::async_trait;
 use songbird::{Event, EventContext, EventHandler};
 
-use crate::extensions::log_ext::LogExt;
+use crate::{application::repositories::voice::VoiceRepository, extensions::log_ext::LogExt};
+
+struct Snippet {
+    bytes: Vec<u8>,
+    date: DateTime<Utc>,
+}
+
+pub struct VoiceController {
+    accumulator: DashMap<u64, Snippet>,
+    repository: VoiceRepository,
+}
+
+impl VoiceController {
+    pub fn new(repository: VoiceRepository) -> Self {
+        Self {
+            accumulator: DashMap::new(),
+            repository,
+        }
+    }
+}
 
 pub struct Receiver {
-    //accumulator: DashMap<u64, Vec<u8>>,
+    controller: Arc<VoiceController>,
 }
 
 impl Receiver {
-    pub fn new() -> Self {
-        Self {
-            //accumulator: DashMap::new(),
-        }
+    pub fn new(controller: Arc<VoiceController>) -> Self {
+        Self { controller }
     }
 }
 
