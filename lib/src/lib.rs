@@ -1,6 +1,5 @@
 use anyhow::Error;
 use application::infra::appsettings::AppSettings;
-use features::events::handlers::ready;
 use poise::serenity_prelude::GatewayIntents;
 use songbird::{driver::DecodeMode, Config, SerenityInit};
 
@@ -26,14 +25,7 @@ pub async fn start_acn() -> Result<(), Error> {
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             event_handler: |ctx, event, _, user_data| {
-                Box::pin(async move {
-                    match event {
-                        poise::Event::Ready { data_about_bot } => {
-                            ready::handler(ctx, user_data, data_about_bot).await
-                        }
-                        _ => Ok(()),
-                    }
-                })
+                Box::pin(invoker::ready_handler(ctx, event, user_data))
             },
             commands: acn_commands::register_commands(),
             on_error: |error| Box::pin(error::handler(error)),

@@ -35,3 +35,14 @@ pub async fn handler(
         _ => Ok(()),
     }
 }
+
+pub async fn ready_handler(
+    ctx: &Context,
+    event: &Event<'_>,
+    data: &DependencyContainer,
+) -> Result<(), Error> {
+    match event {
+        poise::Event::Ready { data_about_bot } => ready::handler(ctx, data, data_about_bot).await,
+        _ => Ok(()),
+    }
+}
