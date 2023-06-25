@@ -1,16 +1,16 @@
 #[cfg(test)]
 mod deploy {
     use anyhow::Error;
-    use lib::{application::infra::http_clients::github_client::GithubClient, get_settings};
+    use lib::application::infra::{appsettings, http_clients::github_client::GithubClient};
     use reqwest::Client;
 
     #[tokio::test]
     async fn should_trigger_deploy() -> Result<(), Error> {
-        let settings = get_settings()?;
+        let settings = appsettings::load()?;
 
-        let _client = GithubClient::new(Client::new(), settings.github_settings);
+        let client = GithubClient::new(Client::new(), settings.github_settings);
 
-        //client.deploy().await?;
+        client.deploy().await?;
 
         Ok(())
     }

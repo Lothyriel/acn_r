@@ -7,12 +7,11 @@ mod stats {
     use lib::{
         application::{
             dependency_configuration::RepositoriesContainer,
-            infra::status_monitor::StatusManager,
+            infra::{appsettings, status_monitor::StatusManager},
             models::{dto::user::UpdateActivityDto, entities::user::Activity},
             repositories::{guild::GuildRepository, stats::StatsRepository, user::UserRepository},
         },
         extensions::serenity::guild_ext::StatusInfo,
-        get_settings,
     };
     use mongodb::Database;
 
@@ -22,7 +21,7 @@ mod stats {
 
     #[tokio::test]
     async fn should_get_stats() -> Result<(), Error> {
-        let settings = get_settings()?;
+        let settings = appsettings::load()?;
         let db = RepositoriesContainer::database(&settings.mongo_settings).await?;
         let stats_repository = StatsRepository::new(&db);
 

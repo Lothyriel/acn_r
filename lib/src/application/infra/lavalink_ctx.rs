@@ -13,14 +13,14 @@ use songbird::{CoreEvent, Songbird};
 
 use crate::{
     application::{
-        infra::songbird::Receiver, models::entities::jukebox_use::JukeboxUse,
+        infra::{appsettings::AppSettings, env, songbird::Receiver},
+        models::entities::jukebox_use::JukeboxUse,
         repositories::jukebox::JukeboxRepository,
     },
     extensions::{
         log_ext::LogExt,
         serenity::{context_ext::ContextExt, Context},
     },
-    infra::{appsettings::AppSettings, env},
 };
 
 struct LavalinkHandler;

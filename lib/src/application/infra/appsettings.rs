@@ -1,12 +1,12 @@
 use anyhow::{anyhow, Error};
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::Deserialize;
 use std::path::PathBuf;
 
 use crate::application::infra::env;
 
 const APPSETTINGS_PATH: &str = "appsettings_{ENV}.json";
 
-pub fn load<T: DeserializeOwned>() -> Result<T, Error> {
+pub fn load() -> Result<AppSettings, Error> {
     env::init()?;
     let env = env::get("ENV")?;
 

@@ -2,18 +2,15 @@
 mod migrate {
     use anyhow::Error;
     use chrono::Utc;
-    use lib::{
-        application::{
-            infra::mongo_client::create_mongo_client,
-            models::entities::{user::Activity, user_activity::UserActivity},
-        },
-        get_settings,
+    use lib::application::{
+        infra::{appsettings, mongo_client::create_mongo_client},
+        models::entities::{user::Activity, user_activity::UserActivity},
     };
     use serde::Deserialize;
 
     #[tokio::test]
     async fn should_migrate_user_activity() -> Result<(), Error> {
-        let settings = get_settings()?;
+        let settings = appsettings::load()?;
 
         let collection = create_mongo_client(&settings.mongo_settings)
             .await?
