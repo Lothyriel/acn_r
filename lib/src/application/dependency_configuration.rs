@@ -9,22 +9,22 @@ use tokio::sync::RwLock;
 use crate::{
     application::{
         infra::{
-            appsettings::{AppConfigurations, AppSettings},
+            appsettings::{AppConfigurations, AppSettings, MongoSettings},
             deploy_service::DeployServices,
             http_clients::github_client::GithubClient,
             lavalink_ctx,
             mongo_client::create_mongo_client,
+            songbird_listener::VoiceController,
             status_monitor::StatusMonitor,
         },
         repositories::{
             command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
             reaction::ReactionRepository, stats::StatsRepository, user::UserRepository,
+            voice::VoiceRepository,
         },
     },
     extensions::log_ext::LogExt,
 };
-
-use super::infra::appsettings::MongoSettings;
 
 pub struct DependencyContainer {
     pub services: ServicesContainer,
@@ -56,6 +56,7 @@ pub struct ServicesContainer {
     pub lava_client: LavalinkClient,
     pub status_monitor: Arc<StatusMonitor>,
     pub deploy_services: DeployServices,
+    pub voice_controller: Arc<VoiceController>,
 }
 
 impl ServicesContainer {
@@ -84,6 +85,8 @@ impl ServicesContainer {
             .await?,
         );
 
+        let voice_controller = Arc::new(VoiceController::new(repositories.voice.to_owned()));
+
         let create_loop_task =
             |a: Arc<StatusMonitor>| async move { a.monitor_status_loop().await.log() };
 
@@ -96,6 +99,7 @@ impl ServicesContainer {
             allowed_ids: settings.allowed_ids,
             app_configurations,
             status_monitor,
+            voice_controller,
         })
     }
 }
@@ -107,6 +111,7 @@ pub struct RepositoriesContainer {
     pub stats: StatsRepository,
     pub jukebox: JukeboxRepository,
     pub reaction: ReactionRepository,
+    pub voice: VoiceRepository,
 }
 
 impl RepositoriesContainer {
@@ -128,6 +133,8 @@ impl RepositoriesContainer {
 
         let reaction = ReactionRepository::new(&db);
 
+        let voice = VoiceRepository::new(&db);
+
         Self {
             user,
             guild,
@@ -135,6 +142,7 @@ impl RepositoriesContainer {
             stats,
             jukebox,
             reaction,
+            voice,
         }
     }
 
