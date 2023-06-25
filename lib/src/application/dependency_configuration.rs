@@ -9,7 +9,7 @@ use tokio::sync::RwLock;
 use crate::{
     application::{
         infra::{
-            appsettings::{AppConfigurations, AcnSettings},
+            appsettings::{AppConfigurations, AppSettings},
             deploy_service::DeployServices,
             http_clients::github_client::GithubClient,
             lavalink_ctx,
@@ -33,7 +33,7 @@ pub struct DependencyContainer {
 
 impl DependencyContainer {
     pub async fn build(
-        settings: AcnSettings,
+        settings: AppSettings,
         id: UserId,
         http: Arc<Http>,
         cache: Arc<Cache>,
@@ -61,7 +61,7 @@ pub struct ServicesContainer {
 impl ServicesContainer {
     async fn build(
         repositories: &RepositoriesContainer,
-        settings: AcnSettings,
+        settings: AppSettings,
         bot_id: UserId,
         http: Arc<Http>,
         cache: Arc<Cache>,
@@ -110,7 +110,7 @@ pub struct RepositoriesContainer {
 }
 
 impl RepositoriesContainer {
-    pub async fn build(settings: &AcnSettings) -> Result<Self, Error> {
+    pub async fn build(settings: &AppSettings) -> Result<Self, Error> {
         let db = Self::database(&settings.mongo_settings).await?;
         Ok(Self::build_with_db(db))
     }

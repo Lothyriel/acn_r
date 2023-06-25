@@ -20,7 +20,7 @@ use crate::{
         log_ext::LogExt,
         serenity::{context_ext::ContextExt, Context},
     },
-    infra::{appsettings::AcnSettings, env},
+    infra::{appsettings::AppSettings, env},
 };
 
 struct LavalinkHandler;
@@ -28,7 +28,7 @@ struct LavalinkHandler;
 #[async_trait]
 impl LavalinkEventHandler for LavalinkHandler {}
 
-pub async fn get_lavalink_client(settings: &AcnSettings) -> Result<LavalinkClient, Error> {
+pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClient, Error> {
     let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
         .get_current_application_info()
         .await?;

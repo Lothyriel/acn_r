@@ -1,5 +1,5 @@
 use anyhow::Error;
-use application::infra::appsettings::{AcnSettings, TestSettings};
+use application::infra::appsettings::AppSettings;
 use features::events::handlers::ready;
 use poise::serenity_prelude::GatewayIntents;
 use songbird::{driver::DecodeMode, Config, SerenityInit};
@@ -81,7 +81,7 @@ pub async fn start_listener() -> Result<(), Error> {
             on_error: |error| Box::pin(error::handler(error)),
             post_command: |ctx| Box::pin(after::handler(ctx)),
             prefix_options: poise::PrefixFrameworkOptions {
-                prefix: Some(settings.prefix.to_owned()),
+                prefix: None,
                 mention_as_prefix: true,
                 ..Default::default()
             },
@@ -112,10 +112,6 @@ pub async fn start_listener() -> Result<(), Error> {
     Ok(())
 }
 
-fn get_settings() -> Result<AcnSettings, Error> {
-    appsettings::load()
-}
-
-pub fn get_test_settings() -> Result<TestSettings, Error> {
+pub fn get_settings() -> Result<AppSettings, Error> {
     appsettings::load()
 }

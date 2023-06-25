@@ -11,4 +11,4 @@ FROM gcr.io/distroless/cc
 COPY --from=builder /target/release/acn_r /
 COPY ../appsettings_prd.json ./
 
-ENTRYPOINT ["./acn_r"]
+ENTRYPOINT ["./listen_r"]
