@@ -1,14 +1,15 @@
 use poise::command;
 
-use crate::extensions::serenity::{
-    context_ext::{get_songbird_client, ContextExt},
-    Command, CommandResult, Context,
+use crate::{
+    extensions::serenity::{
+        context_ext::{get_songbird_client, ContextExt},
+        Command, CommandResult, Context,
+    },
+    features::commands::help,
 };
 
-use super::help::help;
-
 pub fn register_commands() -> Vec<Command> {
-    vec![help(), privacy()]
+    vec![help::help(), privacy()]
 }
 
 #[command(prefix_command, slash_command, guild_only, category = "Listener")]
