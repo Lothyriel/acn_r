@@ -27,8 +27,11 @@ pub async fn att(
 
     let errors_count = join_all(tasks).await.log_errors().errors_count;
 
-    ctx.say(format!("Message sent to {} guilds", guilds.len() - errors_count))
-        .await?;
+    ctx.say(format!(
+        "Message sent to {} guilds",
+        guilds.len() - errors_count
+    ))
+    .await?;
 
     Ok(())
 }

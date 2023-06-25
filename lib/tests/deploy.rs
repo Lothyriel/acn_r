@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod deploy {
-    use lib::{application::infra::http_clients::github_client::GithubClient, get_settings};
     use anyhow::Error;
+    use lib::{application::infra::http_clients::github_client::GithubClient, get_settings};
     use reqwest::Client;
 
     #[tokio::test]
