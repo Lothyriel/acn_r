@@ -9,11 +9,11 @@ use lavalink_rs::{
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
 use rand::seq::SliceRandom;
-use songbird::{CoreEvent, Songbird};
+use songbird::Songbird;
 
 use crate::{
     application::{
-        infra::{appsettings::AppSettings, env, songbird::Receiver},
+        infra::{appsettings::AppSettings, env},
         models::entities::jukebox_use::JukeboxUse,
         repositories::jukebox::JukeboxRepository,
     },
@@ -165,23 +165,6 @@ impl LavalinkCtx {
                 self.lava_client
                     .create_session_with_songbird(&connection_info)
                     .await?;
-
-                let (call, result) = self.songbird.join(self.guild_id, channel_id).await;
-
-                result?;
-
-                {
-                    let mut handler = call.lock().await;
-
-                    handler
-                        .add_global_event(CoreEvent::SpeakingStateUpdate.into(), Receiver::new());
-
-                    handler.add_global_event(CoreEvent::SpeakingUpdate.into(), Receiver::new());
-
-                    handler.add_global_event(CoreEvent::VoicePacket.into(), Receiver::new());
-
-                    handler.add_global_event(CoreEvent::ClientDisconnect.into(), Receiver::new());
-                }
 
                 Ok(())
             }
