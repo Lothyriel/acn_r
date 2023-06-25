@@ -9,6 +9,6 @@ RUN apt-get update && apt-get install -y cmake && cargo build --release
 # Prod stage
 FROM gcr.io/distroless/cc
 COPY --from=builder /target/release/acn_r /
-COPY ../appsettings_prd.json ./
+COPY ../../appsettings_prd.json ./
 
 ENTRYPOINT ["./listen_r"]
