@@ -15,7 +15,7 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - run: flyctl deploy ./bots/acn_r --remote-only
+      - run: flyctl deploy ./acn --remote-only
 
 
   deploy_listen_r:
@@ -26,4 +26,4 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - run: flyctl deploy ./bots/listen_r --remote-only
+      - run: flyctl deploy ./listen_r --remote-only

@@ -7,12 +7,12 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug acn_r",
+            "name": "Debug acn",
             "cargo": {
                 "args": [
                     "build",
                     "--manifest-path",
-                    "${workspaceFolder}/acn_r/Cargo.toml"
+                    "${workspaceFolder}/acn/Cargo.toml"
                 ]
             }
         },

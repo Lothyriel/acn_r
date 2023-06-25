@@ -2,6 +2,6 @@
 
 members = [
     "lib",
-    "acn_r",
+    "acn",
     "listen_r"
 ]

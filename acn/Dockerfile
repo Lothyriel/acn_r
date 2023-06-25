@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y cmake && cargo build --release
 
 # Prod stage
 FROM gcr.io/distroless/cc
-COPY --from=builder /target/release/acn_r /
+COPY --from=builder /target/release/acn /
 COPY ../../appsettings_prd.json ./
 
-ENTRYPOINT ["./acn_r"]
+ENTRYPOINT ["./acn"]
