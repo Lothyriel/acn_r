@@ -166,7 +166,7 @@ impl DispatchData {
     }
 
     pub fn to_receiver(&self) -> Receiver {
-        Receiver::new(self.voice_controller.to_owned())
+        Receiver::new(self.voice_controller.to_owned(), self.guild_id.0)
     }
 }
 
