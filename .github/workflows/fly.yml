@@ -7,7 +7,7 @@ env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
 jobs:
-  deploy:
+  deploy_acn:
     name: Deploy ACN_r Discord Bot
     runs-on: ubuntu-latest
     steps:
@@ -18,7 +18,7 @@ jobs:
       - run: flyctl deploy ./bots/acn_r --remote-only
 
 
-  deploy:
+  deploy_listen_r:
     name: Deploy Listen_r Discord Bot
     runs-on: ubuntu-latest
     steps:
