@@ -1,5 +1,6 @@
 use anyhow::Error;
 use application::infra::appsettings::AppSettings;
+use features::commands::listener_commands;
 use poise::serenity_prelude::GatewayIntents;
 use songbird::{driver::DecodeMode, Config, SerenityInit};
 
@@ -66,7 +67,7 @@ pub async fn start_listener() -> Result<(), Error> {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: acn_commands::register_commands(),
+            commands: listener_commands::register_commands(),
             event_handler: |ctx, event, _, user_data| {
                 Box::pin(invoker::handler(ctx, event, user_data))
             },
