@@ -26,7 +26,7 @@ pub async fn start_acn() -> Result<(), Error> {
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             event_handler: |ctx, event, _, user_data| {
-                Box::pin(invoker::ready_handler(ctx, event, user_data))
+                Box::pin(invoker::songbird_handler(ctx, event, user_data))
             },
             commands: acn_commands::register_commands(),
             on_error: |error| Box::pin(error::handler(error)),
@@ -69,7 +69,7 @@ pub async fn start_listener() -> Result<(), Error> {
         .options(poise::FrameworkOptions {
             commands: listener_commands::register_commands(),
             event_handler: |ctx, event, _, user_data| {
-                Box::pin(invoker::handler(ctx, event, user_data))
+                Box::pin(invoker::all_events_handler(ctx, event, user_data))
             },
             on_error: |error| Box::pin(error::handler(error)),
             post_command: |ctx| Box::pin(after::handler(ctx)),

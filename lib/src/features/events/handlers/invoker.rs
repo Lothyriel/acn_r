@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-pub async fn handler(
+pub async fn all_events_handler(
     ctx: &Context,
     event: &Event<'_>,
     data: &DependencyContainer,
@@ -17,7 +17,9 @@ pub async fn handler(
     match event {
         Event::Ready { data_about_bot } => ready::handler(ctx, data, data_about_bot).await,
         Event::InviteCreate { data } => invite_created::handler(ctx, data).await,
-        Event::VoiceStateUpdate { old, new } => voice_updated::handler(ctx, old, new, data).await,
+        Event::VoiceStateUpdate { old, new } => {
+            voice_updated::all_events_handler(ctx, old, new, data).await
+        }
         Event::GuildMemberAddition { new_member } => member_added::handler(ctx, new_member).await,
         Event::GuildMemberRemoval {
             guild_id,
@@ -36,13 +38,16 @@ pub async fn handler(
     }
 }
 
-pub async fn ready_handler(
+pub async fn songbird_handler(
     ctx: &Context,
     event: &Event<'_>,
     data: &DependencyContainer,
 ) -> Result<(), Error> {
     match event {
         poise::Event::Ready { data_about_bot } => ready::handler(ctx, data, data_about_bot).await,
+        Event::VoiceStateUpdate { old, new } => {
+            voice_updated::songbird_handler(ctx, old, new, data).await
+        }
         _ => Ok(()),
     }
 }
