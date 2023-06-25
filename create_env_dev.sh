@@ -1,1 +1,1 @@
-docker-compose --env-file ./acn/.env up 
+docker-compose --env-file ./lib/.env up 
