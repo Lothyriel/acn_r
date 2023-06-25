@@ -9,7 +9,11 @@ use songbird::Songbird;
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::{deploy_service::DeployServices, lavalink_ctx::LavalinkCtx},
+        infra::{
+            deploy_service::DeployServices,
+            lavalink_ctx::LavalinkCtx,
+            songbird_listener::{Receiver, VoiceController},
+        },
         models::{dto::user::UpdateActivityDto, entities::user::Activity},
         repositories::jukebox::JukeboxRepository,
     },
@@ -56,6 +60,7 @@ pub async fn all_events_handler(
     let tasks = vec![
         |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),
         |c| tokio::spawn(dispatches::deploy::handler(c)),
+        |c| tokio::spawn(dispatches::listener::handler(c)),
     ];
 
     dispatch_tasks(tasks, Arc::new(dispatch_data)).await
@@ -108,6 +113,7 @@ async fn get_dispatch_data(
         lava_client: data.services.lava_client.to_owned(),
         bot_id: data.services.bot_id,
         guild_id: member.guild_id,
+        voice_controller: data.services.voice_controller.to_owned(),
         activity,
     };
 
@@ -142,6 +148,7 @@ pub struct DispatchData {
     guild_id: GuildId,
     activity: Activity,
     channel_id: Option<ChannelId>,
+    voice_controller: Arc<VoiceController>,
 }
 
 impl DispatchData {
@@ -156,6 +163,10 @@ impl DispatchData {
             lava_client,
             jukebox_repository,
         )
+    }
+
+    pub fn to_receiver(&self) -> Receiver {
+        Receiver::new(self.voice_controller.to_owned())
     }
 }
 
