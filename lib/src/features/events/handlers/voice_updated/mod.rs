@@ -18,20 +18,13 @@ use crate::{
 
 mod dispatches;
 
-pub async fn handler(
+pub async fn all_events_handler(
     ctx: &Context,
     old: &Option<VoiceState>,
     new: &VoiceState,
     data: &DependencyContainer,
 ) -> Result<(), Error> {
     let now = chrono::Utc::now();
-
-    let activity = match old {
-        Some(old_activity) => get_activity(&old_activity, &new),
-        None => Activity::Connected,
-    };
-
-    let status_monitor = &data.services.status_monitor;
 
     let user = new.user_id.to_user(ctx).await?;
 
@@ -42,22 +35,67 @@ pub async fn handler(
         )
     })?;
 
-    let nickname = member.display_name().to_string();
+    let guild = ctx.http.get_guild(member.guild_id.0).await?;
 
-    let guild_id = member.guild_id;
-
-    let guild = ctx.http.get_guild(guild_id.0).await?;
+    let dispatch_data = get_dispatch_data(old, new, ctx, data).await?;
 
     let dto = UpdateActivityDto {
         user_id: new.user_id.0,
-        guild_id: guild_id.0,
+        guild_id: member.guild_id.0,
         guild_name: guild.name,
-        nickname,
-        activity,
+        nickname: member.display_name().to_string(),
+        activity: dispatch_data.activity,
         date: now,
     };
 
-    status_monitor.update_user_activity(dto).await?;
+    data.services
+        .status_monitor
+        .update_user_activity(dto)
+        .await?;
+
+    let tasks = vec![
+        |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),
+        |c| tokio::spawn(dispatches::deploy::handler(c)),
+    ];
+
+    dispatch_tasks(tasks, Arc::new(dispatch_data)).await
+}
+
+pub async fn songbird_handler(
+    ctx: &Context,
+    old: &Option<VoiceState>,
+    new: &VoiceState,
+    data: &DependencyContainer,
+) -> Result<(), Error> {
+    let tasks = vec![
+        |c| tokio::spawn(dispatches::songbird_reconnect::handler(c)),
+        |c| tokio::spawn(dispatches::songbird_disconnect::handler(c)),
+    ];
+
+    let dispatch_data = get_dispatch_data(old, new, ctx, data).await?;
+
+    dispatch_tasks(tasks, Arc::new(dispatch_data)).await
+}
+
+async fn get_dispatch_data(
+    old: &Option<VoiceState>,
+    new: &VoiceState,
+    ctx: &Context,
+    data: &DependencyContainer,
+) -> Result<DispatchData, Error> {
+    let activity = match old {
+        Some(old_activity) => get_activity(&old_activity, &new),
+        None => Activity::Connected,
+    };
+
+    let user = new.user_id.to_user(ctx).await?;
+
+    let member = new.member.as_ref().ok_or_else(|| {
+        anyhow!(
+            "{} VoiceStateUpdate triggered outside a Guild context",
+            user.name
+        )
+    })?;
 
     let dispatch_data = DispatchData {
         songbird: context_ext::get_songbird_client(ctx).await?,
@@ -69,22 +107,19 @@ pub async fn handler(
         deploy_services: data.services.deploy_services.to_owned(),
         lava_client: data.services.lava_client.to_owned(),
         bot_id: data.services.bot_id,
-        guild_id,
+        guild_id: member.guild_id,
         activity,
     };
 
-    trigger_dispatches(Arc::new(dispatch_data)).await
+    Ok(dispatch_data)
 }
 
-async fn trigger_dispatches(data: Arc<DispatchData>) -> Result<(), Error> {
-    let tasks = [
-        |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),
-        |c| tokio::spawn(dispatches::deploy::handler(c)),
-        |c| tokio::spawn(dispatches::songbird_reconnect::handler(c)),
-        |c| tokio::spawn(dispatches::songbird_disconnect::handler(c)),
-    ]
-    .into_iter()
-    .map(|c| c(data.to_owned()).map_err(|e| anyhow!(e)));
+type Tasks = Vec<fn(Arc<DispatchData>) -> tokio::task::JoinHandle<Result<(), Error>>>;
+
+async fn dispatch_tasks(tasks: Tasks, data: Arc<DispatchData>) -> Result<(), Error> {
+    let tasks = tasks
+        .into_iter()
+        .map(|c| c(data.to_owned()).map_err(|e| anyhow!(e)));
 
     let dispatches_results = join_all(tasks).await.all_successes()?;
 
