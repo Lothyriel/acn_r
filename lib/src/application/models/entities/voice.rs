@@ -5,6 +5,6 @@ use serde::{Deserialize, Serialize};
 pub struct VoiceSnippet {
     pub guild_id: u64,
     pub user_id: u64,
-    pub bytes: Vec<u8>,
+    pub bytes: Vec<i16>,
     pub date: DateTime<Utc>,
 }
