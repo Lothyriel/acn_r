@@ -15,7 +15,13 @@ pub async fn all_events_handler(
     data: &DependencyContainer,
 ) -> Result<(), Error> {
     match event {
-        Event::Ready { data_about_bot } => ready::handler(ctx, data, data_about_bot).await,
+        Event::Ready { data_about_bot } => {
+            let message = format!(
+                "Estamos totalmente dentro! {} como Listen_r",
+                data_about_bot.user.name
+            );
+            ready::handler(ctx, data, message).await
+        }
         Event::InviteCreate { data } => invite_created::handler(ctx, data).await,
         Event::VoiceStateUpdate { old, new } => {
             voice_updated::all_events_handler(ctx, old, new, data).await
@@ -44,7 +50,13 @@ pub async fn songbird_handler(
     data: &DependencyContainer,
 ) -> Result<(), Error> {
     match event {
-        poise::Event::Ready { data_about_bot } => ready::handler(ctx, data, data_about_bot).await,
+        poise::Event::Ready { data_about_bot } => {
+            let message = format!(
+                "Estamos totalmente dentro! {} como acn_r",
+                data_about_bot.user.name
+            );
+            ready::handler(ctx, data, message).await
+        }
         Event::VoiceStateUpdate { old, new } => {
             voice_updated::songbird_handler(ctx, old, new, data).await
         }

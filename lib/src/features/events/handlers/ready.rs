@@ -10,11 +10,9 @@ use crate::{
 pub async fn handler(
     ctx: &Context,
     container: &DependencyContainer,
-    ready: &poise::serenity_prelude::Ready,
+    message: String,
 ) -> Result<(), Error> {
     let allowed_ids = &container.services.allowed_ids;
-
-    let message = format!("Estamos totalmente dentro! {}", ready.user.name);
 
     warn!("{message}");
 
