@@ -9,6 +9,10 @@ use crate::{
 };
 
 pub async fn handler(data: Arc<DispatchData>) -> Result<(), Error> {
+    if data.bot_id == data.user_id {
+        return Ok(());
+    }
+
     let states = data.guild_id.get_voice_states(data.cache.to_owned())?;
 
     let possible_channel = states
