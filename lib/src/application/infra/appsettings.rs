@@ -14,17 +14,18 @@ pub fn load<T: DeserializeOwned>() -> Result<T, Error> {
 
     let path = try_get_file(5, filename)?;
 
-    let settings_path = std::fs::read_to_string(path)?;
-    Ok(serde_json::from_str(&settings_path)?)
+    let settings_json = std::fs::read_to_string(path)?;
+    Ok(serde_json::from_str(&settings_json)?)
 }
 
 fn try_get_file(max_depth: usize, filename: String) -> Result<PathBuf, Error> {
     for i in 0..max_depth {
-        let possible_path = filename.repeat(i) + &filename;
+        let try_path = "../".repeat(i) + &filename;
+        let possible_path = std::path::Path::new(&try_path);
 
-        match std::fs::read_link(possible_path) {
-            Ok(path) => return Ok(path),
-            Err(_) => continue,
+        match possible_path.exists() {
+            true => return Ok(possible_path.to_path_buf()),
+            false => continue,
         }
     }
 
