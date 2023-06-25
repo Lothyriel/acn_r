@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod migrate {
-    use acn_r::{
+    use acn_lib::{
         application::{
             infra::mongo_client::create_mongo_client,
             models::entities::{user::Activity, user_activity::UserActivity},
         },
-        init_app,
+        get_test_settings,
     };
     use anyhow::Error;
     use chrono::Utc;
@@ -13,7 +13,7 @@ mod migrate {
 
     #[tokio::test]
     async fn should_migrate_user_activity() -> Result<(), Error> {
-        let settings = init_app()?;
+        let settings = get_test_settings()?;
 
         let collection = create_mongo_client(&settings.mongo_settings)
             .await?

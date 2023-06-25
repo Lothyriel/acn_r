@@ -20,7 +20,7 @@ use crate::{
         log_ext::LogExt,
         serenity::{context_ext::ContextExt, Context},
     },
-    infra::{appsettings::AppSettings, env},
+    infra::{appsettings::AcnSettings, env},
 };
 
 struct LavalinkHandler;
@@ -28,7 +28,7 @@ struct LavalinkHandler;
 #[async_trait]
 impl LavalinkEventHandler for LavalinkHandler {}
 
-pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClient, Error> {
+pub async fn get_lavalink_client(settings: &AcnSettings) -> Result<LavalinkClient, Error> {
     let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
         .get_current_application_info()
         .await?;
@@ -158,7 +158,7 @@ impl LavalinkCtx {
     }
 
     pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<(), Error> {
-        let (handler_lock, info) = self.songbird.join_gateway(self.guild_id, channel_id).await;
+        let (_, info) = self.songbird.join_gateway(self.guild_id, channel_id).await;
 
         match info {
             Ok(connection_info) => {
@@ -166,8 +166,12 @@ impl LavalinkCtx {
                     .create_session_with_songbird(&connection_info)
                     .await?;
 
+                let (call, result) = self.songbird.join(self.guild_id, channel_id).await;
+
+                result?;
+
                 {
-                    let mut handler = handler_lock.lock().await;
+                    let mut handler = call.lock().await;
 
                     handler
                         .add_global_event(CoreEvent::SpeakingStateUpdate.into(), Receiver::new());

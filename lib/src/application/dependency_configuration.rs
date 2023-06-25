@@ -9,7 +9,7 @@ use tokio::sync::RwLock;
 use crate::{
     application::{
         infra::{
-            appsettings::{AppConfigurations, AppSettings},
+            appsettings::{AppConfigurations, AcnSettings},
             deploy_service::DeployServices,
             http_clients::github_client::GithubClient,
             lavalink_ctx,
@@ -24,6 +24,8 @@ use crate::{
     extensions::log_ext::LogExt,
 };
 
+use super::infra::appsettings::MongoSettings;
+
 pub struct DependencyContainer {
     pub services: ServicesContainer,
     pub repositories: RepositoriesContainer,
@@ -31,7 +33,7 @@ pub struct DependencyContainer {
 
 impl DependencyContainer {
     pub async fn build(
-        settings: AppSettings,
+        settings: AcnSettings,
         id: UserId,
         http: Arc<Http>,
         cache: Arc<Cache>,
@@ -59,7 +61,7 @@ pub struct ServicesContainer {
 impl ServicesContainer {
     async fn build(
         repositories: &RepositoriesContainer,
-        settings: AppSettings,
+        settings: AcnSettings,
         bot_id: UserId,
         http: Arc<Http>,
         cache: Arc<Cache>,
@@ -108,8 +110,8 @@ pub struct RepositoriesContainer {
 }
 
 impl RepositoriesContainer {
-    pub async fn build(settings: &AppSettings) -> Result<Self, Error> {
-        let db = Self::database(settings).await?;
+    pub async fn build(settings: &AcnSettings) -> Result<Self, Error> {
+        let db = Self::database(&settings.mongo_settings).await?;
         Ok(Self::build_with_db(db))
     }
 
@@ -136,8 +138,8 @@ impl RepositoriesContainer {
         }
     }
 
-    pub async fn database(settings: &AppSettings) -> Result<Database, Error> {
-        Ok(create_mongo_client(&settings.mongo_settings)
+    pub async fn database(settings: &MongoSettings) -> Result<Database, Error> {
+        Ok(create_mongo_client(&settings)
             .await?
             .database("acn_r"))
     }

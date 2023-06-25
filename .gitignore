@@ -1,3 +1,5 @@
-/target
+**/target
+
 .env
-acn_r.UserActivity.json
+
+lib/acn_r.UserActivity.json

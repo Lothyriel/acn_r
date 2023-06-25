@@ -1,7 +1,7 @@
 use crate::extensions::serenity::Command;
 
 mod att;
-mod deploy;
+pub mod deploy;
 mod stats;
 
 pub fn group<'a>() -> Vec<Command> {
