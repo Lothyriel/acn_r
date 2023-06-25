@@ -12,7 +12,7 @@
                 "args": [
                     "build",
                     "--manifest-path",
-                    "${workspaceFolder}/bots/acn_r/Cargo.toml"
+                    "${workspaceFolder}/acn_r/Cargo.toml"
                 ]
             }
         },
@@ -24,7 +24,7 @@
                 "args": [
                     "build",
                     "--manifest-path",
-                    "${workspaceFolder}/bots/listen_r/Cargo.toml"
+                    "${workspaceFolder}/listen_r/Cargo.toml"
                 ]
             }
         }
