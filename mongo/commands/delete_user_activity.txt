@@ -1,0 +1,3 @@
+use acn_r
+
+db.UserActivity.deleteMany({user_id: NumberLong("")})
