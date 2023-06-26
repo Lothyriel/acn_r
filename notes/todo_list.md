@@ -1,4 +1,4 @@
--implement disconnect after queue ends
+-get track info from spotify
 
 -mostrar timestamp da musica no !queue
 
