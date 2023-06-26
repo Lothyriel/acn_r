@@ -50,8 +50,6 @@ impl VoiceController {
 
         let snippet = self.get_snippet(data.ssrc)?;
 
-        println!("{:?}", snippet.bytes.len());
-
         if snippet.bytes.len() >= LIMIT {
             let id = snippet
                 .mapping
