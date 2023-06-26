@@ -32,6 +32,10 @@ pub async fn all_events_handler(
 
     let user = new.user_id.to_user(ctx).await?;
 
+    if user.bot {
+        return Ok(());
+    }
+
     let member = new.member.as_ref().ok_or_else(|| {
         anyhow!(
             "{} VoiceStateUpdate triggered outside a Guild context",
@@ -72,6 +76,10 @@ pub async fn songbird_handler(
     new: &VoiceState,
     data: &DependencyContainer,
 ) -> Result<(), Error> {
+    if new.user_id.to_user(ctx).await?.bot {
+        return Ok(());
+    }
+
     let tasks = vec![
         |c| tokio::spawn(dispatches::songbird_reconnect::handler(c)),
         |c| tokio::spawn(dispatches::songbird_disconnect::handler(c)),
