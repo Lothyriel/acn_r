@@ -29,7 +29,7 @@ pub struct VoiceController {
     repository: VoiceRepository,
 }
 
-const LIMIT: usize = 100_000;
+const BUFFER_LIMIT: usize = 100_000;
 
 impl VoiceController {
     pub fn new(repository: VoiceRepository) -> Self {
@@ -61,7 +61,7 @@ impl VoiceController {
             (snippet.bytes.len(), id)
         };
 
-        if buffer_size >= LIMIT {
+        if buffer_size >= BUFFER_LIMIT {
             self.flush(data.ssrc, id, guild_id).await?;
         }
 
