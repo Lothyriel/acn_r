@@ -7,11 +7,16 @@ use crate::{
         dependency_configuration::DependencyContainer,
         infra::{appsettings, env},
     },
+    extensions::serenity::Command,
     features::{
-        commands::listener_commands,
+        commands::{help, misc::privacy},
         events::{after, check, error, handlers::invoker},
     },
 };
+
+fn register_commands() -> Vec<Command> {
+    vec![help::help(), privacy::privacy()]
+}
 
 pub async fn start_listener() -> Result<(), Error> {
     let settings = appsettings::load()?;
@@ -20,7 +25,7 @@ pub async fn start_listener() -> Result<(), Error> {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: listener_commands::register_commands(),
+            commands: register_commands(),
             event_handler: |ctx, event, _, user_data| {
                 Box::pin(invoker::all_events_handler(ctx, event, user_data))
             },

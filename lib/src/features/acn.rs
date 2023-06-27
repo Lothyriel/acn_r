@@ -7,11 +7,31 @@ use crate::{
         dependency_configuration::DependencyContainer,
         infra::{appsettings, env},
     },
+    extensions::serenity::Command,
     features::{
-        commands::acn_commands,
+        commands::{help, jukebox, misc, r34, reactions},
         events::{after, check, error, handlers::invoker},
     },
 };
+
+fn register_groups() -> Vec<Vec<Command>> {
+    vec![
+        r34::group(),
+        misc::group(),
+        jukebox::group(),
+        reactions::group(),
+    ]
+}
+
+fn register_commands() -> Vec<Command> {
+    let mut commands = vec![help::help()];
+
+    for mut command in register_groups() {
+        commands.append(command.as_mut());
+    }
+
+    commands
+}
 
 pub async fn start_acn() -> Result<(), Error> {
     let settings = appsettings::load()?;
@@ -22,7 +42,7 @@ pub async fn start_acn() -> Result<(), Error> {
             event_handler: |ctx, event, _, user_data| {
                 Box::pin(invoker::songbird_handler(ctx, event, user_data))
             },
-            commands: acn_commands::register_commands(),
+            commands: register_commands(),
             on_error: |error| Box::pin(error::handler(error)),
             post_command: |ctx| Box::pin(after::handler(ctx)),
             prefix_options: poise::PrefixFrameworkOptions {
