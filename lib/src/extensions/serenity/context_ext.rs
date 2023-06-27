@@ -34,7 +34,7 @@ impl ContextExt for Context<'_> {
             poise::Context::Application(ctx) => {
                 let args: Vec<_> = ctx
                     .args
-                    .into_iter()
+                    .iter()
                     .flat_map(|a| {
                         a.value
                             .as_ref()

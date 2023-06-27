@@ -5,6 +5,6 @@ pub mod deploy;
 pub mod privacy;
 mod stats;
 
-pub fn group<'a>() -> Vec<Command> {
+pub fn group() -> Vec<Command> {
     vec![att::att(), stats::stats(), deploy::deploy()]
 }

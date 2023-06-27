@@ -41,13 +41,10 @@ impl GuildRepository {
     }
 
     async fn update_name(&self, id: u64, name: String, date: DateTime<Utc>) -> Result<(), Error> {
-        match self.get_last_name(id).await? {
-            Some(last_name) => {
-                if last_name == name {
-                    return Ok(());
-                }
+        if let Some(last_name) = self.get_last_name(id).await? {
+            if last_name == name {
+                return Ok(());
             }
-            None => (),
         }
 
         let new_name = GuildNameChange {

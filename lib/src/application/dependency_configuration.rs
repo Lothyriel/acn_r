@@ -147,6 +147,6 @@ impl RepositoriesContainer {
     }
 
     pub async fn database(settings: &MongoSettings) -> Result<Database, Error> {
-        Ok(create_mongo_client(&settings).await?.database("acn_r"))
+        Ok(create_mongo_client(settings).await?.database("acn_r"))
     }
 }

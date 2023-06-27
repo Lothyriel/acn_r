@@ -17,7 +17,7 @@ pub async fn handler(
     warn!("{message}");
 
     let tasks = allowed_ids
-        .into_iter()
+        .iter()
         .map(|p| send_greetings(ctx, *p, &message));
 
     join_all(tasks).await.log_errors();

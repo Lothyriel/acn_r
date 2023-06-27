@@ -100,8 +100,7 @@ impl VoiceController {
         let snippet = self
             .accumulator
             .iter()
-            .filter(|a| a.mapping == Some(data.user_id))
-            .next()
+            .find(|a| a.mapping == Some(data.user_id))
             .ok_or_else(|| anyhow!("WE NEED TO FIND THIS HERE"))?;
 
         self.flush(*snippet.key(), data.user_id, guild_id).await

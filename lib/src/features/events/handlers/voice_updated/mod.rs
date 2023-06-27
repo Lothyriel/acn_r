@@ -97,7 +97,7 @@ async fn get_dispatch_data(
     data: &DependencyContainer,
 ) -> Result<DispatchData, Error> {
     let activity = match old {
-        Some(old_activity) => get_activity(&old_activity, &new),
+        Some(old_activity) => get_activity(old_activity, new),
         None => Activity::Connected,
     };
 

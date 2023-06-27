@@ -75,3 +75,9 @@ impl AppConfigurations {
         }
     }
 }
+
+impl Default for AppConfigurations {
+    fn default() -> Self {
+        Self::new()
+    }
+}

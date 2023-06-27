@@ -246,7 +246,7 @@ impl LavalinkCtx {
         let query_information = self.lava_client.auto_search_tracks(&query).await?;
 
         for track in query_information.tracks.iter() {
-            self.add_track_to_queue(&track).await?;
+            self.add_track_to_queue(track).await?;
         }
 
         let reply = format!(
@@ -283,7 +283,7 @@ impl LavalinkCtx {
     async fn skip_track(&self) -> Result<Option<TrackQueue>, Error> {
         let skipped_track = self.lava_client.skip(self.guild_id).await;
 
-        if let Some(_) = skipped_track {
+        if skipped_track.is_some() {
             let nodes = self.lava_client.nodes().await;
 
             let node = nodes
