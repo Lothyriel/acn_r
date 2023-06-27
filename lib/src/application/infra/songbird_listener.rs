@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Error};
 use chrono::{DateTime, Utc};
-use dashmap::{mapref::one::Ref, DashMap};
+use dashmap::DashMap;
 use lavalink_rs::async_trait;
 use log::warn;
 use songbird::{
@@ -48,23 +48,24 @@ impl VoiceController {
             return Ok(());
         }
 
-        let snippet = self.get_snippet(data.ssrc)?;
+        let (buffer_size, id) = {
+            let snippet = self
+                .accumulator
+                .get(&data.ssrc)
+                .ok_or_else(|| anyhow!("Couldn't get Snippet after SpeakingUpdate"))?;
 
-        if snippet.bytes.len() >= LIMIT {
             let id = snippet
                 .mapping
                 .ok_or_else(|| anyhow!("Buffer overflow without mapping"))?;
 
+            (snippet.bytes.len(), id)
+        };
+
+        if buffer_size >= LIMIT {
             self.flush(data.ssrc, id, guild_id).await?;
         }
 
         Ok(())
-    }
-
-    fn get_snippet(&self, key: u32) -> Result<Ref<'_, u32, Snippet>, Error> {
-        self.accumulator
-            .get(&key)
-            .ok_or_else(|| anyhow!("Couldn't get Snippet after SpeakingUpdate"))
     }
 
     fn handle_speaking_state_update(&self, data: &Speaking) -> Result<(), Error> {
@@ -131,24 +132,26 @@ impl VoiceController {
     }
 
     async fn flush(&self, key: u32, user_id: UserId, guild_id: u64) -> Result<(), Error> {
-        let snippet = match self.accumulator.get(&key) {
-            Some(r) => r,
-            None => {
-                warn!("Usuário {user_id} desconectou sem nunca falar nada");
-                return Ok(());
+        let snippet = {
+            let snippet = match self.accumulator.get(&key) {
+                Some(r) => r,
+                None => {
+                    warn!("Usuário {user_id} desconectou sem nunca falar nada");
+                    return Ok(());
+                }
+            };
+
+            VoiceSnippet {
+                bytes: snippet.bytes.to_owned(),
+                date: snippet.date,
+                user_id: user_id.0,
+                guild_id,
             }
         };
 
         {
             self.accumulator.remove(&key);
         }
-
-        let snippet = VoiceSnippet {
-            bytes: snippet.bytes.to_owned(),
-            date: snippet.date,
-            user_id: user_id.0,
-            guild_id,
-        };
 
         self.repository.add_voice_snippet(snippet).await
     }
