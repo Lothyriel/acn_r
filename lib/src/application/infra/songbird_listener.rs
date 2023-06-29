@@ -98,13 +98,13 @@ impl VoiceController {
         data: &ClientDisconnect,
         guild_id: u64,
     ) -> Result<(), Error> {
-        let snippet = self
+        let ssrc = *self
             .accumulator
             .iter()
             .find(|a| a.mapping == Some(data.user_id))
-            .ok_or_else(|| anyhow!("WE NEED TO FIND THIS HERE"))?;
+            .ok_or_else(|| anyhow!("WE NEED TO FIND THIS HERE"))?.key();
 
-        self.flush(*snippet.key(), data.user_id, guild_id).await
+        self.flush(ssrc, data.user_id, guild_id).await
     }
 
     fn handle_voice_packet(&self, data: &VoiceData<'_>) -> Result<(), Error> {
