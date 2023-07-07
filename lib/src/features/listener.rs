@@ -27,7 +27,7 @@ pub async fn start_listener() -> Result<(), Error> {
         .options(poise::FrameworkOptions {
             commands: register_commands(),
             event_handler: |ctx, event, _, user_data| {
-                Box::pin(invoker::all_events_handler(ctx, event, user_data))
+                Box::pin(invoker::listener_events_handler(ctx, event, user_data))
             },
             on_error: |error| Box::pin(error::handler(error)),
             post_command: |ctx| Box::pin(after::handler(ctx)),

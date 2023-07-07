@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-pub async fn all_events_handler(
+pub async fn listener_events_handler(
     ctx: &Context,
     event: &Event<'_>,
     data: &DependencyContainer,
