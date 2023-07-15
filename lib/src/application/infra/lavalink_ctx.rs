@@ -194,9 +194,9 @@ impl LavalinkCtx {
 
         let should_join = match self.songbird.get(self.guild_id) {
             Some(call) => {
-                let lock = call.lock().await;
+                let guard = call.lock().await;
 
-                match lock.current_connection() {
+                match guard.current_connection() {
                     Some(current_connection) => {
                         current_connection.channel_id.map(|c| c.0) != Some(channel.0)
                     }
