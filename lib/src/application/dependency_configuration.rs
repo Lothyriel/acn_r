@@ -56,6 +56,7 @@ impl ServicesContainer {
         bot_id: UserId,
     ) -> Result<Self, Error> {
         let http_client = Client::new();
+
         let lava_client = lavalink_ctx::get_lavalink_client(&settings).await?;
 
         let github_client = Arc::new(GithubClient::new(http_client, settings.github_settings));
