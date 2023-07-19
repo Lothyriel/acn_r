@@ -64,7 +64,6 @@ pub async fn all_events_handler(
 
     let tasks = vec![
         |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),
-        |c| tokio::spawn(dispatches::deploy::handler(c)),
         |c| tokio::spawn(dispatches::listener::handler(c)),
     ];
 
@@ -84,6 +83,7 @@ pub async fn songbird_handler(
     let tasks = vec![
         |c| tokio::spawn(dispatches::songbird_reconnect::handler(c)),
         |c| tokio::spawn(dispatches::songbird_disconnect::handler(c)),
+        |c| tokio::spawn(dispatches::deploy::handler(c)),
     ];
 
     let dispatch_data = get_dispatch_data(old, new, ctx, data).await?;
