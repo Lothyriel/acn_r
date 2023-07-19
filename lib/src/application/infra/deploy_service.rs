@@ -14,7 +14,7 @@ use crate::{
     extensions::serenity::guild_ext,
 };
 
-const SECONDS_IN_30_MINUTES: u64 = 30 * 60;
+const SECONDS_IN_5_MINUTES: u64 = 5 * 60;
 
 #[derive(Clone)]
 pub struct DeployServices {
@@ -56,8 +56,8 @@ impl DeployServices {
         match someone_online {
             true => Ok(()),
             false => {
-                warn!("Deploying in {SECONDS_IN_30_MINUTES} seconds");
-                time::sleep(Duration::from_secs(SECONDS_IN_30_MINUTES)).await;
+                warn!("Deploying in {SECONDS_IN_5_MINUTES} seconds");
+                time::sleep(Duration::from_secs(SECONDS_IN_5_MINUTES)).await;
                 match is_someone_online(http, cache).await? {
                     true => {
                         warn!("Deploy cancelled");

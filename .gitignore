@@ -1,7 +1,3 @@
+/target
+
 .env
-
-lib/target
-acn/target
-escuitad_r/target
-
-lib/acn_r.UserActivity.json

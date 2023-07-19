@@ -8,13 +8,3 @@ edition = "2021"
 [dependencies]
 lib = { path = "../lib" }
 tokio = { version = "1.23", features = ["full"] }
-serde = { version = "1.0", features = ["derive"] }
-poise = { version = "0.5.5", features = ["cache"] }
-songbird = "0.3.2"
-anyhow = "1.0.68"
-rand = "0.8.5"
-lavalink-rs = { git = "https://github.com/DoggySazHi/lavalink-rs-moogan", branch = "master"}
-reqwest = { version = "0.11.16", features = ["json"] }
-futures = "0.3.28"
-chrono = { version = "0.4.23", features = ["serde"] }
-log = "0.4.17"

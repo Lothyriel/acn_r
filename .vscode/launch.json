@@ -7,39 +7,26 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'acn_r'",
+            "name": "Debug acn",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=acn_r",
-                    "--package=acn_r"
-                ],
-                "filter": {
-                    "name": "acn_r",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
+                    "--manifest-path",
+                    "${workspaceFolder}/acn/Cargo.toml"
+                ]
+            }
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'acn_r'",
+            "name": "Debug listen_r",
             "cargo": {
                 "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=acn_r",
-                    "--package=acn_r"
-                ],
-                "filter": {
-                    "name": "acn_r",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
+                    "build",
+                    "--manifest-path",
+                    "${workspaceFolder}/listen_r/Cargo.toml"
+                ]
+            }
         }
     ]
 }
