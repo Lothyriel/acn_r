@@ -5,4 +5,3 @@ pub mod http_clients;
 pub mod lavalink_ctx;
 pub mod mongo_client;
 pub mod songbird_listener;
-pub mod status_monitor;

@@ -14,7 +14,10 @@ use crate::{
             lavalink_ctx::LavalinkCtx,
             songbird_listener::{Receiver, VoiceController},
         },
-        models::{dto::user::UpdateActivityDto, entities::user::Activity},
+        models::{
+            dto::user::{GuildInfo, UpdateUserDto},
+            entities::user::Activity,
+        },
         repositories::jukebox::JukeboxRepository,
     },
     extensions::{serenity::context_ext, std_ext::VecResultErrorExt},
@@ -47,19 +50,17 @@ pub async fn all_events_handler(
 
     let dispatch_data = get_dispatch_data(old, new, ctx, data).await?;
 
-    let dto = UpdateActivityDto {
+    let dto = UpdateUserDto {
         user_id: new.user_id.0,
-        guild_id: member.guild_id.0,
-        guild_name: guild.name,
+        guild_info: Some(GuildInfo {
+            guild_id: guild.id.0,
+            guild_name: guild.name,
+        }),
         nickname: member.display_name().to_string(),
-        activity: dispatch_data.activity,
         date: now,
     };
 
-    data.services
-        .status_monitor
-        .update_user_activity(dto)
-        .await?;
+    data.repositories.user.update_user(dto).await?;
 
     let tasks = vec![
         |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),

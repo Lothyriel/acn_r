@@ -1,12 +1,10 @@
-use std::borrow::Borrow;
-
 use anyhow::Error;
 use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
 use crate::application::{
     models::{
-        dto::user::{AddUserDto, UpdateActivityDto, UpdateNickDto},
-        entities::{nickname::NicknameChange, user::User, user_activity::UserActivity},
+        dto::user::{UpdateNickDto, UpdateUserDto},
+        entities::{nickname::NicknameChange, user::User},
     },
     repositories::guild::GuildRepository,
 };
@@ -14,7 +12,6 @@ use crate::application::{
 #[derive(Clone)]
 pub struct UserRepository {
     users: Collection<User>,
-    user_activity: Collection<UserActivity>,
     nickname_changes: Collection<NicknameChange>,
     guild_repository: GuildRepository,
 }
@@ -25,7 +22,6 @@ impl UserRepository {
             guild_repository,
             users: database.collection("Users"),
             nickname_changes: database.collection("NicknameChanges"),
-            user_activity: database.collection("UserActivity"),
         }
     }
 
@@ -38,39 +34,33 @@ impl UserRepository {
         Ok(possible_last_change.map(|n| n.nickname))
     }
 
-    pub async fn update_user_activity(&self, update_dto: UpdateActivityDto) -> Result<(), Error> {
-        self.add_user(update_dto.borrow().into()).await?;
-        self.add_activity(update_dto.borrow().into()).await?;
-
-        Ok(())
-    }
-
-    pub async fn add_user(&self, add_user_dto: AddUserDto) -> Result<(), Error> {
-        if let Some(guild_info) = &add_user_dto.guild_info {
+    pub async fn update_user(&self, update_user_dto: UpdateUserDto) -> Result<(), Error> {
+        if let Some(guild_info) = &update_user_dto.guild_info {
             self.guild_repository
                 .add_guild(
                     guild_info.guild_id,
                     guild_info.guild_name.to_owned(),
-                    add_user_dto.date,
+                    update_user_dto.date,
                 )
                 .await?;
+
+            let update_dto = UpdateNickDto {
+                user_id: update_user_dto.user_id,
+                guild_id: Some(guild_info.guild_id),
+                new_nickname: update_user_dto.nickname,
+                date: update_user_dto.date,
+            };
+
+            self.update_nickname(update_dto).await?;
         }
 
-        let update_dto = UpdateNickDto {
-            user_id: add_user_dto.user_id,
-            guild_id: add_user_dto.guild_info.map(|g| g.guild_id),
-            new_nickname: add_user_dto.nickname,
-            date: add_user_dto.date,
-        };
-
-        let user_id = update_dto.user_id;
-        self.update_nickname(update_dto).await?;
-
-        if self.user_exists(user_id).await? {
+        if self.user_exists(update_user_dto.user_id).await? {
             return Ok(());
         }
 
-        let user = User { id: user_id };
+        let user = User {
+            id: update_user_dto.user_id,
+        };
 
         self.users.insert_one(user, None).await?;
         Ok(())
@@ -91,12 +81,6 @@ impl UserRepository {
         };
 
         self.nickname_changes.insert_one(nick, None).await?;
-
-        Ok(())
-    }
-
-    pub async fn add_activity(&self, activity: UserActivity) -> Result<(), Error> {
-        self.user_activity.insert_one(activity, None).await?;
 
         Ok(())
     }

@@ -9,10 +9,7 @@ use poise::{
     serenity_prelude::{Cache, GuildId, Http, UserId, VoiceState},
 };
 
-use crate::{
-    application::models::entities::{user::Activity, user_activity::UserActivity},
-    extensions::std_ext::VecResultErrorExt,
-};
+use crate::extensions::std_ext::VecResultErrorExt;
 
 #[async_trait]
 pub trait GuildExt {
@@ -83,14 +80,5 @@ pub struct StatusInfo {
 impl StatusInfo {
     pub fn new(user_id: u64, guild_id: u64) -> Self {
         Self { user_id, guild_id }
-    }
-
-    pub fn to_activity(&self, activity: Activity) -> UserActivity {
-        UserActivity {
-            guild_id: self.guild_id,
-            user_id: self.user_id,
-            date: chrono::Utc::now(),
-            activity_type: activity,
-        }
     }
 }

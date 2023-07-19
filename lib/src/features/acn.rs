@@ -60,13 +60,7 @@ pub async fn start_acn() -> Result<(), Error> {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
-                DependencyContainer::build(
-                    settings,
-                    ready.user.id,
-                    ctx.http.to_owned(),
-                    ctx.cache.to_owned(),
-                )
-                .await
+                DependencyContainer::build(settings, ready.user.id).await
             })
         });
 
