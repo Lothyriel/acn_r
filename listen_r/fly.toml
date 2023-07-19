@@ -1,10 +1,12 @@
-# fly.toml file generated for acn-r on 2023-04-22T14:01:09-03:00
+# fly.toml app configuration file generated for listen-r on 2023-07-19T11:25:32-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
 app = "listen-r"
-kill_signal = "SIGINT"
-kill_timeout = 5
 primary_region = "gru"
-processes = []
+kill_signal = "SIGINT"
+kill_timeout = "5s"
 
 [experimental]
   auto_rollback = true
