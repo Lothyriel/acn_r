@@ -1,3 +1,7 @@
+-fix multiple dockerfiles with relative COPY paths
+-fix voice_sink module
+
+
 -get track info from spotify
 
 -mostrar timestamp da musica no !queue
