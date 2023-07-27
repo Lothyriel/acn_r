@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "lib",
-    "acn",
-    "listen_r"
+    "src/lib",
+    "src/acn",
+    "src/listen_r"
 ]
