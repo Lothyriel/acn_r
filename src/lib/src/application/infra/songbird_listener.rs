@@ -48,20 +48,17 @@ impl VoiceController {
             return Ok(());
         }
 
-        let (buffer_size, id) = {
-            let snippet = self
-                .accumulator
-                .get(&data.ssrc)
-                .ok_or_else(|| anyhow!("Couldn't get Snippet after SpeakingUpdate"))?;
+        let (buffer_size, maybe_id) = {
+            let maybe_snippet = self.accumulator.get(&data.ssrc);
 
-            let id = snippet
-                .mapping
-                .ok_or_else(|| anyhow!("Buffer overflow without mapping"))?;
-
-            (snippet.bytes.len(), id)
+            match maybe_snippet {
+                Some(s) => (s.bytes.len(), s.mapping),
+                None => return Ok(()),
+            }
         };
 
         if buffer_size >= BUFFER_LIMIT {
+            let id = maybe_id.ok_or_else(|| anyhow!("Buffer overflow without Mapped Id"))?;
             self.flush(data.ssrc, id, guild_id).await?;
         }
 
@@ -102,7 +99,10 @@ impl VoiceController {
             .accumulator
             .iter()
             .find(|a| a.mapping == Some(data.user_id))
-            .ok_or_else(|| anyhow!("WE NEED TO FIND THIS HERE"))?.key();
+            .ok_or_else(|| {
+                anyhow!("Client disconnected without sending a SpeakingStateUpdate event")
+            })?
+            .key();
 
         self.flush(ssrc, data.user_id, guild_id).await
     }
