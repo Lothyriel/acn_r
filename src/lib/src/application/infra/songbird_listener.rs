@@ -95,16 +95,15 @@ impl VoiceController {
         data: &ClientDisconnect,
         guild_id: u64,
     ) -> Result<(), Error> {
-        let ssrc = *self
+        let ssrc = self
             .accumulator
             .iter()
             .find(|a| a.mapping == Some(data.user_id))
             .ok_or_else(|| {
                 anyhow!("Client disconnected without sending a SpeakingStateUpdate event")
-            })?
-            .key();
+            })?;
 
-        self.flush(ssrc, data.user_id, guild_id).await
+        self.flush(*ssrc.key(), data.user_id, guild_id).await
     }
 
     fn handle_voice_packet(&self, data: &VoiceData<'_>) -> Result<(), Error> {
