@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use lavalink_rs::async_trait;
 use log::warn;
+use mongodb::bson::{spec::BinarySubtype, Binary};
 use poise::serenity_prelude::Http;
 use songbird::{
     events::context_data::{SpeakingUpdateData, VoiceData},
@@ -20,7 +21,7 @@ use crate::{
 };
 
 struct Snippet {
-    bytes: Vec<i16>,
+    bytes: Vec<u8>,
     date: DateTime<Utc>,
     mapping: Option<UserId>,
 }
@@ -110,18 +111,14 @@ impl VoiceController {
     }
 
     fn handle_voice_packet(&self, data: &VoiceData<'_>) -> Result<(), Error> {
-        let audio = data
-            .audio
-            .as_ref()
-            .ok_or_else(|| anyhow!("Could not decode packet"))?;
-
         let key = data.packet.ssrc;
+        let mut bytes = data.packet.payload[data.payload_offset..].to_owned();
 
         match self.accumulator.get_mut(&key) {
-            Some(mut m) => m.bytes.append(&mut audio.to_owned()),
+            Some(mut m) => m.bytes.append(&mut bytes),
             None => {
                 let snippet = Snippet {
-                    bytes: audio.to_owned(),
+                    bytes,
                     date: chrono::Utc::now(),
                     mapping: None,
                 };
@@ -150,17 +147,20 @@ impl VoiceController {
                 return Ok(());
             }
 
-            let buffer = snippet.bytes.to_owned();
+            let bytes = snippet.bytes.to_owned();
             let date = snippet.date;
 
             snippet.date = chrono::Utc::now();
             snippet.bytes.clear();
 
-            (buffer, date)
+            (bytes, date)
         };
 
         let snippet = VoiceSnippet {
-            bytes,
+            bytes: Binary {
+                subtype: BinarySubtype::Generic,
+                bytes,
+            },
             date,
             user_id: user_id.0,
             guild_id,
