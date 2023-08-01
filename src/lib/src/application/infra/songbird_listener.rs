@@ -131,8 +131,8 @@ impl VoiceController {
     }
 
     async fn flush(&self, key: u32, user_id: UserId, guild_id: u64) -> Result<(), Error> {
-        let snippet = {
-            let snippet = match self.accumulator.get(&key) {
+        let (bytes, date) = {
+            let mut snippet = match self.accumulator.get_mut(&key) {
                 Some(r) => r,
                 None => {
                     warn!("Usuário {user_id} desconectou sem nunca falar nada");
@@ -140,17 +140,21 @@ impl VoiceController {
                 }
             };
 
-            VoiceSnippet {
-                bytes: snippet.bytes.to_owned(),
-                date: snippet.date,
-                user_id: user_id.0,
-                guild_id,
-            }
+            let buffer = snippet.bytes.to_owned();
+            let date = snippet.date;
+
+            snippet.date = chrono::Utc::now();
+            snippet.bytes.clear();
+
+            (buffer, date)
         };
 
-        {
-            self.accumulator.remove(&key);
-        }
+        let snippet = VoiceSnippet {
+            bytes,
+            date,
+            user_id: user_id.0,
+            guild_id,
+        };
 
         self.repository.add_voice_snippet(snippet).await
     }
