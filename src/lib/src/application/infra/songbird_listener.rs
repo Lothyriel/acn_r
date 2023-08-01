@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use lavalink_rs::async_trait;
 use log::warn;
+use poise::serenity_prelude::Http;
 use songbird::{
     events::context_data::{SpeakingUpdateData, VoiceData},
     model::{
@@ -27,14 +28,16 @@ struct Snippet {
 pub struct VoiceController {
     accumulator: DashMap<u32, Snippet>,
     repository: VoiceRepository,
+    http: Arc<Http>,
 }
 
 const BUFFER_LIMIT: usize = 100_000;
 
 impl VoiceController {
-    pub fn new(repository: VoiceRepository) -> Self {
+    pub fn new(repository: VoiceRepository, http: Arc<Http>) -> Self {
         Self {
             accumulator: DashMap::new(),
+            http,
             repository,
         }
     }
@@ -131,6 +134,8 @@ impl VoiceController {
     }
 
     async fn flush(&self, key: u32, user_id: UserId, guild_id: u64) -> Result<(), Error> {
+        let user = self.http.get_user(user_id.0).await?;
+
         let (bytes, date) = {
             let mut snippet = match self.accumulator.get_mut(&key) {
                 Some(r) => r,
@@ -139,6 +144,11 @@ impl VoiceController {
                     return Ok(());
                 }
             };
+
+            if user.bot {
+                snippet.bytes.clear();
+                return Ok(());
+            }
 
             let buffer = snippet.bytes.to_owned();
             let date = snippet.date;
