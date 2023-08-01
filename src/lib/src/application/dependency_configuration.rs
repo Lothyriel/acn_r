@@ -29,7 +29,7 @@ pub struct DependencyContainer {
 
 impl DependencyContainer {
     pub async fn build(settings: AppSettings, http: Arc<Http>, id: UserId) -> Result<Self, Error> {
-        let repositories = RepositoriesContainer::build(&settings).await?;
+        let repositories = RepositoriesContainer::build(&settings.mongo_settings).await?;
 
         let services = ServicesContainer::build(&repositories, settings, http, id).await?;
 
@@ -90,8 +90,8 @@ pub struct RepositoriesContainer {
 }
 
 impl RepositoriesContainer {
-    pub async fn build(settings: &AppSettings) -> Result<Self, Error> {
-        let db = Self::database(&settings.mongo_settings).await?;
+    pub async fn build(settings: &MongoSettings) -> Result<Self, Error> {
+        let db = Self::database(&settings).await?;
         Ok(Self::build_with_db(db))
     }
 
