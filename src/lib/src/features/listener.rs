@@ -5,7 +5,7 @@ use songbird::{driver::DecodeMode, Config, SerenityInit};
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::{appsettings, env},
+        infra::{appsettings::AppSettings, env},
     },
     extensions::serenity::Command,
     features::{
@@ -19,7 +19,7 @@ fn register_commands() -> Vec<Command> {
 }
 
 pub async fn start_listener() -> Result<(), Error> {
-    let settings = appsettings::load()?;
+    let settings = AppSettings::load()?;
 
     let token = env::get("TOKEN_BOT")?;
 

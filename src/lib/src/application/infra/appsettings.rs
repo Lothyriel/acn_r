@@ -6,18 +6,6 @@ use crate::application::infra::env;
 
 const APPSETTINGS_PATH: &str = "appsettings_{ENV}.json";
 
-pub fn load() -> Result<AppSettings, Error> {
-    env::init()?;
-    let env = env::get("ENV")?;
-
-    let filename = APPSETTINGS_PATH.replace("{ENV}", env.as_str());
-
-    let path = try_get_file(5, filename)?;
-
-    let settings_json = std::fs::read_to_string(path)?;
-    Ok(serde_json::from_str(&settings_json)?)
-}
-
 fn try_get_file(max_depth: usize, filename: String) -> Result<PathBuf, Error> {
     for i in 0..max_depth {
         let try_path = format!("{}{}", "../".repeat(i), &filename);
@@ -41,6 +29,20 @@ pub struct AppSettings {
     pub lavalink_settings: LavalinkSettings,
     pub mongo_settings: MongoSettings,
     pub github_settings: GithubSettings,
+}
+
+impl AppSettings {
+    pub fn load() -> Result<Self, Error> {
+        env::init()?;
+        let env = env::get("ENV")?;
+
+        let filename = APPSETTINGS_PATH.replace("{ENV}", env.as_str());
+
+        let path = try_get_file(5, filename)?;
+
+        let settings_json = std::fs::read_to_string(path)?;
+        Ok(serde_json::from_str(&settings_json)?)
+    }
 }
 
 #[derive(Deserialize)]
