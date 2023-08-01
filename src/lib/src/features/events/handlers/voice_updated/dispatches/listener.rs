@@ -16,7 +16,7 @@ pub async fn handler(data: Arc<DispatchData>) -> Result<(), Error> {
     let states = data.guild_id.get_voice_states(data.cache.to_owned())?;
 
     let possible_channel = states
-        .into_iter()
+        .iter()
         .filter_map(|(id, voice)| voice.channel_id.map(|c| (id, c)))
         .fold(HashMap::new(), |mut map, e| {
             let entry = map.entry(e.1).or_insert(0);
@@ -32,6 +32,12 @@ pub async fn handler(data: Arc<DispatchData>) -> Result<(), Error> {
         Some((c, _)) => c,
         None => return disconnect(data).await,
     };
+
+    if let Some(voice_state) = states.get(&data.bot_id) {
+        if Some(channel) == voice_state.channel_id {
+            return Ok(());
+        }
+    }
 
     let (call, result) = data.songbird.join(data.guild_id, channel).await;
 
