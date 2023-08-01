@@ -1,7 +1,7 @@
 use anyhow::Error;
 use lavalink_rs::LavalinkClient;
 use mongodb::Database;
-use poise::serenity_prelude::UserId;
+use poise::serenity_prelude::{Http, UserId};
 use reqwest::Client;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -30,10 +30,10 @@ pub struct DependencyContainer {
 }
 
 impl DependencyContainer {
-    pub async fn build(settings: AppSettings, id: UserId) -> Result<Self, Error> {
+    pub async fn build(settings: AppSettings, http: Arc<Http>, id: UserId) -> Result<Self, Error> {
         let repositories = RepositoriesContainer::build(&settings).await?;
 
-        let services = ServicesContainer::build(&repositories, settings, id).await?;
+        let services = ServicesContainer::build(&repositories, settings, http, id).await?;
 
         Ok(Self {
             services,
@@ -56,6 +56,7 @@ impl ServicesContainer {
     async fn build(
         repositories: &RepositoriesContainer,
         settings: AppSettings,
+        http: Arc<Http>,
         bot_id: UserId,
     ) -> Result<Self, Error> {
         let http_client = Client::new();
@@ -70,7 +71,7 @@ impl ServicesContainer {
 
         let deploy_services = DeployServices::new(github_client, app_configurations.to_owned());
 
-        let voice_controller = Arc::new(VoiceController::new(repositories.voice.to_owned()));
+        let voice_controller = Arc::new(VoiceController::new(repositories.voice.to_owned(), http));
 
         Ok(Self {
             deploy_services,
