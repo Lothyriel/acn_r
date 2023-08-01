@@ -20,4 +20,8 @@ impl VoiceRepository {
 
         Ok(())
     }
+
+    pub async fn get_voice_snippet(&self) -> Result<Option<VoiceSnippet>, Error> {
+        Ok(self.voice_snippets.find_one(None, None).await?)
+    }
 }
