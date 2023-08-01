@@ -22,6 +22,8 @@ use crate::application::{
     },
 };
 
+use super::infra::http_clients::r34_client::R34Client;
+
 pub struct DependencyContainer {
     pub services: ServicesContainer,
     pub repositories: RepositoriesContainer,
@@ -47,6 +49,7 @@ pub struct ServicesContainer {
     pub lava_client: LavalinkClient,
     pub deploy_services: DeployServices,
     pub voice_controller: Arc<VoiceController>,
+    pub r34_client: R34Client,
 }
 
 impl ServicesContainer {
@@ -59,7 +62,9 @@ impl ServicesContainer {
 
         let lava_client = lavalink_ctx::get_lavalink_client(&settings).await?;
 
-        let github_client = Arc::new(GithubClient::new(http_client, settings.github_settings));
+        let github_client = Arc::new(GithubClient::new(http_client.to_owned(), settings.github_settings));
+
+        let r34_client = R34Client::new(http_client.to_owned());
 
         let app_configurations = Arc::new(RwLock::new(AppConfigurations::new()));
 
@@ -74,6 +79,7 @@ impl ServicesContainer {
             allowed_ids: settings.allowed_ids,
             app_configurations,
             voice_controller,
+            r34_client,
         })
     }
 }
