@@ -20,7 +20,7 @@ pub fn load() -> Result<AppSettings, Error> {
 
 fn try_get_file(max_depth: usize, filename: String) -> Result<PathBuf, Error> {
     for i in 0..max_depth {
-        let try_path = "../".repeat(i) + &filename;
+        let try_path = format!("{}{}", "../".repeat(i), &filename);
         let possible_path = std::path::Path::new(&try_path);
 
         match possible_path.exists() {
@@ -73,11 +73,5 @@ impl AppConfigurations {
         Self {
             deploy_ready: false,
         }
-    }
-}
-
-impl Default for AppConfigurations {
-    fn default() -> Self {
-        Self::new()
     }
 }
