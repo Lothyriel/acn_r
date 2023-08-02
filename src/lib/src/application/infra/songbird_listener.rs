@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Error};
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
+use hound::{WavSpec, WavWriter};
 use lavalink_rs::async_trait;
 use log::warn;
 use mongodb::bson::{spec::BinarySubtype, Binary};
@@ -13,7 +14,20 @@ use songbird::{
     },
     Event, EventContext, EventHandler,
 };
-use std::sync::Arc;
+use std::{
+    fs::{File, OpenOptions},
+    io::{Cursor, Read, Write},
+    sync::Arc,
+};
+use symphonia::{
+    core::{
+        audio::{Layout, AudioBuffer},
+        codecs::{CodecParameters, CodecRegistry, Decoder, DecoderOptions, CODEC_TYPE_PCM_S16LE},
+        io::MediaSourceStream,
+        sample::SampleFormat,
+    },
+    default::{self, codecs::MpaDecoder},
+};
 
 use crate::{
     application::{models::entities::voice::VoiceSnippet, repositories::voice::VoiceRepository},
@@ -21,7 +35,7 @@ use crate::{
 };
 
 struct Snippet {
-    bytes: Vec<u8>,
+    bytes: Vec<i16>,
     date: DateTime<Utc>,
     mapping: Option<UserId>,
 }
@@ -32,7 +46,7 @@ pub struct VoiceController {
     http: Arc<Http>,
 }
 
-const BUFFER_LIMIT: usize = 100_000;
+const BUFFER_LIMIT: usize = 1_000_000;
 
 impl VoiceController {
     pub fn new(repository: VoiceRepository, http: Arc<Http>) -> Self {
@@ -111,8 +125,9 @@ impl VoiceController {
     }
 
     fn handle_voice_packet(&self, data: &VoiceData<'_>) -> Result<(), Error> {
+        //let mut bytes = data.packet.payload[data.payload_offset..].to_owned();
         let key = data.packet.ssrc;
-        let mut bytes = data.packet.payload[data.payload_offset..].to_owned();
+        let mut bytes = data.audio.to_owned().unwrap();
 
         match self.accumulator.get_mut(&key) {
             Some(mut m) => m.bytes.append(&mut bytes),
@@ -156,10 +171,23 @@ impl VoiceController {
             (bytes, date)
         };
 
+        let mut buffer = vec![];
+        to_wav(bytes.as_slice(), &mut buffer);
+
+        let mp3 = to_mp3(buffer);
+
+        OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(format!("audio_{}.mp3", user.name))
+            .unwrap()
+            .write_all(mp3.as_slice())
+            .unwrap();
+
         let snippet = VoiceSnippet {
             bytes: Binary {
                 subtype: BinarySubtype::Generic,
-                bytes,
+                bytes: mp3,
             },
             date,
             user_id: user_id.0,
@@ -167,6 +195,65 @@ impl VoiceController {
         };
 
         self.repository.add_voice_snippet(snippet).await
+    }
+}
+
+fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) {
+    let spec = WavSpec {
+        channels: 2,
+        sample_rate: 48000,
+        bits_per_sample: 16,
+        sample_format: hound::SampleFormat::Int,
+    };
+
+    let cursor = Cursor::new(buffer);
+
+    let mut writer = WavWriter::new(cursor, spec).unwrap();
+
+    for &sample in pcm_samples {
+        writer.write_sample(sample).unwrap();
+    }
+}
+
+fn to_mp3(buffer: Vec<u8>) -> Vec<u8> {
+    // let codec_parameters = CodecParameters {
+    //     codec: CODEC_TYPE_PCM_S16LE,
+    //     sample_rate: Some(48_000),
+    //     sample_format: Some(SampleFormat::U16),
+    //     bits_per_coded_sample: Some(16),
+    //     channel_layout: Some(Layout::Stereo),
+    //     ..Default::default()
+    // };
+
+    let codec_registry = default::get_codecs();
+
+    let probe = default::get_probe();
+
+    let mss = MediaSourceStream::new(Box::new(Cursor::new(buffer)), Default::default());
+
+    let mut reader = probe
+        .format(
+            &Default::default(),
+            mss,
+            &Default::default(),
+            &Default::default(),
+        )
+        .unwrap()
+        .format;
+
+    let track = reader.tracks().first().unwrap();
+
+    let mut decoder = codec_registry
+        .make(&track.codec_params, &Default::default())
+        .unwrap();
+
+    loop {
+        let packet = reader.next_packet().unwrap();
+        let audio_buffer = decoder.decode(&packet).unwrap();
+
+        let a: SampleFormat = audio_buffer.into();
+
+        //let a: AudioBuffer<u32> = audio_buffer.make_equivalent();
     }
 }
 
