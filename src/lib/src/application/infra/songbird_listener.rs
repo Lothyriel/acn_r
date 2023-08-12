@@ -174,20 +174,20 @@ impl VoiceController {
         let mut buffer = vec![];
         to_wav(bytes.as_slice(), &mut buffer);
 
-        let mp3 = to_mp3(buffer);
+        // let mp3 = to_mp3(buffer);
 
-        OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(format!("audio_{}.mp3", user.name))
-            .unwrap()
-            .write_all(mp3.as_slice())
-            .unwrap();
+        // OpenOptions::new()
+        //     .append(true)
+        //     .create(true)
+        //     .open(format!("audio_{}.mp3", user.name))
+        //     .unwrap()
+        //     .write_all(mp3.as_slice())
+        //     .unwrap();
 
         let snippet = VoiceSnippet {
             bytes: Binary {
                 subtype: BinarySubtype::Generic,
-                bytes: mp3,
+                bytes: buffer,
             },
             date,
             user_id: user_id.0,
@@ -251,7 +251,7 @@ fn to_mp3(buffer: Vec<u8>) -> Vec<u8> {
         let packet = reader.next_packet().unwrap();
         let audio_buffer = decoder.decode(&packet).unwrap();
 
-        let a: SampleFormat = audio_buffer.into();
+        //let a: SampleFormat = audio_buffer.into();
 
         //let a: AudioBuffer<u32> = audio_buffer.make_equivalent();
     }
