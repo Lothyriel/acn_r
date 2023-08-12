@@ -4,8 +4,8 @@ use poise::{serenity_prelude::Context, Event};
 use crate::{
     application::dependency_configuration::DependencyContainer,
     features::events::handlers::{
-        guild_updated, invite_created, member_added, member_removed, member_updated, ready,
-        voice_updated,
+        guild_updated, invite_created, member_added, member_removed, member_updated, message,
+        ready, voice_updated,
     },
 };
 
@@ -50,6 +50,7 @@ pub async fn songbird_handler(
     data: &DependencyContainer,
 ) -> Result<(), Error> {
     match event {
+        Event::Message { new_message } => message::handler(ctx, data, new_message).await,
         poise::Event::Ready { data_about_bot } => {
             let message = format!(
                 "Estamos totalmente dentro! {} como acn_r",
