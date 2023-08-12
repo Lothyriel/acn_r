@@ -13,7 +13,7 @@ services:
       - mongodb_data:/data/db
 
   lavalink:
-    image: ghcr.io/lavalink-devs/lavalink:latest
+    image: fredboat/lavalink:latest
     restart: unless-stopped
     mem_limit: 400m
     ports:
