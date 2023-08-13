@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
 use poise::async_trait;
-use poise::serenity_prelude::{ChannelId, Guild, GuildId};
+use poise::serenity_prelude::{CacheHttp, ChannelId, Guild, GuildId, User};
 use songbird::Songbird;
 
 use crate::{
@@ -16,6 +16,7 @@ pub trait ContextExt {
     async fn get_command_args(self) -> String;
     async fn get_lavalink(self) -> Result<LavalinkCtx, Error>;
     async fn assure_connected(self) -> Result<Option<ChannelId>, Error>;
+    async fn get_user(self, user_id: u64) -> Result<User, Error>;
     fn get_guild_info(self) -> Option<GuildInfo>;
     fn assure_cached_guild(self) -> Result<Guild, Error>;
     fn assure_guild_context(self) -> Result<GuildId, Error>;
@@ -78,6 +79,17 @@ impl ContextExt for Context<'_> {
             .and_then(|voice_state| voice_state.channel_id);
 
         Ok(channel)
+    }
+
+    async fn get_user(self, user_id: u64) -> Result<User, Error> {
+        let cached_user = self.serenity_context().cache.user(user_id);
+
+        let user = match cached_user {
+            Some(u) => Ok(u),
+            None => self.http().get_user(user_id).await,
+        };
+
+        Ok(user?)
     }
 
     fn assure_cached_guild(self) -> Result<Guild, Error> {
