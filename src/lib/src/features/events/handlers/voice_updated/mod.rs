@@ -113,7 +113,6 @@ async fn get_dispatch_data(
         lava_client: data.services.lava_client.to_owned(),
         bot_id: data.services.bot_id,
         guild_id: member.guild_id,
-        voice_controller: data.services.voice_controller.to_owned(),
         activity,
     };
 
