@@ -263,13 +263,6 @@ pub struct Receiver {
 }
 
 impl Receiver {
-    pub fn new(controller: Arc<VoiceController>, guild_id: u64) -> Self {
-        Self {
-            controller,
-            guild_id,
-        }
-    }
-
     pub fn from_ctx(ctx: &Context<'_>, guild_id: u64) -> Self {
         Self {
             controller: ctx.data().services.voice_controller.to_owned(),
