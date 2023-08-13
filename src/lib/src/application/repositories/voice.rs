@@ -1,5 +1,8 @@
-use anyhow::Error;
-use mongodb::{Collection, Database};
+use anyhow::{anyhow, Error};
+use mongodb::{
+    bson::{doc, from_document},
+    Collection, Database,
+};
 
 use crate::application::models::entities::voice::VoiceSnippet;
 
@@ -21,7 +24,19 @@ impl VoiceRepository {
         Ok(())
     }
 
-    pub async fn get_voice_snippet(&self) -> Result<Option<VoiceSnippet>, Error> {
-        Ok(self.voice_snippets.find_one(None, None).await?)
+    pub async fn get_voice_snippet(&self, guild_id: u64) -> Result<Option<VoiceSnippet>, Error> {
+        let filter = doc! { "guild_id": guild_id as i64};
+
+        let pipeline = [
+            doc! { "$match": filter, },
+            doc! { "$sample": { "size": 1 } },
+        ];
+
+        let mut cursor = self.voice_snippets.aggregate(pipeline, None).await?;
+
+        match cursor.advance().await? {
+            true => Ok(from_document(cursor.deserialize_current()?)?),
+            false => Err(anyhow!("Sem emoções correspondentes registradas")),
+        }
     }
 }
