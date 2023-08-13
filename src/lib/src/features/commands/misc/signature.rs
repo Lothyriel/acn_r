@@ -8,7 +8,9 @@ use crate::{
 #[command(prefix_command, slash_command, category = "Misc")]
 pub async fn set_signature(
     ctx: Context<'_>,
-    #[description = "Emojis para assinatura"] emojis: String,
+    #[rest]
+    #[description = "Emojis para assinatura"]
+    emojis: String,
 ) -> CommandResult {
     let user = &ctx.data().repositories.user;
 
