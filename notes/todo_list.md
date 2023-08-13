@@ -1,6 +1,5 @@
--only reconnect on voice_sink if it is not already connected to that channel
--fix voice_sink module
-
+-convert voice_sink audios to mp3 to save space
+-update lavalink client to newer version (webhooks will be deprecated)
 
 -get track info from spotify
 
