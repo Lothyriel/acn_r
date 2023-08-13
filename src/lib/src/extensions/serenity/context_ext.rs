@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
 use chrono_tz::Tz;
+use log::error;
 use poise::async_trait;
 use poise::serenity_prelude::{CacheHttp, ChannelId, Guild, GuildId, User};
 use songbird::Songbird;
@@ -123,7 +124,13 @@ impl ContextExt for Context<'_> {
             None => return chrono_tz::UTC,
         };
 
-        locale.parse().unwrap_or_else(|_| chrono_tz::UTC)
+        match locale {
+            "pt-BR" => chrono_tz::Tz::Brazil__Acre,
+            l => {
+                error!("Encontrada timezone não cadastrada {}", l);
+                chrono_tz::UTC
+            }
+        }
     }
 }
 
