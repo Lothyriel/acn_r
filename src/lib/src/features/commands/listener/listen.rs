@@ -1,17 +1,12 @@
-use std::collections::HashMap;
-
+use poise::command;
 use songbird::CoreEvent;
 
 use crate::{
-    application::infra::songbird_listener::Receiver, extensions::serenity::guild_ext::GuildExt,
-    features::commands::listener::disconnect,
-};
-
-use poise::command;
-
-use crate::extensions::serenity::{
-    context_ext::{get_songbird_client, ContextExt},
-    CommandResult, Context,
+    application::infra::songbird_listener::Receiver,
+    extensions::serenity::{
+        context_ext::{get_songbird_client, ContextExt},
+        CommandResult, Context,
+    },
 };
 
 #[command(prefix_command, slash_command, guild_only, category = "Listener")]
@@ -22,34 +17,13 @@ pub async fn listen(ctx: Context<'_>) -> CommandResult {
 
     let manager = get_songbird_client(s_ctx).await?;
 
-    let states = guild.get_voice_states(s_ctx.cache.to_owned())?;
-
-    let possible_channel = states
-        .iter()
-        .filter_map(|(id, voice)| voice.channel_id.map(|c| (id, c)))
-        .fold(HashMap::new(), |mut map, e| {
-            let entry = map.entry(e.1).or_insert(0);
-
-            *entry += 1;
-
-            map
-        })
-        .into_iter()
-        .max_by_key(|(_, count)| *count);
-
-    let channel = match possible_channel {
-        Some((c, _)) => c,
+    let channel = match ctx.assure_connected().await? {
+        Some(c) => c,
         None => {
-            disconnect(manager.to_owned(), guild).await?;
+            ctx.say("Join a voice channel").await?;
             return Ok(());
         }
     };
-
-    if let Some(voice_state) = states.get(&ctx.data().services.bot_id) {
-        if Some(channel) == voice_state.channel_id {
-            return Ok(());
-        }
-    }
 
     let (call, result) = manager.join(guild, channel).await;
 
