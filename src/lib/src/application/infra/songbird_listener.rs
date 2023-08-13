@@ -21,7 +21,7 @@ use std::{
 };
 use symphonia::{
     core::{
-        audio::{Layout, AudioBuffer},
+        audio::{AudioBuffer, Layout},
         codecs::{CodecParameters, CodecRegistry, Decoder, DecoderOptions, CODEC_TYPE_PCM_S16LE},
         io::MediaSourceStream,
         sample::SampleFormat,
@@ -31,7 +31,7 @@ use symphonia::{
 
 use crate::{
     application::{models::entities::voice::VoiceSnippet, repositories::voice::VoiceRepository},
-    extensions::log_ext::LogExt,
+    extensions::{log_ext::LogExt, serenity::Context},
 };
 
 struct Snippet {
@@ -266,6 +266,13 @@ impl Receiver {
     pub fn new(controller: Arc<VoiceController>, guild_id: u64) -> Self {
         Self {
             controller,
+            guild_id,
+        }
+    }
+
+    pub fn from_ctx(ctx: &Context<'_>, guild_id: u64) -> Self {
+        Self {
+            controller: ctx.data().services.voice_controller.to_owned(),
             guild_id,
         }
     }
