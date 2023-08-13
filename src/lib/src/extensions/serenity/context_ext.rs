@@ -98,7 +98,7 @@ impl ContextExt for Context<'_> {
     fn assure_cached_guild(self) -> Result<Guild, Error> {
         let guild_id = self.assure_guild_context()?;
         self.guild()
-            .ok_or_else(|| anyhow!("Couldn't get Guild {guild_id} from cache"))
+            .ok_or_else(|| anyhow!("Couldn't get Guild {} from cache", guild_id))
     }
 
     fn assure_guild_context(self) -> Result<GuildId, Error> {

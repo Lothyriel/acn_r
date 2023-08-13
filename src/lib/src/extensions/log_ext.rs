@@ -45,7 +45,7 @@ impl<T> LogExt for Result<T, Error> {
     fn log(self) {
         match self {
             Ok(_) => (),
-            Err(error) => error!("{error}"),
+            Err(error) => error!("{}", error),
         }
     }
 }

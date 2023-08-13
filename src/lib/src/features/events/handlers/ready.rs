@@ -14,7 +14,7 @@ pub async fn handler(
 ) -> Result<(), Error> {
     let allowed_ids = &container.services.allowed_ids;
 
-    warn!("{message}");
+    warn!("{}", message);
 
     let tasks = allowed_ids
         .iter()

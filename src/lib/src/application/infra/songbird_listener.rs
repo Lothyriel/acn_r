@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use hound::{WavSpec, WavWriter};
 use lavalink_rs::async_trait;
-use log::warn;
+use log::{error, warn};
 use mongodb::bson::{spec::BinarySubtype, Binary};
 use poise::serenity_prelude::Http;
 use songbird::{
@@ -145,7 +145,7 @@ impl VoiceController {
             let mut snippet = match self.accumulator.get_mut(&key) {
                 Some(r) => r,
                 None => {
-                    warn!("Usuário {user_id} desconectou sem nunca falar nada");
+                    warn!("Usuário {} desconectou sem nunca falar nada", user_id);
                     return Ok(());
                 }
             };
