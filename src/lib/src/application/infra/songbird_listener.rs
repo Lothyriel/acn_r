@@ -185,7 +185,7 @@ impl VoiceController {
         //     .unwrap();
 
         let snippet = VoiceSnippet {
-            bytes: Binary {
+            voice_data: Binary {
                 subtype: BinarySubtype::Generic,
                 bytes: buffer,
             },
