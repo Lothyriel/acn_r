@@ -125,9 +125,9 @@ impl ContextExt for Context<'_> {
         };
 
         match locale {
-            "pt-BR" => chrono_tz::Tz::Brazil__Acre,
-            l => {
-                error!("Encontrada timezone não cadastrada {}", l);
+            "pt-BR" => chrono_tz::Tz::Brazil__East,
+            _ => {
+                error!("Encontrada timezone não cadastrada {}", locale);
                 chrono_tz::UTC
             }
         }
