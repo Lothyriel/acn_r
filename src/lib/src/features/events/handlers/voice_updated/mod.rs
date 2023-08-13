@@ -9,11 +9,7 @@ use songbird::Songbird;
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::{
-            deploy_service::DeployServices,
-            lavalink_ctx::LavalinkCtx,
-            songbird_listener::{Receiver, VoiceController},
-        },
+        infra::{deploy_service::DeployServices, lavalink_ctx::LavalinkCtx},
         models::{
             dto::user::{GuildInfo, UpdateUserDto},
             entities::user::Activity,
@@ -152,7 +148,6 @@ pub struct DispatchData {
     guild_id: GuildId,
     activity: Activity,
     channel_id: Option<ChannelId>,
-    voice_controller: Arc<VoiceController>,
 }
 
 impl DispatchData {
