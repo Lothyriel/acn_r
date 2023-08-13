@@ -95,9 +95,7 @@ impl VoiceController {
                     }
                 };
             }
-            None => {
-                warn!("Isso acontece muito?")
-            }
+            None => (),
         }
 
         Ok(())
