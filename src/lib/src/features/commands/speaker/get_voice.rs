@@ -35,7 +35,7 @@ pub async fn get_voice(
         x.attachment(file).content(format!(
             "{} : {}",
             user_id.mention(),
-            snippet.date.with_timezone(&time_zone).date_naive()
+            snippet.date.with_timezone(&time_zone).naive_local()
         ))
     })
     .await?;
