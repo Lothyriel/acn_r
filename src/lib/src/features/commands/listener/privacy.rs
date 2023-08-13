@@ -1,11 +1,13 @@
-use poise::command;
+use std::sync::Arc;
 
-use crate::{
-    extensions::serenity::{
-        context_ext::{get_songbird_client, ContextExt},
-        CommandResult, Context,
-    },
-    features::commands::listener::disconnect,
+use anyhow::Error;
+use poise::command;
+use poise::serenity_prelude::GuildId;
+use songbird::Songbird;
+
+use crate::extensions::serenity::{
+    context_ext::{get_songbird_client, ContextExt},
+    CommandResult, Context,
 };
 
 #[command(prefix_command, slash_command, guild_only, category = "Listener")]
@@ -21,4 +23,14 @@ pub async fn privacy(ctx: Context<'_>) -> CommandResult {
     }
 
     Ok(())
+}
+
+pub async fn disconnect(songbird: Arc<Songbird>, guild_id: GuildId) -> Result<bool, Error> {
+    let has_handler = songbird.get(guild_id).is_some();
+
+    if has_handler {
+        songbird.remove(guild_id).await?;
+    }
+
+    Ok(has_handler)
 }
