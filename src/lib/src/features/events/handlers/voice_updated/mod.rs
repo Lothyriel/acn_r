@@ -62,12 +62,7 @@ pub async fn all_events_handler(
 
     data.repositories.user.update_user(dto).await?;
 
-    let tasks = vec![
-        |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),
-        |c| tokio::spawn(dispatches::listener::handler(c)),
-    ];
-
-    dispatch_tasks(tasks, Arc::new(dispatch_data)).await
+    tokio::spawn(dispatches::afk_disconnect::handler(Arc::new(dispatch_data))).await?
 }
 
 pub async fn songbird_handler(
@@ -172,10 +167,6 @@ impl DispatchData {
             lava_client,
             jukebox_repository,
         )
-    }
-
-    pub fn to_receiver(&self) -> Receiver {
-        Receiver::new(self.voice_controller.to_owned(), self.guild_id.0)
     }
 }
 
