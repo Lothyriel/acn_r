@@ -1,0 +1,13 @@
+# fly.toml app configuration file generated for listen-r on 2023-07-19T11:25:32-03:00
+
+app = "listen-r"
+primary_region = "gru"
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+[build]
+  dockerfile = "../listen_r/Dockerfile"
+
+[experimental]
+  auto_rollback = true

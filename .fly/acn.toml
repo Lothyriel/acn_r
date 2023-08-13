@@ -1,0 +1,13 @@
+# fly.toml file generated for acn-r on 2023-04-22T14:01:09-03:00
+
+app = "acn-r"
+primary_region = "gru"
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+[build]
+  dockerfile = "../acn/Dockerfile"
+
+[experimental]
+  auto_rollback = true

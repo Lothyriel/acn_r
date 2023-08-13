@@ -1,3 +1,7 @@
+-only reconnect on voice_sink if it is not already connected to that channel
+-fix voice_sink module
+
+
 -get track info from spotify
 
 -mostrar timestamp da musica no !queue
