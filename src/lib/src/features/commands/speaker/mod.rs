@@ -1,5 +1,7 @@
 use crate::extensions::serenity::Command;
 
+mod get_voice;
+
 pub fn group() -> Vec<Command> {
-    vec![]
+    vec![get_voice::get_voice()]
 }
