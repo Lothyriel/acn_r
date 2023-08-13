@@ -15,18 +15,13 @@ use songbird::{
     Event, EventContext, EventHandler,
 };
 use std::{
-    fs::{File, OpenOptions},
-    io::{Cursor, Read, Write},
+    fs::OpenOptions,
+    io::{Cursor, Write},
     sync::Arc,
 };
 use symphonia::{
-    core::{
-        audio::{AudioBuffer, Layout},
-        codecs::{CodecParameters, CodecRegistry, Decoder, DecoderOptions, CODEC_TYPE_PCM_S16LE},
-        io::MediaSourceStream,
-        sample::SampleFormat,
-    },
-    default::{self, codecs::MpaDecoder},
+    core::io::MediaSourceStream,
+    default::{self},
 };
 
 use crate::{
@@ -174,20 +169,20 @@ impl VoiceController {
         let mut buffer = vec![];
         to_wav(bytes.as_slice(), &mut buffer);
 
-        // let mp3 = to_mp3(buffer);
+        let mp3 = to_mp3(buffer);
 
-        // OpenOptions::new()
-        //     .append(true)
-        //     .create(true)
-        //     .open(format!("audio_{}.mp3", user.name))
-        //     .unwrap()
-        //     .write_all(mp3.as_slice())
-        //     .unwrap();
+        OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(format!("audio_{}.mp3", user.name))
+            .unwrap()
+            .write_all(mp3.as_slice())
+            .unwrap();
 
         let snippet = VoiceSnippet {
             voice_data: Binary {
                 subtype: BinarySubtype::Generic,
-                bytes: buffer,
+                bytes: mp3,
             },
             date,
             user_id: user_id.0,
@@ -247,14 +242,14 @@ fn to_mp3(buffer: Vec<u8>) -> Vec<u8> {
         .make(&track.codec_params, &Default::default())
         .unwrap();
 
-    loop {
-        let packet = reader.next_packet().unwrap();
-        let audio_buffer = decoder.decode(&packet).unwrap();
+    let packet = reader.next_packet().unwrap();
+    let _audio_buffer = decoder.decode(&packet).unwrap();
 
-        //let a: SampleFormat = audio_buffer.into();
+    //let a: SampleFormat = audio_buffer.into();
 
-        //let a: AudioBuffer<u32> = audio_buffer.make_equivalent();
-    }
+    //let a: AudioBuffer<u32> = audio_buffer.make_equivalent();
+
+    todo!()
 }
 
 pub struct Receiver {
