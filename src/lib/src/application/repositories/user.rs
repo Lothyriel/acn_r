@@ -4,7 +4,10 @@ use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 use crate::application::{
     models::{
         dto::user::{UpdateNickDto, UpdateUserDto},
-        entities::{nickname::NicknameChange, user::User},
+        entities::{
+            nickname::NicknameChange,
+            user::{Signature, User},
+        },
     },
     repositories::guild::GuildRepository,
 };
@@ -12,6 +15,7 @@ use crate::application::{
 #[derive(Clone)]
 pub struct UserRepository {
     users: Collection<User>,
+    signatures: Collection<Signature>,
     nickname_changes: Collection<NicknameChange>,
     guild_repository: GuildRepository,
 }
@@ -21,8 +25,25 @@ impl UserRepository {
         Self {
             guild_repository,
             users: database.collection("Users"),
+            signatures: database.collection("Signatures"),
             nickname_changes: database.collection("NicknameChanges"),
         }
+    }
+
+    pub async fn get_last_signature(&self, user_id: u64) -> Result<Option<Signature>, Error> {
+        let filter = doc! {"user_id": user_id as i64};
+
+        let options = FindOneOptions::builder().sort(doc! { "date": -1 }).build();
+
+        let user = self.signatures.find_one(filter, options).await?;
+
+        Ok(user)
+    }
+
+    pub async fn add_signature(&self, signature: Signature) -> Result<(), Error> {
+        self.signatures.insert_one(signature, None).await?;
+
+        Ok(())
     }
 
     pub async fn get_last_name(&self, user_id: u64) -> Result<Option<String>, Error> {
