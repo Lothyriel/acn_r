@@ -9,7 +9,7 @@ use crate::{
     },
     extensions::serenity::Command,
     features::{
-        commands::{jukebox, misc, r34, reactions},
+        commands::{jukebox, misc, r34, reactions, speaker},
         events::{after, check, error, handlers::invoker},
         register_commands,
     },
@@ -21,6 +21,7 @@ fn register_groups() -> Vec<Vec<Command>> {
         misc::group(),
         jukebox::group(),
         reactions::group(),
+        speaker::group(),
     ]
 }
 
