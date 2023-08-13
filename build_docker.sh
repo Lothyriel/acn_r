@@ -1,0 +1,1 @@
+docker build -t acn_r -f src/acn/Dockerfile .
