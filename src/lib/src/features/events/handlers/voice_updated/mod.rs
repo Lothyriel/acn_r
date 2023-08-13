@@ -27,8 +27,6 @@ pub async fn all_events_handler(
     new: &VoiceState,
     data: &DependencyContainer,
 ) -> Result<(), Error> {
-    let now = chrono::Utc::now();
-
     let user = new.user_id.to_user(ctx).await?;
 
     if user.bot {
@@ -53,7 +51,7 @@ pub async fn all_events_handler(
             guild_name: guild.name,
         }),
         nickname: member.display_name().to_string(),
-        date: now,
+        date: chrono::Utc::now(),
     };
 
     data.repositories.user.update_user(dto).await?;
