@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use hound::{WavSpec, WavWriter};
 use lavalink_rs::async_trait;
-use log::{error, warn};
+use log::warn;
 use mongodb::bson::{spec::BinarySubtype, Binary};
 use poise::serenity_prelude::Http;
 use songbird::{
