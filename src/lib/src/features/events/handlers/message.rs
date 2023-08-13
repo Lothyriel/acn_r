@@ -8,7 +8,11 @@ pub async fn handler(
     data: &DependencyContainer,
     message: &Message,
 ) -> Result<(), Error> {
-    let signature = data.repositories.user.get_last_signature(message.author.id.0).await?;
+    let signature = data
+        .repositories
+        .user
+        .get_last_signature(message.author.id.0)
+        .await?;
 
     match signature {
         Some(s) => react(message, ctx, &s.emojis).await?,
@@ -19,9 +23,10 @@ pub async fn handler(
 }
 
 async fn react(message: &Message, ctx: &Context, emojis: &str) -> Result<(), Error> {
-    for unicode_reaction in emojis.chars() {
-        let reaction = ReactionType::Unicode(unicode_reaction.to_string());
-        message.react(ctx, reaction).await?;
+    for emoji in emojis.chars().filter(|&c| c != ' ') {
+        let reaction = ReactionType::Unicode(emoji.to_string());
+
+        message.react(ctx, reaction).await.ok();
     }
 
     Ok(())
