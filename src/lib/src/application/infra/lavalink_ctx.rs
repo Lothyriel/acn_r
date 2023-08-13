@@ -177,15 +177,8 @@ impl LavalinkCtx {
     }
 
     async fn assure_connected(&self, ctx: Context<'_>) -> Result<(), Error> {
-        let guild = ctx.assure_cached_guild()?;
-
-        let channel_id = guild
-            .voice_states
-            .get(&ctx.author().id)
-            .and_then(|voice_state| voice_state.channel_id);
-
-        let channel = match channel_id {
-            Some(channel) => channel,
+        let channel = match ctx.assure_connected().await? {
+            Some(c) => c,
             None => {
                 ctx.say("Join a voice channel.").await?;
                 return Ok(());

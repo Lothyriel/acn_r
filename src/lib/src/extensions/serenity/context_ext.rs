@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
 use poise::async_trait;
-use poise::serenity_prelude::{Guild, GuildId};
+use poise::serenity_prelude::{ChannelId, Guild, GuildId};
 use songbird::Songbird;
 
 use crate::{
@@ -15,6 +15,7 @@ pub trait ContextExt {
     async fn get_author_name(self) -> String;
     async fn get_command_args(self) -> String;
     async fn get_lavalink(self) -> Result<LavalinkCtx, Error>;
+    async fn assure_connected(self) -> Result<Option<ChannelId>, Error>;
     fn get_guild_info(self) -> Option<GuildInfo>;
     fn assure_cached_guild(self) -> Result<Guild, Error>;
     fn assure_guild_context(self) -> Result<GuildId, Error>;
@@ -66,6 +67,17 @@ impl ContextExt for Context<'_> {
             lava_client,
             jukebox_repository,
         ))
+    }
+
+    async fn assure_connected(self) -> Result<Option<ChannelId>, Error> {
+        let guild = self.assure_cached_guild()?;
+
+        let channel = guild
+            .voice_states
+            .get(&self.author().id)
+            .and_then(|voice_state| voice_state.channel_id);
+
+        Ok(channel)
     }
 
     fn assure_cached_guild(self) -> Result<Guild, Error> {
