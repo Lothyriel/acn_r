@@ -17,9 +17,9 @@ fn try_get_file(max_depth: usize, filename: String) -> Result<PathBuf, Error> {
         }
     }
 
-    Err(anyhow!(
-        "The file {filename} was not found in depth {max_depth}"
-    ))
+    let error = anyhow!("The file {} was not found in depth {}", filename, max_depth);
+
+    Err(error)
 }
 
 #[derive(Deserialize)]

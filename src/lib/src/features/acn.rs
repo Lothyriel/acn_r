@@ -9,8 +9,9 @@ use crate::{
     },
     extensions::serenity::Command,
     features::{
-        commands::{help, jukebox, misc, r34, reactions},
+        commands::{jukebox, misc, r34, reactions, speaker},
         events::{after, check, error, handlers::invoker},
+        register_commands,
     },
 };
 
@@ -20,17 +21,8 @@ fn register_groups() -> Vec<Vec<Command>> {
         misc::group(),
         jukebox::group(),
         reactions::group(),
+        speaker::group(),
     ]
-}
-
-fn register_commands() -> Vec<Command> {
-    let mut commands = vec![help::help()];
-
-    for mut command in register_groups() {
-        commands.append(command.as_mut());
-    }
-
-    commands
 }
 
 pub async fn start_acn() -> Result<(), Error> {
@@ -42,7 +34,7 @@ pub async fn start_acn() -> Result<(), Error> {
             event_handler: |ctx, event, _, user_data| {
                 Box::pin(invoker::songbird_handler(ctx, event, user_data))
             },
-            commands: register_commands(),
+            commands: register_commands(register_groups()),
             on_error: |error| Box::pin(error::handler(error)),
             post_command: |ctx| Box::pin(after::handler(ctx)),
             prefix_options: poise::PrefixFrameworkOptions {

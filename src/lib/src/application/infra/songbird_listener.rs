@@ -15,23 +15,18 @@ use songbird::{
     Event, EventContext, EventHandler,
 };
 use std::{
-    fs::{File, OpenOptions},
-    io::{Cursor, Read, Write},
+    fs::OpenOptions,
+    io::{Cursor, Write},
     sync::Arc,
 };
 use symphonia::{
-    core::{
-        audio::{Layout, AudioBuffer},
-        codecs::{CodecParameters, CodecRegistry, Decoder, DecoderOptions, CODEC_TYPE_PCM_S16LE},
-        io::MediaSourceStream,
-        sample::SampleFormat,
-    },
-    default::{self, codecs::MpaDecoder},
+    core::io::MediaSourceStream,
+    default::{self},
 };
 
 use crate::{
     application::{models::entities::voice::VoiceSnippet, repositories::voice::VoiceRepository},
-    extensions::log_ext::LogExt,
+    extensions::{log_ext::LogExt, serenity::Context},
 };
 
 struct Snippet {
@@ -100,9 +95,7 @@ impl VoiceController {
                     }
                 };
             }
-            None => {
-                warn!("Isso acontece muito?")
-            }
+            None => (),
         }
 
         Ok(())
@@ -152,7 +145,7 @@ impl VoiceController {
             let mut snippet = match self.accumulator.get_mut(&key) {
                 Some(r) => r,
                 None => {
-                    warn!("Usuário {user_id} desconectou sem nunca falar nada");
+                    warn!("Usuário {} desconectou sem nunca falar nada", user_id);
                     return Ok(());
                 }
             };
@@ -174,20 +167,20 @@ impl VoiceController {
         let mut buffer = vec![];
         to_wav(bytes.as_slice(), &mut buffer);
 
-        // let mp3 = to_mp3(buffer);
+        let mp3 = to_mp3(buffer);
 
-        // OpenOptions::new()
-        //     .append(true)
-        //     .create(true)
-        //     .open(format!("audio_{}.mp3", user.name))
-        //     .unwrap()
-        //     .write_all(mp3.as_slice())
-        //     .unwrap();
+        OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(format!("audio_{}.mp3", user.name))
+            .unwrap()
+            .write_all(mp3.as_slice())
+            .unwrap();
 
         let snippet = VoiceSnippet {
-            bytes: Binary {
+            voice_data: Binary {
                 subtype: BinarySubtype::Generic,
-                bytes: buffer,
+                bytes: mp3,
             },
             date,
             user_id: user_id.0,
@@ -247,14 +240,14 @@ fn to_mp3(buffer: Vec<u8>) -> Vec<u8> {
         .make(&track.codec_params, &Default::default())
         .unwrap();
 
-    loop {
-        let packet = reader.next_packet().unwrap();
-        let audio_buffer = decoder.decode(&packet).unwrap();
+    let packet = reader.next_packet().unwrap();
+    let _audio_buffer = decoder.decode(&packet).unwrap();
 
-        //let a: SampleFormat = audio_buffer.into();
+    //let a: SampleFormat = audio_buffer.into();
 
-        //let a: AudioBuffer<u32> = audio_buffer.make_equivalent();
-    }
+    //let a: AudioBuffer<u32> = audio_buffer.make_equivalent();
+
+    todo!()
 }
 
 pub struct Receiver {
@@ -263,9 +256,9 @@ pub struct Receiver {
 }
 
 impl Receiver {
-    pub fn new(controller: Arc<VoiceController>, guild_id: u64) -> Self {
+    pub fn from_ctx(ctx: &Context<'_>, guild_id: u64) -> Self {
         Self {
-            controller,
+            controller: ctx.data().services.voice_controller.to_owned(),
             guild_id,
         }
     }

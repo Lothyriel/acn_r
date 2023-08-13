@@ -56,7 +56,7 @@ impl DeployServices {
         match someone_online {
             true => Ok(()),
             false => {
-                warn!("Deploying in {SECONDS_IN_5_MINUTES} seconds");
+                warn!("Deploying in {} seconds", SECONDS_IN_5_MINUTES);
                 time::sleep(Duration::from_secs(SECONDS_IN_5_MINUTES)).await;
                 match is_someone_online(http, cache).await? {
                     true => {
@@ -83,7 +83,7 @@ async fn is_someone_online(http: Arc<Http>, cache: Arc<Cache>) -> Result<bool, E
 
     let count = online_users.len();
 
-    warn!("Users online: {count}");
+    warn!("Users online: {}", count);
 
     Ok(count > usize::MIN)
 }

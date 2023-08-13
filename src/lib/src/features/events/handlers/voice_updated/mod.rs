@@ -9,11 +9,7 @@ use songbird::Songbird;
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::{
-            deploy_service::DeployServices,
-            lavalink_ctx::LavalinkCtx,
-            songbird_listener::{Receiver, VoiceController},
-        },
+        infra::{deploy_service::DeployServices, lavalink_ctx::LavalinkCtx},
         models::{
             dto::user::{GuildInfo, UpdateUserDto},
             entities::user::Activity,
@@ -31,8 +27,6 @@ pub async fn all_events_handler(
     new: &VoiceState,
     data: &DependencyContainer,
 ) -> Result<(), Error> {
-    let now = chrono::Utc::now();
-
     let user = new.user_id.to_user(ctx).await?;
 
     if user.bot {
@@ -57,17 +51,12 @@ pub async fn all_events_handler(
             guild_name: guild.name,
         }),
         nickname: member.display_name().to_string(),
-        date: now,
+        date: chrono::Utc::now(),
     };
 
     data.repositories.user.update_user(dto).await?;
 
-    let tasks = vec![
-        |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),
-        |c| tokio::spawn(dispatches::listener::handler(c)),
-    ];
-
-    dispatch_tasks(tasks, Arc::new(dispatch_data)).await
+    tokio::spawn(dispatches::afk_disconnect::handler(Arc::new(dispatch_data))).await?
 }
 
 pub async fn songbird_handler(
@@ -122,7 +111,6 @@ async fn get_dispatch_data(
         lava_client: data.services.lava_client.to_owned(),
         bot_id: data.services.bot_id,
         guild_id: member.guild_id,
-        voice_controller: data.services.voice_controller.to_owned(),
         activity,
     };
 
@@ -157,7 +145,6 @@ pub struct DispatchData {
     guild_id: GuildId,
     activity: Activity,
     channel_id: Option<ChannelId>,
-    voice_controller: Arc<VoiceController>,
 }
 
 impl DispatchData {
@@ -172,10 +159,6 @@ impl DispatchData {
             lava_client,
             jukebox_repository,
         )
-    }
-
-    pub fn to_receiver(&self) -> Receiver {
-        Receiver::new(self.voice_controller.to_owned(), self.guild_id.0)
     }
 }
 

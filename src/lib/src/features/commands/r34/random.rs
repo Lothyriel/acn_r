@@ -7,7 +7,5 @@ pub async fn random(
     _ctx: Context<'_>,
     #[description = "Prompt to search for"] _search: Option<String>,
 ) -> CommandResult {
-    let _now = chrono::Utc::now();
-
     Ok(())
 }

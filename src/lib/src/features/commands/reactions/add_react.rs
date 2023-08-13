@@ -15,11 +15,9 @@ pub async fn add_react(
 ) -> CommandResult {
     let mut reaction_repository = ctx.data().repositories.reaction.to_owned();
 
-    let now = chrono::Utc::now();
-
     let dto = AddReactionDto {
         bytes: Cursor::new(file.download().await?),
-        date: now,
+        date: chrono::Utc::now(),
         emotion: emotion.to_lowercase(),
         guild_id: ctx.assure_guild_context()?.0,
         user_id: ctx.author().id.0,

@@ -42,7 +42,7 @@ async fn handle_command_error(ctx: Context<'_>, error: Error) -> Result<(), Erro
         .map(|g| g.id.to_string())
         .unwrap_or_else(|| format!("DM: {}", dto.user_id));
 
-    let message = format!("{id}: {error}");
+    let message = format!("{}: {}", id, error);
 
     ctx.say(&message).await?;
 
