@@ -9,9 +9,9 @@ use crate::{
     },
     extensions::serenity::Command,
     features::{
-        register_commands,
         commands::{jukebox, misc, r34, reactions},
         events::{after, check, error, handlers::invoker},
+        register_commands,
     },
 };
 
