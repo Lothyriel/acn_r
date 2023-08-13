@@ -9,13 +9,14 @@ use crate::{
     },
     extensions::serenity::Command,
     features::{
-        commands::{help, misc::privacy},
+        commands::listener,
         events::{after, check, error, handlers::invoker},
+        register_commands,
     },
 };
 
-fn register_commands() -> Vec<Command> {
-    vec![help::help(), privacy::privacy()]
+fn register_groups() -> Vec<Vec<Command>> {
+    vec![listener::group()]
 }
 
 pub async fn start_listener() -> Result<(), Error> {
@@ -25,7 +26,7 @@ pub async fn start_listener() -> Result<(), Error> {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: register_commands(),
+            commands: register_commands(register_groups()),
             event_handler: |ctx, event, _, user_data| {
                 Box::pin(invoker::listener_events_handler(ctx, event, user_data))
             },
