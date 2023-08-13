@@ -1,9 +1,9 @@
 # Build stage
 FROM rust:1.70 as builder
 
-COPY lib lib
-COPY listen_r/src ./src
-COPY listen_r/Cargo.toml ./
+COPY src/lib lib
+COPY src/listen_r/src ./src
+COPY src/listen_r/Cargo.toml ./
 
 RUN apt-get update
 RUN apt-get install -y cmake

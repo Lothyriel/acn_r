@@ -1,9 +1,9 @@
 # Build stage
 FROM rust:1.70 as builder
 
-COPY lib lib
-COPY acn/src ./src
-COPY acn/Cargo.toml ./
+COPY src/lib lib
+COPY src/acn/src ./src
+COPY src/acn/Cargo.toml ./
 
 RUN apt-get update
 RUN apt-get install -y cmake
