@@ -16,7 +16,7 @@ use crate::{
         },
         repositories::jukebox::JukeboxRepository,
     },
-    extensions::{serenity::context_ext, std_ext::VecResultErrorExt},
+    extensions::std_ext::VecResultErrorExt,
 };
 
 mod dispatches;
