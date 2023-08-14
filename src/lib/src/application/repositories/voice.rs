@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use mongodb::{
     bson::{doc, from_document},
     Collection, Database,
@@ -42,9 +42,11 @@ impl VoiceRepository {
 
         let mut cursor = self.voice_snippets.aggregate(pipeline, None).await?;
 
-        match cursor.advance().await? {
-            true => Ok(from_document(cursor.deserialize_current()?)?),
-            false => Err(anyhow!("Sem vozes registradas")),
-        }
+        let maybe_snippet = match cursor.advance().await? {
+            true => Some(from_document(cursor.deserialize_current()?)?),
+            false => None,
+        };
+
+        Ok(maybe_snippet)
     }
 }
