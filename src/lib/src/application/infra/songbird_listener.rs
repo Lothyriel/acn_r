@@ -167,20 +167,20 @@ impl VoiceController {
         let mut buffer = vec![];
         to_wav(bytes.as_slice(), &mut buffer);
 
-        let mp3 = to_mp3(buffer);
+        // let mp3 = to_mp3(buffer);
 
-        OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(format!("audio_{}.mp3", user.name))
-            .unwrap()
-            .write_all(mp3.as_slice())
-            .unwrap();
+        // OpenOptions::new()
+        //     .append(true)
+        //     .create(true)
+        //     .open(format!("audio_{}.mp3", user.name))
+        //     .unwrap()
+        //     .write_all(mp3.as_slice())
+        //     .unwrap();
 
         let snippet = VoiceSnippet {
             voice_data: Binary {
                 subtype: BinarySubtype::Generic,
-                bytes: mp3,
+                bytes: buffer,
             },
             date,
             user_id: user_id.0,
