@@ -146,7 +146,7 @@ impl VoiceController {
 
     fn handle_voice_packet(&self, data: &VoiceData<'_>) -> Result<(), Error> {
         let key = data.packet.ssrc;
-        
+
         let mut bytes = data
             .audio
             .to_owned()
@@ -200,7 +200,7 @@ impl VoiceController {
         };
 
         let mut buffer = vec![];
-        to_wav(bytes.as_slice(), &mut buffer);
+        to_wav(bytes.as_slice(), &mut buffer)?;
 
         // let mp3 = to_mp3(buffer);
 
@@ -226,7 +226,7 @@ impl VoiceController {
     }
 }
 
-fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) {
+fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) -> Result<(), Error> {
     let spec = WavSpec {
         channels: 2,
         sample_rate: 48000,
@@ -236,11 +236,13 @@ fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) {
 
     let cursor = Cursor::new(buffer);
 
-    let mut writer = WavWriter::new(cursor, spec).unwrap();
+    let mut writer = WavWriter::new(cursor, spec)?;
 
     for &sample in pcm_samples {
-        writer.write_sample(sample).unwrap();
+        writer.write_sample(sample)?;
     }
+
+    Ok(())
 }
 
 fn to_mp3(buffer: Vec<u8>) -> Vec<u8> {
