@@ -101,7 +101,7 @@ async fn get_dispatch_data(
     })?;
 
     let dispatch_data = DispatchData {
-        songbird: context_ext::get_songbird_client(ctx).await?,
+        songbird: data.services.songbird.to_owned(),
         cache: ctx.cache.to_owned(),
         http: ctx.http.to_owned(),
         channel_id: new.channel_id,
