@@ -4,7 +4,7 @@ use anyhow::{anyhow, Error};
 use lavalink_rs::{
     async_trait,
     gateway::LavalinkEventHandler,
-    model::{Track, TrackQueue},
+    model::{Track, TrackFinish, TrackQueue},
     LavalinkClient,
 };
 use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
@@ -23,12 +23,43 @@ use crate::{
     },
 };
 
-struct LavalinkHandler;
+struct LavalinkHandler {
+    songbird: Arc<Songbird>,
+}
+
+impl LavalinkHandler {
+    async fn track_finish_handler(
+        &self,
+        client: LavalinkClient,
+        guild_id: u64,
+    ) -> Result<(), Error> {
+        self.songbird.remove(guild_id).await?;
+
+        let nodes = client.nodes().await;
+        nodes.remove(&guild_id);
+
+        let loops = client.loops().await;
+        loops.remove(&guild_id);
+
+        client.destroy(guild_id).await?;
+
+        Ok(())
+    }
+}
 
 #[async_trait]
-impl LavalinkEventHandler for LavalinkHandler {}
+impl LavalinkEventHandler for LavalinkHandler {
+    async fn track_finish(&self, client: LavalinkClient, event: TrackFinish) {
+        self.track_finish_handler(client, event.guild_id.0)
+            .await
+            .log()
+    }
+}
 
-pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClient, Error> {
+pub async fn get_lavalink_client(
+    settings: &AppSettings,
+    songbird: Arc<Songbird>,
+) -> Result<LavalinkClient, Error> {
     let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
         .get_current_application_info()
         .await?;
@@ -37,7 +68,7 @@ pub async fn get_lavalink_client(settings: &AppSettings) -> Result<LavalinkClien
         .set_host(&settings.lavalink_settings.url)
         .set_port(settings.lavalink_settings.port)
         .set_password(env::get("LAVALINK_PASSWORD")?)
-        .build(LavalinkHandler)
+        .build(LavalinkHandler { songbird })
         .await?;
 
     Ok(lava_client)
