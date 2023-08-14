@@ -18,7 +18,7 @@ impl GuildRepository {
         }
     }
 
-    pub async fn add_guild(&self, id: u64, name: String, date: DateTime<Utc>) -> Result<(), Error> {
+    pub async fn add_guild(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<(), Error> {
         self.update_name(id, name, date).await?;
 
         if self.guild_exists(id).await? {
@@ -40,7 +40,7 @@ impl GuildRepository {
         Ok(self.guilds.find_one(filter, None).await?)
     }
 
-    async fn update_name(&self, id: u64, name: String, date: DateTime<Utc>) -> Result<(), Error> {
+    async fn update_name(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<(), Error> {
         if let Some(last_name) = self.get_last_name(id).await? {
             if last_name == name {
                 return Ok(());
@@ -49,7 +49,7 @@ impl GuildRepository {
 
         let new_name = GuildNameChange {
             guild_id: id,
-            name,
+            name: name.to_owned(),
             date,
         };
 

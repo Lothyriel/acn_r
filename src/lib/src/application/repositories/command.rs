@@ -48,14 +48,14 @@ impl CommandRepository {
         Ok(())
     }
 
-    pub async fn add_command_error(&self, dto: CommandUseDto, error: String) -> Result<(), Error> {
+    pub async fn add_command_error(&self, dto: CommandUseDto, error: &str) -> Result<(), Error> {
         let command_error = CommandError {
             guild_id: dto.guild_info.map(|g| g.guild_id),
             user_id: dto.user_id,
             date: dto.date,
             name: dto.command,
             args: dto.args,
-            error,
+            error: error.to_owned(),
         };
 
         self.commands_errors.insert_one(command_error, None).await?;
