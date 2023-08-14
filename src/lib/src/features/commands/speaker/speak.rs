@@ -1,11 +1,5 @@
-use poise::{
-    command,
-    serenity_prelude::{AttachmentType, Mentionable, UserId},
-};
-use songbird::{
-    input::{self, cached::Memory, Reader},
-    Songbird,
-};
+use poise::{command, serenity_prelude::UserId};
+use songbird::input::{self, Reader};
 
 use crate::extensions::serenity::{context_ext::ContextExt, CommandResult, Context};
 
