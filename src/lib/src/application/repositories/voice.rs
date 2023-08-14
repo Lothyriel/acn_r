@@ -24,8 +24,16 @@ impl VoiceRepository {
         Ok(())
     }
 
-    pub async fn get_voice_snippet(&self, guild_id: u64) -> Result<Option<VoiceSnippet>, Error> {
-        let filter = doc! { "guild_id": guild_id as i64};
+    pub async fn get_voice_snippet(
+        &self,
+        guild_id: u64,
+        user_id: Option<u64>,
+    ) -> Result<Option<VoiceSnippet>, Error> {
+        let mut filter = doc! { "guild_id": guild_id as i64};
+
+        if let Some(user_id) = user_id {
+            filter.insert("user_id", user_id as i64);
+        }
 
         let pipeline = [
             doc! { "$match": filter, },
@@ -36,7 +44,7 @@ impl VoiceRepository {
 
         match cursor.advance().await? {
             true => Ok(from_document(cursor.deserialize_current()?)?),
-            false => Err(anyhow!("Sem emoções correspondentes registradas")),
+            false => Err(anyhow!("Sem vozes registradas")),
         }
     }
 }
