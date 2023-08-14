@@ -4,22 +4,17 @@ pub trait LogExt {
     fn log(self);
 }
 
-pub trait LogErrorsExt<T> {
-    fn log_errors(self) -> LogResult<T>;
-}
-
-pub struct LogResult<T> {
-    pub successes: Vec<T>,
-    pub errors_count: usize,
-}
-
-impl<T> LogResult<T> {
-    pub fn new(successes: Vec<T>, errors_count: usize) -> Self {
-        Self {
-            successes,
-            errors_count,
+impl LogExt for Result<(), Error> {
+    fn log(self) {
+        match self {
+            Ok(_) => (),
+            Err(error) => error!("{}", error),
         }
     }
+}
+
+pub trait LogErrorsExt<T> {
+    fn log_errors(self) -> LogResult<T>;
 }
 
 impl<T> LogErrorsExt<T> for Vec<Result<T, Error>> {
@@ -41,11 +36,16 @@ impl<T> LogErrorsExt<T> for Vec<Result<T, Error>> {
     }
 }
 
-impl<T> LogExt for Result<T, Error> {
-    fn log(self) {
-        match self {
-            Ok(_) => (),
-            Err(error) => error!("{}", error),
+pub struct LogResult<T> {
+    pub successes: Vec<T>,
+    pub errors_count: usize,
+}
+
+impl<T> LogResult<T> {
+    pub fn new(successes: Vec<T>, errors_count: usize) -> Self {
+        Self {
+            successes,
+            errors_count,
         }
     }
 }

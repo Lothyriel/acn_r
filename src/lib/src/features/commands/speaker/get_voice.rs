@@ -8,13 +8,13 @@ use crate::extensions::serenity::{context_ext::ContextExt, CommandResult, Contex
 #[command(prefix_command, slash_command, guild_only, category = "Speaker")]
 pub async fn get_voice(
     ctx: Context<'_>,
-    #[description = "User to get voice"] _user: Option<UserId>,
+    #[description = "User to get voice"] user: Option<UserId>,
 ) -> CommandResult {
     let voice = &ctx.data().repositories.voice;
 
     let guild = ctx.assure_guild_context()?;
 
-    let snippet = match voice.get_voice_snippet(guild.0).await? {
+    let snippet = match voice.get_voice_snippet(guild.0, user.map(|x| x.0)).await? {
         Some(s) => s,
         None => {
             ctx.say("Tem nada não...").await?;

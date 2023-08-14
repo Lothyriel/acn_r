@@ -62,7 +62,7 @@ impl ContextExt for Context<'_> {
 
         let user_id = self.author().id.0;
 
-        let songbird = get_songbird_client(self.serenity_context()).await?;
+        let songbird = self.data().services.songbird.to_owned();
 
         Ok(LavalinkCtx::new(
             guild_id,

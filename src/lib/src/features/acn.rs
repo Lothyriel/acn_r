@@ -7,7 +7,7 @@ use crate::{
         dependency_configuration::DependencyContainer,
         infra::{appsettings::AppSettings, env},
     },
-    extensions::serenity::Command,
+    extensions::serenity::{context_ext::get_songbird_client, Command},
     features::{
         commands::{jukebox, misc, r34, reactions, speaker},
         events::{after, check, error, handlers::invoker},
@@ -52,7 +52,10 @@ pub async fn start_acn() -> Result<(), Error> {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
-                DependencyContainer::build(settings, ctx.http.to_owned(), ready.user.id).await
+                let songbird = get_songbird_client(ctx).await?;
+
+                DependencyContainer::build(settings, ctx.http.to_owned(), songbird, ready.user.id)
+                    .await
             })
         });
 
