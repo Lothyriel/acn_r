@@ -15,10 +15,12 @@ pub async fn privacy(ctx: Context<'_>) -> CommandResult {
         ctx.say("Not in a voice channel").await?;
     }
 
+    ctx.data().services.voice_controller.flush_all().await?;
+
     Ok(())
 }
 
-pub async fn disconnect(songbird: &Songbird, guild_id: GuildId) -> Result<bool, Error> {
+async fn disconnect(songbird: &Songbird, guild_id: GuildId) -> Result<bool, Error> {
     let has_handler = songbird.get(guild_id).is_some();
 
     if has_handler {

@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Error};
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
+use futures::future::join_all;
 use hound::{WavSpec, WavWriter};
 use lavalink_rs::async_trait;
 use log::warn;
@@ -26,13 +27,19 @@ use symphonia::{
 
 use crate::{
     application::{models::entities::voice::VoiceSnippet, repositories::voice::VoiceRepository},
-    extensions::{log_ext::LogExt, serenity::Context},
+    extensions::{log_ext::LogExt, serenity::Context, std_ext::VecResultErrorExt},
 };
 
 struct Snippet {
     bytes: Vec<i16>,
     date: DateTime<Utc>,
-    mapping: Option<UserId>,
+    mapping: Option<UserInfo>,
+}
+
+#[derive(PartialEq, Copy, Clone)]
+struct UserInfo {
+    user_id: u64,
+    guild_id: u64,
 }
 
 pub struct VoiceController {
@@ -52,11 +59,20 @@ impl VoiceController {
         }
     }
 
-    async fn handle_speaking_update(
-        &self,
-        data: &SpeakingUpdateData,
-        guild_id: u64,
-    ) -> Result<(), Error> {
+    pub async fn flush_all(&self) -> Result<(), Error> {
+        let flush_tasks = self.accumulator.iter().flat_map(|s| match s.mapping {
+            Some(id) => Some(self.flush(*s.key(), id.user_id)),
+            None => None,
+        });
+
+        join_all(flush_tasks).await.all_successes()?;
+
+        self.accumulator.clear();
+
+        Ok(())
+    }
+
+    async fn handle_speaking_update(&self, data: &SpeakingUpdateData) -> Result<(), Error> {
         if data.speaking {
             return Ok(());
         }
@@ -72,24 +88,29 @@ impl VoiceController {
 
         if buffer_size >= BUFFER_LIMIT {
             let id = maybe_id.ok_or_else(|| anyhow!("Buffer overflow without Mapped Id"))?;
-            self.flush(data.ssrc, id, guild_id).await?;
+            self.flush(data.ssrc, id.user_id).await?;
         }
 
         Ok(())
     }
 
-    fn handle_speaking_state_update(&self, data: &Speaking) -> Result<(), Error> {
+    fn handle_speaking_state_update(&self, data: &Speaking, guild_id: u64) -> Result<(), Error> {
         match data.user_id {
             Some(_) => {
+                let get_info = |i: UserId| UserInfo {
+                    user_id: i.0,
+                    guild_id,
+                };
+
                 match self.accumulator.get_mut(&data.ssrc) {
-                    Some(mut snippet) => snippet.mapping = data.user_id,
+                    Some(mut snippet) => snippet.mapping = data.user_id.map(get_info),
                     None => {
                         self.accumulator.insert(
                             data.ssrc,
                             Snippet {
                                 bytes: vec![],
                                 date: chrono::Utc::now(),
-                                mapping: data.user_id,
+                                mapping: data.user_id.map(get_info),
                             },
                         );
                     }
@@ -109,12 +130,18 @@ impl VoiceController {
         let ssrc = self
             .accumulator
             .iter()
-            .find(|a| a.mapping == Some(data.user_id))
+            .find(|a| {
+                a.mapping
+                    == Some(UserInfo {
+                        user_id: data.user_id.0,
+                        guild_id,
+                    })
+            })
             .ok_or_else(|| {
                 anyhow!("Client disconnected without sending a SpeakingStateUpdate event")
             })?;
 
-        self.flush(*ssrc.key(), data.user_id, guild_id).await
+        self.flush(*ssrc.key(), data.user_id.0).await
     }
 
     fn handle_voice_packet(&self, data: &VoiceData<'_>) -> Result<(), Error> {
@@ -138,10 +165,10 @@ impl VoiceController {
         Ok(())
     }
 
-    async fn flush(&self, key: u32, user_id: UserId, guild_id: u64) -> Result<(), Error> {
-        let user = self.http.get_user(user_id.0).await?;
+    async fn flush(&self, key: u32, user_id: u64) -> Result<(), Error> {
+        let user = self.http.get_user(user_id).await?;
 
-        let (bytes, date) = {
+        let (bytes, date, guild_id) = {
             let mut snippet = match self.accumulator.get_mut(&key) {
                 Some(r) => r,
                 None => {
@@ -155,13 +182,18 @@ impl VoiceController {
                 return Ok(());
             }
 
+            let guild_id = match &snippet.mapping {
+                Some(i) => i.guild_id,
+                None => return Ok(()),
+            };
+
             let bytes = snippet.bytes.to_owned();
             let date = snippet.date;
 
             snippet.date = chrono::Utc::now();
             snippet.bytes.clear();
 
-            (bytes, date)
+            (bytes, date, guild_id)
         };
 
         let mut buffer = vec![];
@@ -183,7 +215,7 @@ impl VoiceController {
                 bytes: buffer,
             },
             date,
-            user_id: user_id.0,
+            user_id,
             guild_id,
         };
 
@@ -281,10 +313,12 @@ async fn handler(
     controller: Arc<VoiceController>,
 ) -> Result<(), Error> {
     match ctx {
-        EventContext::SpeakingStateUpdate(data) => controller.handle_speaking_state_update(data),
+        EventContext::SpeakingStateUpdate(data) => {
+            controller.handle_speaking_state_update(data, guild_id)
+        }
         EventContext::VoicePacket(data) => controller.handle_voice_packet(data),
         EventContext::SpeakingUpdate(data) => {
-            controller.handle_speaking_update(data, guild_id).await
+            controller.handle_speaking_update(data).await
         }
         EventContext::ClientDisconnect(disconnect) => {
             controller
