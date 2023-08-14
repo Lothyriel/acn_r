@@ -54,6 +54,7 @@ pub struct ServicesContainer {
     pub lava_client: LavalinkClient,
     pub deploy_services: DeployServices,
     pub voice_controller: Arc<VoiceController>,
+    pub songbird: Arc<Songbird>,
 }
 
 impl ServicesContainer {
@@ -66,7 +67,7 @@ impl ServicesContainer {
     ) -> Result<Self, Error> {
         let http_client = Client::new();
 
-        let lava_client = lavalink_ctx::get_lavalink_client(&settings, songbird).await?;
+        let lava_client = lavalink_ctx::get_lavalink_client(&settings, songbird.to_owned()).await?;
 
         let github_client = Arc::new(GithubClient::new(http_client, settings.github_settings));
 
@@ -83,6 +84,7 @@ impl ServicesContainer {
             allowed_ids: settings.allowed_ids,
             app_configurations,
             voice_controller,
+            songbird,
         })
     }
 }
