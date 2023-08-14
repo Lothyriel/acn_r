@@ -48,7 +48,7 @@ pub async fn listen(ctx: Context<'_>) -> CommandResult {
         );
     }
 
-    ctx.say("Ok!").await?;
+    ctx.say("Tô escuitando!").await?;
 
     Ok(())
 }
