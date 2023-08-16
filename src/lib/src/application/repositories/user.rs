@@ -60,7 +60,7 @@ impl UserRepository {
             self.guild_repository
                 .add_guild(
                     guild_info.guild_id,
-                    guild_info.guild_name.to_owned(),
+                    guild_info.guild_name.as_str(),
                     update_user_dto.date,
                 )
                 .await?;

@@ -255,7 +255,7 @@ impl LavalinkCtx {
         let query_information = self.lava_client.auto_search_tracks(&query).await?;
 
         match query_information.tracks.first() {
-            Some(track) => self.add_to_queue(ctx, track.to_owned()).await,
+            Some(track) => self.add_to_queue(ctx, &track).await,
             None => {
                 let reply = "Could not find any video of the search query.";
 
@@ -283,10 +283,10 @@ impl LavalinkCtx {
         Ok(())
     }
 
-    async fn add_to_queue(&self, ctx: Context<'_>, track: Track) -> Result<(), Error> {
-        self.add_track_to_queue(&track).await?;
+    async fn add_to_queue(&self, ctx: Context<'_>, track: &Track) -> Result<(), Error> {
+        self.add_track_to_queue(track).await?;
 
-        ctx.say(format!("Added to queue: {}", get_track_name(&track)))
+        ctx.say(format!("Added to queue: {}", get_track_name(track)))
             .await?;
 
         Ok(())

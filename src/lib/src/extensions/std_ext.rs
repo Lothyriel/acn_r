@@ -22,9 +22,7 @@ impl<T> VecResultErrorExt<T> for Vec<Result<T, Error>> {
     fn all_successes(self) -> Result<Vec<T>, Error> {
         let (success, errors) = self.partition_results();
 
-        let failed = errors.iter().any(|_| true);
-
-        match failed {
+        match errors.len() > 1 {
             false => Ok(success),
             true => {
                 let error_messages: Vec<_> = errors.iter().map(|e| format!("{e}")).collect();

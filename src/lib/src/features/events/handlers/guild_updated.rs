@@ -6,7 +6,7 @@ use crate::application::dependency_configuration::DependencyContainer;
 pub async fn handler(new: &PartialGuild, data: &DependencyContainer) -> Result<(), Error> {
     data.repositories
         .guild
-        .add_guild(new.id.0, new.name.to_owned(), chrono::Utc::now())
+        .add_guild(new.id.0, new.name.as_str(), chrono::Utc::now())
         .await?;
 
     Ok(())

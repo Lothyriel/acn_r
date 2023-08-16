@@ -145,9 +145,12 @@ impl VoiceController {
     }
 
     fn handle_voice_packet(&self, data: &VoiceData<'_>) -> Result<(), Error> {
-        //let mut bytes = data.packet.payload[data.payload_offset..].to_owned();
         let key = data.packet.ssrc;
-        let mut bytes = data.audio.to_owned().unwrap();
+
+        let mut bytes = data
+            .audio
+            .to_owned()
+            .ok_or_else(|| anyhow!("Decoded audio was not present"))?;
 
         match self.accumulator.get_mut(&key) {
             Some(mut m) => m.bytes.append(&mut bytes),
@@ -197,7 +200,7 @@ impl VoiceController {
         };
 
         let mut buffer = vec![];
-        to_wav(bytes.as_slice(), &mut buffer);
+        to_wav(bytes.as_slice(), &mut buffer)?;
 
         // let mp3 = to_mp3(buffer);
 
@@ -223,7 +226,7 @@ impl VoiceController {
     }
 }
 
-fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) {
+fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) -> Result<(), Error> {
     let spec = WavSpec {
         channels: 2,
         sample_rate: 48000,
@@ -233,11 +236,13 @@ fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) {
 
     let cursor = Cursor::new(buffer);
 
-    let mut writer = WavWriter::new(cursor, spec).unwrap();
+    let mut writer = WavWriter::new(cursor, spec)?;
 
     for &sample in pcm_samples {
-        writer.write_sample(sample).unwrap();
+        writer.write_sample(sample)?;
     }
+
+    Ok(())
 }
 
 fn to_mp3(buffer: Vec<u8>) -> Vec<u8> {
@@ -317,9 +322,7 @@ async fn handler(
             controller.handle_speaking_state_update(data, guild_id)
         }
         EventContext::VoicePacket(data) => controller.handle_voice_packet(data),
-        EventContext::SpeakingUpdate(data) => {
-            controller.handle_speaking_update(data).await
-        }
+        EventContext::SpeakingUpdate(data) => controller.handle_speaking_update(data).await,
         EventContext::ClientDisconnect(disconnect) => {
             controller
                 .handle_client_disconnect(disconnect, guild_id)

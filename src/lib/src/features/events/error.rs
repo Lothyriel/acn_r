@@ -47,7 +47,7 @@ async fn handle_command_error(ctx: Context<'_>, error: Error) -> Result<(), Erro
     ctx.say(&message).await?;
 
     command_repository
-        .add_command_error(dto, message.to_owned())
+        .add_command_error(dto, message.as_str())
         .await?;
 
     Err(anyhow!(message))
