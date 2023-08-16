@@ -14,9 +14,8 @@ pub async fn handler(
         .get_last_signature(message.author.id.0)
         .await?;
 
-    match signature {
-        Some(s) => react(message, ctx, &s.emojis).await?,
-        None => (),
+    if let Some(s) = signature {
+        react(message, ctx, &s.emojis).await?
     }
 
     Ok(())

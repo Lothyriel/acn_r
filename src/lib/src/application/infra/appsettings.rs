@@ -66,14 +66,7 @@ pub struct LavalinkSettings {
     pub port: u16,
 }
 
+#[derive(Default)]
 pub struct AppConfigurations {
     pub deploy_ready: bool,
-}
-
-impl AppConfigurations {
-    pub fn new() -> Self {
-        Self {
-            deploy_ready: false,
-        }
-    }
 }
