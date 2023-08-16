@@ -3,6 +3,7 @@
 
 -convert voice_sink audios to mp3 to save space
 -update lavalink client to newer version (webhooks will be deprecated)
+-split deploy in two parts (one for each bot)
 
 -get track info from spotify
 
