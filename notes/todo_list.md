@@ -1,9 +1,13 @@
+-add voice_channel Optional<ChannelId> parameter on !speak
+
 -disconnect after !speak (i thing we'll need a custom event for songbird EventHandler)
 * we could merge !play and !speak
 
 -convert voice_sink audios to mp3 to save space
--update lavalink client to newer version (webhooks will be deprecated)
+
 -split deploy in two parts (one for each bot)
+
+-update lavalink client to newer version (webhooks will be deprecated)
 
 -get track info from spotify
 
