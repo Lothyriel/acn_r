@@ -71,7 +71,7 @@ impl ServicesContainer {
 
         let github_client = Arc::new(GithubClient::new(http_client, settings.github_settings));
 
-        let app_configurations = Arc::new(RwLock::new(AppConfigurations::new()));
+        let app_configurations = Arc::new(RwLock::new(Default::default()));
 
         let deploy_services = DeployServices::new(github_client, app_configurations.to_owned());
 
@@ -101,7 +101,7 @@ pub struct RepositoriesContainer {
 
 impl RepositoriesContainer {
     pub async fn build(settings: &MongoSettings) -> Result<Self, Error> {
-        let db = Self::database(&settings).await?;
+        let db = Self::database(settings).await?;
         Ok(Self::build_with_db(db))
     }
 

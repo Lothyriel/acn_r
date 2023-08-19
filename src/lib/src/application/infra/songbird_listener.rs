@@ -60,10 +60,10 @@ impl VoiceController {
     }
 
     pub async fn flush_all(&self) -> Result<(), Error> {
-        let flush_tasks = self.accumulator.iter().flat_map(|s| match s.mapping {
-            Some(id) => Some(self.flush(*s.key(), id.user_id)),
-            None => None,
-        });
+        let flush_tasks = self
+            .accumulator
+            .iter()
+            .flat_map(|s| s.mapping.map(|id| self.flush(*s.key(), id.user_id)));
 
         join_all(flush_tasks).await.all_successes()?;
 
@@ -95,29 +95,28 @@ impl VoiceController {
     }
 
     fn handle_speaking_state_update(&self, data: &Speaking, guild_id: u64) -> Result<(), Error> {
-        match data.user_id {
-            Some(_) => {
-                let get_info = |i: UserId| UserInfo {
-                    user_id: i.0,
-                    guild_id,
-                };
-
-                match self.accumulator.get_mut(&data.ssrc) {
-                    Some(mut snippet) => snippet.mapping = data.user_id.map(get_info),
-                    None => {
-                        self.accumulator.insert(
-                            data.ssrc,
-                            Snippet {
-                                bytes: vec![],
-                                date: chrono::Utc::now(),
-                                mapping: data.user_id.map(get_info),
-                            },
-                        );
-                    }
-                };
-            }
-            None => (),
+        if data.user_id.is_none() {
+            return Ok(());
         }
+
+        let get_info = |i: UserId| UserInfo {
+            user_id: i.0,
+            guild_id,
+        };
+
+        match self.accumulator.get_mut(&data.ssrc) {
+            Some(mut snippet) => snippet.mapping = data.user_id.map(get_info),
+            None => {
+                self.accumulator.insert(
+                    data.ssrc,
+                    Snippet {
+                        bytes: vec![],
+                        date: chrono::Utc::now(),
+                        mapping: data.user_id.map(get_info),
+                    },
+                );
+            }
+        };
 
         Ok(())
     }
