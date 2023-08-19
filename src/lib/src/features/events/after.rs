@@ -45,7 +45,7 @@ async fn attempt_russian_roulette(ctx: Context<'_>, now: DateTime<Utc>) -> Resul
 
     if shot {
         let message = format!(
-            "Comi o cu do {} (Tirou {:.2})",
+            "Comi o cu do {} (Tirou {:.4})",
             ctx.author().mention(),
             random_number
         );
