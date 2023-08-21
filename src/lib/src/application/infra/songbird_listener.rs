@@ -21,7 +21,12 @@ use std::{
     sync::Arc,
 };
 use symphonia::{
-    core::io::MediaSourceStream,
+    core::{
+        audio::Layout,
+        codecs::{CodecParameters, CODEC_TYPE_PCM_S16LE},
+        io::MediaSourceStream,
+        sample::SampleFormat,
+    },
     default::{self},
 };
 
@@ -244,15 +249,15 @@ fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) -> Result<(), Error> {
     Ok(())
 }
 
-fn to_mp3(buffer: Vec<u8>) -> Vec<u8> {
-    // let codec_parameters = CodecParameters {
-    //     codec: CODEC_TYPE_PCM_S16LE,
-    //     sample_rate: Some(48_000),
-    //     sample_format: Some(SampleFormat::U16),
-    //     bits_per_coded_sample: Some(16),
-    //     channel_layout: Some(Layout::Stereo),
-    //     ..Default::default()
-    // };
+fn to_mp3(buffer: Vec<u8>) -> Result<Vec<u8>, Error> {
+    let codec_parameters = CodecParameters {
+        codec: CODEC_TYPE_PCM_S16LE,
+        sample_rate: Some(48_000),
+        sample_format: Some(SampleFormat::U16),
+        bits_per_coded_sample: Some(16),
+        channel_layout: Some(Layout::Stereo),
+        ..Default::default()
+    };
 
     let codec_registry = default::get_codecs();
 
@@ -266,18 +271,18 @@ fn to_mp3(buffer: Vec<u8>) -> Vec<u8> {
             mss,
             &Default::default(),
             &Default::default(),
-        )
-        .unwrap()
+        )?
         .format;
 
-    let track = reader.tracks().first().unwrap();
+    let track = reader
+        .tracks()
+        .first()
+        .ok_or_else(|| anyhow!("No tracks found"))?;
 
-    let mut decoder = codec_registry
-        .make(&track.codec_params, &Default::default())
-        .unwrap();
+    let mut decoder = codec_registry.make(&track.codec_params, &Default::default())?;
 
-    let packet = reader.next_packet().unwrap();
-    let _audio_buffer = decoder.decode(&packet).unwrap();
+    let packet = reader.next_packet()?;
+    let audio_buffer = decoder.decode(&packet)?;
 
     //let a: SampleFormat = audio_buffer.into();
 
