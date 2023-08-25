@@ -1,4 +1,4 @@
-name: Deploy ACN Discord Bots
+name: Deploy Listen_r
 
 on:
   workflow_dispatch
@@ -7,17 +7,6 @@ env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
 jobs:
-  deploy_acn:
-    name: Deploy ACN_r Discord Bot
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - run: flyctl deploy -c .fly/acn.toml --remote-only
-
-
   deploy_listen_r:
     name: Deploy Listen_r Discord Bot
     runs-on: ubuntu-latest

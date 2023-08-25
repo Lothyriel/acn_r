@@ -1,4 +1,4 @@
-name: Deploy ACN Discord Bots
+name: Deploy ACN
 
 on:
   workflow_dispatch
@@ -16,14 +16,3 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - run: flyctl deploy -c .fly/acn.toml --remote-only
-
-
-  deploy_listen_r:
-    name: Deploy Listen_r Discord Bot
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - run: flyctl deploy -c .fly/listen_r.toml --remote-only
