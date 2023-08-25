@@ -56,7 +56,6 @@ pub struct MongoSettings {
 pub struct GithubSettings {
     pub username: String,
     pub repository: String,
-    pub workflow_file: String,
     pub branch_name: String,
 }
 
