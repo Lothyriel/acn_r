@@ -21,11 +21,17 @@ pub struct DeployServices {
     deploy_semaphor: Arc<Semaphore>,
     configurations: Arc<RwLock<AppConfigurations>>,
     client: Arc<GithubClient>,
+    deploy_file: String,
 }
 
 impl DeployServices {
-    pub fn new(client: Arc<GithubClient>, configurations: Arc<RwLock<AppConfigurations>>) -> Self {
+    pub fn new(
+        client: Arc<GithubClient>,
+        configurations: Arc<RwLock<AppConfigurations>>,
+        deploy_file: String,
+    ) -> Self {
         Self {
+            deploy_file,
             client,
             configurations,
             deploy_semaphor: Arc::new(Semaphore::new(1)),
@@ -74,7 +80,7 @@ impl DeployServices {
 
     async fn start_deploy(&self) -> Result<(), Error> {
         warn!("Calling Github API and triggering action deploy");
-        self.client.deploy().await
+        self.client.deploy(&self.deploy_file).await
     }
 }
 
