@@ -9,14 +9,14 @@ use crate::{
     },
     extensions::serenity::{context_ext::get_songbird_client, Command},
     features::{
-        commands::listener,
+        commands::{listener, misc::deploy},
         events::{after, check, error, handlers::invoker},
         register_commands,
     },
 };
 
 fn register_groups() -> Vec<Vec<Command>> {
-    vec![listener::group()]
+    vec![listener::group(), vec![deploy::deploy()]]
 }
 
 pub async fn start_listener() -> Result<(), Error> {
@@ -51,8 +51,14 @@ pub async fn start_listener() -> Result<(), Error> {
 
                 let songbird = get_songbird_client(ctx).await?;
 
-                DependencyContainer::build(settings, ctx.http.to_owned(), songbird, ready.user.id)
-                    .await
+                DependencyContainer::build(
+                    settings,
+                    ctx.http.to_owned(),
+                    songbird,
+                    ready.user.id,
+                    "listen_r.yml".to_owned(),
+                )
+                .await
             })
         });
 
