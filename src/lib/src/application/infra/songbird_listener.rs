@@ -245,6 +245,7 @@ fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) -> Result<(), Error> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn to_mp3(buffer: Vec<u8>) -> Result<Vec<u8>, Error> {
     let _codec_parameters = CodecParameters {
         codec: CODEC_TYPE_PCM_S16LE,
