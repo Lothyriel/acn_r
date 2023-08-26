@@ -28,7 +28,7 @@ use symphonia::{
 
 use crate::{
     application::{models::entities::voice::VoiceSnippet, repositories::voice::VoiceRepository},
-    extensions::{log_ext::LogExt, serenity::Context, std_ext::VecResultErrorExt},
+    extensions::{log_ext::LogExt, serenity::Context, std_ext::join_errors},
 };
 
 struct Snippet {
@@ -66,7 +66,9 @@ impl VoiceController {
             .iter()
             .flat_map(|s| s.mapping.map(|id| self.flush(*s.key(), id.user_id)));
 
-        join_all(flush_tasks).await.all_successes()?;
+        let tasks_results = join_all(flush_tasks).await;
+
+        _ = join_errors(tasks_results)?;
 
         self.accumulator.clear();
 

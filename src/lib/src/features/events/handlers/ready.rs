@@ -4,7 +4,7 @@ use log::warn;
 use poise::serenity_prelude::Context;
 
 use crate::{
-    application::dependency_configuration::DependencyContainer, extensions::log_ext::LogErrorsExt,
+    application::dependency_configuration::DependencyContainer, extensions::std_ext::join_errors,
 };
 
 pub async fn handler(
@@ -20,7 +20,9 @@ pub async fn handler(
         .iter()
         .map(|p| send_greetings(ctx, *p, &message));
 
-    join_all(tasks).await.log_errors();
+    let tasks_results = join_all(tasks).await;
+
+    _ = join_errors(tasks_results)?;
 
     Ok(())
 }
