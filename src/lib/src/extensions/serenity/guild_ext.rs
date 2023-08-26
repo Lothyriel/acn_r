@@ -61,14 +61,13 @@ pub async fn get_all_online_users(
 ) -> Result<HashSet<StatusInfo>, Error> {
     let guilds_info = http.get_guilds(None, None).await?;
 
-    let get_online_users_results: Vec<_> = guilds_info
+    let get_online_users_results = guilds_info
         .into_iter()
-        .map(|g| g.id.get_online_users(cache.to_owned()))
-        .collect();
+        .map(|g| g.id.get_online_users(cache.to_owned()));
 
     let all_online_users = join_errors(get_online_users_results)?;
 
-    Ok(all_online_users.into_iter().flatten().collect())
+    Ok(all_online_users.flatten().collect())
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]

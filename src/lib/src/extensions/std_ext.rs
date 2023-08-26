@@ -9,12 +9,25 @@ where
     match iter.any(|r| r.is_err()) {
         false => Ok(iter.filter_map(Result::ok)),
         true => {
-            let error_messages: Vec<_> = iter
-                .filter_map(Result::err)
-                .map(|e| format!("{e}"))
-                .collect();
+            let error_messages = iter.filter_map(Result::err).map(|e| format!("{e}"));
 
             Err(anyhow!("Errors: {}", error_messages.join(" | ")))
         }
+    }
+}
+
+pub trait JoinString {
+    fn join(self, separator: &str) -> String;
+}
+
+impl<S: Iterator<Item = String>> JoinString for S {
+    fn join(self, separator: &str) -> String {
+        self.fold(String::new(), |acc, segment| {
+            if acc.is_empty() {
+                segment.to_string()
+            } else {
+                acc + separator + &segment
+            }
+        })
     }
 }

@@ -7,6 +7,7 @@ use poise::async_trait;
 use poise::serenity_prelude::{CacheHttp, ChannelId, Guild, GuildId, User};
 use songbird::Songbird;
 
+use crate::extensions::std_ext::JoinString;
 use crate::{
     application::{infra::lavalink_ctx::LavalinkCtx, models::dto::user::GuildInfo},
     extensions::serenity::Context,
@@ -37,15 +38,14 @@ impl ContextExt for Context<'_> {
     async fn get_command_args(self) -> String {
         match self {
             poise::Context::Application(ctx) => {
-                let args: Vec<_> = ctx
+                let args = ctx
                     .args
                     .iter()
                     .flat_map(|a| {
                         a.value
                             .as_ref()
                             .map(|v| format!("{v}").trim_matches('"').to_owned())
-                    })
-                    .collect();
+                    });
 
                 args.join(" ")
             }
