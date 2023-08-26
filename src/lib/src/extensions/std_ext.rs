@@ -24,7 +24,7 @@ impl<S: Iterator<Item = String>> JoinString for S {
     fn join(self, separator: &str) -> String {
         self.fold(String::new(), |acc, segment| {
             if acc.is_empty() {
-                segment.to_string()
+                segment
             } else {
                 acc + separator + &segment
             }
