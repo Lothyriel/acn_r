@@ -15,11 +15,7 @@ use songbird::{
     },
     Event, EventContext, EventHandler,
 };
-use std::{
-    fs::OpenOptions,
-    io::{Cursor, Write},
-    sync::Arc,
-};
+use std::{io::Cursor, sync::Arc};
 use symphonia::{
     core::{
         audio::Layout,
@@ -250,7 +246,7 @@ fn to_wav(pcm_samples: &[i16], buffer: &mut Vec<u8>) -> Result<(), Error> {
 }
 
 fn to_mp3(buffer: Vec<u8>) -> Result<Vec<u8>, Error> {
-    let codec_parameters = CodecParameters {
+    let _codec_parameters = CodecParameters {
         codec: CODEC_TYPE_PCM_S16LE,
         sample_rate: Some(48_000),
         sample_format: Some(SampleFormat::U16),
@@ -282,7 +278,7 @@ fn to_mp3(buffer: Vec<u8>) -> Result<Vec<u8>, Error> {
     let mut decoder = codec_registry.make(&track.codec_params, &Default::default())?;
 
     let packet = reader.next_packet()?;
-    let audio_buffer = decoder.decode(&packet)?;
+    let _audio_buffer = decoder.decode(&packet)?;
 
     //let a: SampleFormat = audio_buffer.into();
 
