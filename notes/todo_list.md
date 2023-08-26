@@ -1,5 +1,3 @@
--split deploy in two (one for each bot)
-
 -merge !play and !speak
 
 -convert voice_sink audios to mp3 to save space
