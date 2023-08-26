@@ -120,10 +120,9 @@ async fn get_dispatch_data(
 type Tasks = Vec<fn(Arc<DispatchData>) -> tokio::task::JoinHandle<Result<(), Error>>>;
 
 async fn dispatch_tasks(tasks: Tasks, data: Arc<DispatchData>) -> Result<(), Error> {
-    let tasks: Vec<_> = tasks
+    let tasks = tasks
         .into_iter()
-        .map(|c| c(data.to_owned()).map_err(|e| anyhow!(e)))
-        .collect();
+        .map(|c| c(data.to_owned()).map_err(|e| anyhow!(e)));
 
     let join_results = join_all(tasks).await;
 
