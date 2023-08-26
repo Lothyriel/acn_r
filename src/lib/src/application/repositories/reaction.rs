@@ -78,16 +78,13 @@ impl ReactionRepository {
         Ok((reaction, bytes))
     }
 
-    pub async fn list(&self, guild_id: u64) -> Result<Vec<String>, Error> {
+    pub async fn list(&self, guild_id: u64) -> Result<impl Iterator<Item = String>, Error> {
         let emotions = self
             .reactions
             .distinct("emotion", doc! {"guild_id": guild_id as i64}, None)
             .await?;
 
-        Ok(emotions
-            .into_iter()
-            .map(|emotion| emotion.to_string())
-            .collect())
+        Ok(emotions.into_iter().map(|emotion| emotion.to_string()))
     }
 
     async fn get_reaction(
