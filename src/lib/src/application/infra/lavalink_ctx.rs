@@ -166,7 +166,7 @@ impl LavalinkCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let now = if i == 0 { "▶️" } else { "" };
+                        let now = if i == usize::MIN { "▶️" } else { "" };
 
                         let line = format!("- {} {} | By: {}", now, track_name, requester);
 
