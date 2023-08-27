@@ -40,8 +40,6 @@ impl LavalinkHandler {
                 .get(&guild_id)
                 .ok_or_else(|| anyhow!("Can't get guild loop for {}", guild_id))?;
 
-            println!("Fila: {:?}", guild_node.queue);
-
             guild_node.queue.is_empty()
         };
 
