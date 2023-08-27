@@ -7,7 +7,7 @@ use mongodb::{
 use poise::async_trait;
 use serde::de::DeserializeOwned;
 
-use super::std_ext::join_errors;
+use crate::extensions::std_ext::join_errors;
 
 #[async_trait]
 pub trait CollectionExt<T> {
