@@ -87,7 +87,7 @@ impl DeployServices {
 async fn is_someone_online(http: Arc<Http>, cache: Arc<Cache>) -> Result<bool, Error> {
     let online_users = guild_ext::get_all_online_users(http, cache).await?;
 
-    let count = online_users.len();
+    let count = online_users.count();
 
     warn!("Users online: {}", count);
 
