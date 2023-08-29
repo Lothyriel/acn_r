@@ -33,15 +33,27 @@ impl LavalinkHandler {
         client: LavalinkClient,
         guild_id: u64,
     ) -> Result<(), Error> {
-        self.songbird.remove(guild_id).await?;
+        let empty = {
+            let node = client.nodes().await;
 
-        let nodes = client.nodes().await;
-        nodes.remove(&guild_id);
+            let guild_node = node
+                .get(&guild_id)
+                .ok_or_else(|| anyhow!("Can't get guild loop for {}", guild_id))?;
 
-        let loops = client.loops().await;
-        loops.remove(&guild_id);
+            guild_node.queue.is_empty()
+        };
 
-        client.destroy(guild_id).await?;
+        if empty {
+            self.songbird.remove(guild_id).await?;
+
+            let nodes = client.nodes().await;
+            nodes.remove(&guild_id);
+
+            let loops = client.loops().await;
+            loops.remove(&guild_id);
+
+            client.destroy(guild_id).await?;
+        }
 
         Ok(())
     }
@@ -152,7 +164,7 @@ impl LavalinkCtx {
                             .map(|r| format!("<@{}>", r.0))
                             .unwrap_or_else(|| "Unknown".to_owned());
 
-                        let now = if i == 0 { "▶️" } else { "" };
+                        let now = if i == usize::MIN { "▶️" } else { "" };
 
                         let line = format!("- {} {} | By: {}", now, track_name, requester);
 

@@ -15,12 +15,12 @@ impl GithubClient {
         Self { client, settings }
     }
 
-    pub async fn deploy(&self) -> Result<(), Error> {
+    pub async fn deploy(&self, file: &str) -> Result<(), Error> {
         let pat = env::get("GITHUB_PAT")?;
         let url = URL
             .replace("{USER}", &self.settings.username)
             .replace("{REPO}", &self.settings.repository)
-            .replace("{FILE}", &self.settings.workflow_file);
+            .replace("{FILE}", file);
 
         let body = serde_json::json!({
             "ref": self.settings.branch_name,

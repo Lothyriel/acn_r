@@ -7,7 +7,7 @@ use mongodb::{
 use poise::async_trait;
 use serde::de::DeserializeOwned;
 
-use super::std_ext::VecResultErrorExt;
+use crate::extensions::std_ext::join_errors;
 
 #[async_trait]
 pub trait CollectionExt<T> {
@@ -26,11 +26,12 @@ impl<T: DeserializeOwned + Send + Sync> CollectionExt<T> for Collection<T> {
 
         let documents: Vec<_> = cursor.try_collect().await?;
 
-        let entities: Vec<_> = documents
+        let entities = documents
             .into_iter()
-            .map(|d| from_document(d).map_err(|e| anyhow!(e)))
-            .collect();
+            .map(|d| from_document(d).map_err(|e| anyhow!(e)));
 
-        entities.all_successes()
+        let successes = join_errors(entities)?;
+
+        Ok(successes.collect())
     }
 }

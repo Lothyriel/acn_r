@@ -1,33 +1,33 @@
 use anyhow::{anyhow, Error};
 
-pub trait VecResultExt<T, E> {
-    fn partition_results(self) -> (Vec<T>, Vec<E>);
-}
+pub fn join_errors<T, I>(input: I) -> Result<impl Iterator<Item = T>, Error>
+where
+    I: IntoIterator<Item = Result<T, Error>>,
+{
+    let mut iter = input.into_iter();
 
-impl<T, E> VecResultExt<T, E> for Vec<Result<T, E>> {
-    fn partition_results(self) -> (Vec<T>, Vec<E>) {
-        let (success, errors): (Vec<_>, Vec<_>) = self.into_iter().partition(Result::is_ok);
-        (
-            success.into_iter().filter_map(Result::ok).collect(),
-            errors.into_iter().filter_map(Result::err).collect(),
-        )
+    match iter.any(|r| r.is_err()) {
+        false => Ok(iter.filter_map(Result::ok)),
+        true => {
+            let error_messages = iter.filter_map(Result::err).map(|e| format!("{e}"));
+
+            Err(anyhow!("Errors: {}", error_messages.join(" | ")))
+        }
     }
 }
 
-pub trait VecResultErrorExt<T> {
-    fn all_successes(self) -> Result<Vec<T>, Error>;
+pub trait JoinString {
+    fn join(self, separator: &str) -> String;
 }
 
-impl<T> VecResultErrorExt<T> for Vec<Result<T, Error>> {
-    fn all_successes(self) -> Result<Vec<T>, Error> {
-        let (success, errors) = self.partition_results();
-
-        match errors.len() > 1 {
-            false => Ok(success),
-            true => {
-                let error_messages: Vec<_> = errors.iter().map(|e| format!("{e}")).collect();
-                Err(anyhow!("Errors: {}", error_messages.join(" | ")))
+impl<S: Iterator<Item = String>> JoinString for S {
+    fn join(self, separator: &str) -> String {
+        self.fold(String::new(), |acc, segment| {
+            if acc.is_empty() {
+                segment
+            } else {
+                acc + separator + &segment
             }
-        }
+        })
     }
 }

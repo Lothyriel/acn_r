@@ -9,7 +9,7 @@ use songbird::Songbird;
 
 use crate::{
     application::{infra::lavalink_ctx::LavalinkCtx, models::dto::user::GuildInfo},
-    extensions::serenity::Context,
+    extensions::{serenity::Context, std_ext::JoinString},
 };
 
 #[async_trait]
@@ -37,15 +37,11 @@ impl ContextExt for Context<'_> {
     async fn get_command_args(self) -> String {
         match self {
             poise::Context::Application(ctx) => {
-                let args: Vec<_> = ctx
-                    .args
-                    .iter()
-                    .flat_map(|a| {
-                        a.value
-                            .as_ref()
-                            .map(|v| format!("{v}").trim_matches('"').to_owned())
-                    })
-                    .collect();
+                let args = ctx.args.iter().flat_map(|a| {
+                    a.value
+                        .as_ref()
+                        .map(|v| format!("{v}").trim_matches('"').to_owned())
+                });
 
                 args.join(" ")
             }

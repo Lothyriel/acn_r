@@ -16,7 +16,7 @@ use crate::{
         },
         repositories::jukebox::JukeboxRepository,
     },
-    extensions::std_ext::VecResultErrorExt,
+    extensions::std_ext::join_errors,
 };
 
 mod dispatches;
@@ -124,9 +124,11 @@ async fn dispatch_tasks(tasks: Tasks, data: Arc<DispatchData>) -> Result<(), Err
         .into_iter()
         .map(|c| c(data.to_owned()).map_err(|e| anyhow!(e)));
 
-    let dispatches_results = join_all(tasks).await.all_successes()?;
+    let join_results = join_all(tasks).await;
 
-    dispatches_results.all_successes()?;
+    let a = join_errors(join_results)?;
+
+    _ = join_errors(a)?;
 
     Ok(())
 }

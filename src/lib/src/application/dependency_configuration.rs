@@ -34,11 +34,13 @@ impl DependencyContainer {
         http: Arc<Http>,
         songbird: Arc<Songbird>,
         id: UserId,
+        deploy_file: String,
     ) -> Result<Self, Error> {
         let repositories = RepositoriesContainer::build(&settings.mongo_settings).await?;
 
         let services =
-            ServicesContainer::build(&repositories, settings, http, songbird, id).await?;
+            ServicesContainer::build(&repositories, settings, http, songbird, id, deploy_file)
+                .await?;
 
         Ok(Self {
             services,
@@ -64,6 +66,7 @@ impl ServicesContainer {
         http: Arc<Http>,
         songbird: Arc<Songbird>,
         bot_id: UserId,
+        deploy_file: String,
     ) -> Result<Self, Error> {
         let http_client = Client::new();
 
@@ -73,7 +76,8 @@ impl ServicesContainer {
 
         let app_configurations = Arc::new(RwLock::new(Default::default()));
 
-        let deploy_services = DeployServices::new(github_client, app_configurations.to_owned());
+        let deploy_services =
+            DeployServices::new(github_client, app_configurations.to_owned(), deploy_file);
 
         let voice_controller = Arc::new(VoiceController::new(repositories.voice.to_owned(), http));
 
