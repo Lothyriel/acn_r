@@ -21,7 +21,7 @@ use crate::{
 
 mod dispatches;
 
-pub async fn all_events_handler(
+pub async fn handler(
     ctx: &Context,
     old: &Option<VoiceState>,
     new: &VoiceState,
@@ -42,8 +42,6 @@ pub async fn all_events_handler(
 
     let guild = ctx.http.get_guild(member.guild_id.0).await?;
 
-    let dispatch_data = get_dispatch_data(old, new, ctx, data).await?;
-
     let dto = UpdateUserDto {
         user_id: new.user_id.0,
         guild_info: Some(GuildInfo {
@@ -56,22 +54,10 @@ pub async fn all_events_handler(
 
     data.repositories.user.update_user(dto).await?;
 
-    tokio::spawn(dispatches::afk_disconnect::handler(Arc::new(dispatch_data))).await?
-}
-
-pub async fn songbird_handler(
-    ctx: &Context,
-    old: &Option<VoiceState>,
-    new: &VoiceState,
-    data: &DependencyContainer,
-) -> Result<(), Error> {
-    if new.user_id.to_user(ctx).await?.bot {
-        return Ok(());
-    }
-
     let tasks = vec![
         |c| tokio::spawn(dispatches::songbird_reconnect::handler(c)),
         |c| tokio::spawn(dispatches::songbird_disconnect::handler(c)),
+        |c| tokio::spawn(dispatches::deploy::handler(c)),
         |c| tokio::spawn(dispatches::deploy::handler(c)),
     ];
 
