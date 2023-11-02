@@ -22,10 +22,26 @@ pub async fn listener_events_handler(
             );
             ready::handler(ctx, data, message).await
         }
-        Event::InviteCreate { data } => invite_created::handler(ctx, data).await,
-        Event::VoiceStateUpdate { old, new } => {
-            voice_updated::all_events_handler(ctx, old, new, data).await
+        _ => Ok(()),
+    }
+}
+
+pub async fn songbird_handler(
+    ctx: &Context,
+    event: &Event<'_>,
+    data: &DependencyContainer,
+) -> Result<(), Error> {
+    match event {
+        Event::Message { new_message } => message::handler(ctx, data, new_message).await,
+        Event::Ready { data_about_bot } => {
+            let message = format!(
+                "Estamos totalmente dentro! {} como acn_r",
+                data_about_bot.user.name
+            );
+            ready::handler(ctx, data, message).await
         }
+        Event::InviteCreate { data } => invite_created::handler(ctx, data).await,
+        Event::VoiceStateUpdate { old, new } => voice_updated::handler(ctx, old, new, data).await,
         Event::GuildMemberAddition { new_member } => member_added::handler(ctx, new_member).await,
         Event::GuildMemberRemoval {
             guild_id,
@@ -40,27 +56,6 @@ pub async fn listener_events_handler(
             old_data_if_available: _,
             new_but_incomplete,
         } => guild_updated::handler(new_but_incomplete, data).await,
-        _ => Ok(()),
-    }
-}
-
-pub async fn songbird_handler(
-    ctx: &Context,
-    event: &Event<'_>,
-    data: &DependencyContainer,
-) -> Result<(), Error> {
-    match event {
-        Event::Message { new_message } => message::handler(ctx, data, new_message).await,
-        poise::Event::Ready { data_about_bot } => {
-            let message = format!(
-                "Estamos totalmente dentro! {} como acn_r",
-                data_about_bot.user.name
-            );
-            ready::handler(ctx, data, message).await
-        }
-        Event::VoiceStateUpdate { old, new } => {
-            voice_updated::songbird_handler(ctx, old, new, data).await
-        }
         _ => Ok(()),
     }
 }
