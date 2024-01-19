@@ -1,7 +1,6 @@
 name: Deploy ACN
 
-on:
-  workflow_dispatch
+on: workflow_dispatch
 
 env:
   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
@@ -15,4 +14,4 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - run: flyctl deploy -c .fly/acn.toml --remote-only
+      - run: flyctl deploy --remote-only
