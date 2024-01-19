@@ -1,5 +1,5 @@
 use futures::future::join_all;
-use poise::{command, serenity_prelude::CacheHttp};
+use poise::command;
 
 use crate::extensions::serenity::{
     guild_ext::GuildExt,

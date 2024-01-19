@@ -4,7 +4,7 @@ use anyhow::{anyhow, Error};
 use chrono_tz::Tz;
 use log::error;
 use poise::async_trait;
-use poise::serenity_prelude::{CacheHttp, ChannelId, Guild, GuildId, User};
+use poise::serenity_prelude::{ChannelId, Guild, GuildId, User};
 use songbird::Songbird;
 
 use crate::{
