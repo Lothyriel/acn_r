@@ -1,13 +1,12 @@
 # Build stage
 FROM rust:1.70 as builder
 
-COPY src/lib lib
-COPY src/acn/src ./src
-COPY src/acn/Cargo.toml ./
+COPY src ./src
+COPY Cargo.toml ./
 
 RUN apt-get update
 RUN apt-get install -y cmake
-RUN cargo build --release --bin=acn
+RUN cargo build --release
 
 # Prod stage
 FROM gcr.io/distroless/cc
