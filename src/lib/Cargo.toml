@@ -26,4 +26,4 @@ dashmap = "5.4.0"
 symphonia = { version = "0.5.3", features = ["mp3"] }
 hound = "3.5.0"
 chrono-tz = "0.8.3"
-sqlx = { version = "0.7", features = ["runtime-tokio", "tls-native-tls"] }
+postgres = "0.19"
