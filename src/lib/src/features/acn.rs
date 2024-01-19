@@ -59,7 +59,7 @@ pub async fn start_acn() -> Result<(), Error> {
                     ctx.http.to_owned(),
                     songbird,
                     ready.user.id,
-                    "acn.yml".to_owned(),
+                    "acn.yml",
                 )
                 .await
             })

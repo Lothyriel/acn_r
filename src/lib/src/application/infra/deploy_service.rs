@@ -28,10 +28,10 @@ impl DeployServices {
     pub fn new(
         client: Arc<GithubClient>,
         configurations: Arc<RwLock<AppConfigurations>>,
-        deploy_file: String,
+        deploy_file: &str,
     ) -> Self {
         Self {
-            deploy_file,
+            deploy_file: deploy_file.to_owned(),
             client,
             configurations,
             deploy_semaphor: Arc::new(Semaphore::new(1)),

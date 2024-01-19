@@ -34,7 +34,7 @@ impl DependencyContainer {
         http: Arc<Http>,
         songbird: Arc<Songbird>,
         id: UserId,
-        deploy_file: String,
+        deploy_file: &str,
     ) -> Result<Self, Error> {
         let repositories = RepositoriesContainer::build(&settings.mongo_settings).await?;
 
@@ -66,7 +66,7 @@ impl ServicesContainer {
         http: Arc<Http>,
         songbird: Arc<Songbird>,
         bot_id: UserId,
-        deploy_file: String,
+        deploy_file: &str,
     ) -> Result<Self, Error> {
         let http_client = Client::new();
 
