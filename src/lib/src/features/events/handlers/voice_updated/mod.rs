@@ -29,10 +29,6 @@ pub async fn handler(
 ) -> Result<(), Error> {
     let user = new.user_id.to_user(ctx).await?;
 
-    if user.bot {
-        return Ok(());
-    }
-
     let member = new.member.as_ref().ok_or_else(|| {
         anyhow!(
             "{} VoiceStateUpdate triggered outside a Guild context",
