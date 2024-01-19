@@ -65,14 +65,7 @@ pub async fn start() -> Result<(), Error> {
 
                 let songbird = get_songbird_client(ctx).await?;
 
-                DependencyContainer::build(
-                    settings,
-                    ctx.http.to_owned(),
-                    songbird,
-                    ready.user.id,
-                    "acn.yml",
-                )
-                .await
+                DependencyContainer::build(settings, songbird, ready.user.id, "acn.yml").await
             })
         });
 

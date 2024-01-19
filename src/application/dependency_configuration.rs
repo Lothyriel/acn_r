@@ -1,7 +1,7 @@
 use anyhow::Error;
 use lavalink_rs::LavalinkClient;
 use mongodb::Database;
-use poise::serenity_prelude::{Http, UserId};
+use poise::serenity_prelude::UserId;
 use reqwest::Client;
 use songbird::Songbird;
 use std::sync::Arc;
@@ -14,7 +14,6 @@ use crate::application::{
         http_clients::github_client::GithubClient,
         lavalink_ctx,
         mongo_client::create_mongo_client,
-        songbird_listener::VoiceController,
     },
     repositories::{
         command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
@@ -31,16 +30,13 @@ pub struct DependencyContainer {
 impl DependencyContainer {
     pub async fn build(
         settings: AppSettings,
-        http: Arc<Http>,
         songbird: Arc<Songbird>,
         id: UserId,
         deploy_file: &str,
     ) -> Result<Self, Error> {
         let repositories = RepositoriesContainer::build(&settings.mongo_settings).await?;
 
-        let services =
-            ServicesContainer::build(&repositories, settings, http, songbird, id, deploy_file)
-                .await?;
+        let services = ServicesContainer::build(settings, songbird, id, deploy_file).await?;
 
         Ok(Self {
             services,
@@ -55,15 +51,12 @@ pub struct ServicesContainer {
     pub app_configurations: Arc<RwLock<AppConfigurations>>,
     pub lava_client: LavalinkClient,
     pub deploy_services: DeployServices,
-    pub voice_controller: Arc<VoiceController>,
     pub songbird: Arc<Songbird>,
 }
 
 impl ServicesContainer {
     async fn build(
-        repositories: &RepositoriesContainer,
         settings: AppSettings,
-        http: Arc<Http>,
         songbird: Arc<Songbird>,
         bot_id: UserId,
         deploy_file: &str,
@@ -79,15 +72,12 @@ impl ServicesContainer {
         let deploy_services =
             DeployServices::new(github_client, app_configurations.to_owned(), deploy_file);
 
-        let voice_controller = Arc::new(VoiceController::new(repositories.voice.to_owned(), http));
-
         Ok(Self {
             deploy_services,
             lava_client,
             bot_id,
             allowed_ids: settings.allowed_ids,
             app_configurations,
-            voice_controller,
             songbird,
         })
     }
