@@ -18,7 +18,6 @@ use crate::application::{
     repositories::{
         command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
         reaction::ReactionRepository, stats::StatsRepository, user::UserRepository,
-        voice::VoiceRepository,
     },
 };
 
@@ -90,7 +89,6 @@ pub struct RepositoriesContainer {
     pub stats: StatsRepository,
     pub jukebox: JukeboxRepository,
     pub reaction: ReactionRepository,
-    pub voice: VoiceRepository,
 }
 
 impl RepositoriesContainer {
@@ -112,8 +110,6 @@ impl RepositoriesContainer {
 
         let reaction = ReactionRepository::new(&db);
 
-        let voice = VoiceRepository::new(&db);
-
         Self {
             user,
             guild,
@@ -121,7 +117,6 @@ impl RepositoriesContainer {
             stats,
             jukebox,
             reaction,
-            voice,
         }
     }
 

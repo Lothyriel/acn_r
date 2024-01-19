@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
-use chrono_tz::Tz;
-use log::error;
 use poise::async_trait;
 use poise::serenity_prelude::{ChannelId, Guild, GuildId, User};
 use songbird::Songbird;
@@ -22,7 +20,6 @@ pub trait ContextExt {
     fn get_guild_info(self) -> Option<GuildInfo>;
     fn assure_cached_guild(self) -> Result<Guild, Error>;
     fn assure_guild_context(self) -> Result<GuildId, Error>;
-    fn get_time_zone(self) -> Tz;
 }
 
 #[async_trait]
@@ -112,21 +109,6 @@ impl ContextExt for Context<'_> {
                 guild_name: n,
             })
         })
-    }
-
-    fn get_time_zone(self) -> Tz {
-        let locale = match self.locale() {
-            Some(l) => l,
-            None => return chrono_tz::UTC,
-        };
-
-        match locale {
-            "pt-BR" => chrono_tz::Tz::Brazil__East,
-            _ => {
-                error!("Encontrada timezone não cadastrada {}", locale);
-                chrono_tz::UTC
-            }
-        }
     }
 }
 
