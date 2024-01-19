@@ -9,23 +9,6 @@ use crate::{
     },
 };
 
-pub async fn listener_events_handler(
-    ctx: &Context,
-    event: &Event<'_>,
-    data: &DependencyContainer,
-) -> Result<(), Error> {
-    match event {
-        Event::Ready { data_about_bot } => {
-            let message = format!(
-                "Estamos totalmente dentro! {} como Listen_r",
-                data_about_bot.user.name
-            );
-            ready::handler(ctx, data, message).await
-        }
-        _ => Ok(()),
-    }
-}
-
 pub async fn songbird_handler(
     ctx: &Context,
     event: &Event<'_>,
