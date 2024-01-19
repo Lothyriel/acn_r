@@ -1,5 +1,5 @@
 [package]
-name = "lib"
+name = "acn"
 version = "0.1.0"
 edition = "2021"
 
@@ -22,8 +22,4 @@ poise = { version = "0.5.5", features = ["cache"] }
 lavalink-rs = { git = "https://github.com/DoggySazHi/lavalink-rs-moogan", branch = "master" }
 songbird = "0.3.2"
 rand = "0.8.5"
-dashmap = "5.4.0"
-symphonia = { version = "0.5.3", features = ["mp3"] }
-hound = "3.5.0"
-chrono-tz = "0.8.3"
 postgres = "0.19"
