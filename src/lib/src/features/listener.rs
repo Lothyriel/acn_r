@@ -56,7 +56,7 @@ pub async fn start_listener() -> Result<(), Error> {
                     ctx.http.to_owned(),
                     songbird,
                     ready.user.id,
-                    "listen_r.yml".to_owned(),
+                    "listen_r.yml",
                 )
                 .await
             })
