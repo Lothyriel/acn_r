@@ -2,10 +2,10 @@ use anyhow::Error;
 use lavalink_rs::LavalinkClient;
 use mongodb::Database;
 use poise::serenity_prelude::UserId;
-use reqwest::Client;
 use songbird::Songbird;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tokio_postgres::Client;
 
 use crate::application::{
     infra::{
@@ -21,6 +21,8 @@ use crate::application::{
     },
 };
 
+use super::repositories::get_client;
+
 pub struct DependencyContainer {
     pub services: ServicesContainer,
     pub repositories: RepositoriesContainer,
@@ -33,9 +35,11 @@ impl DependencyContainer {
         id: UserId,
         deploy_file: &str,
     ) -> Result<Self, Error> {
-        let repositories = RepositoriesContainer::build(&settings.mongo_settings).await?;
+        let repositories = RepositoriesContainer::build(&settings).await?;
 
-        let services = ServicesContainer::build(settings, songbird, id, deploy_file).await?;
+        let services = ServicesContainer::build(settings, songbird, id, deploy_file)
+            .await
+            .unwrap();
 
         Ok(Self {
             services,
@@ -60,7 +64,7 @@ impl ServicesContainer {
         bot_id: UserId,
         deploy_file: &str,
     ) -> Result<Self, Error> {
-        let http_client = Client::new();
+        let http_client = reqwest::Client::new();
 
         let lava_client = lavalink_ctx::get_lavalink_client(&settings, songbird.to_owned()).await?;
 
@@ -91,19 +95,24 @@ pub struct RepositoriesContainer {
 }
 
 impl RepositoriesContainer {
-    pub async fn build(settings: &MongoSettings) -> Result<Self, Error> {
-        let db = Self::database(settings).await?;
-        Ok(Self::build_with_db(db))
+    pub async fn build(settings: &AppSettings) -> Result<Self, Error> {
+        let db = Self::database(&settings.mongo_settings).await?;
+
+        let client = get_client(&settings.pg_settings).await?;
+
+        super::repositories::ensure_database_created(&client).await?;
+
+        Ok(Self::build_with_db(db, client))
     }
 
-    pub fn build_with_db(db: Database) -> Self {
+    pub fn build_with_db(db: Database, client: Client) -> Self {
         let guild = GuildRepository::new(&db);
 
         let user = UserRepository::new(&db, guild.to_owned());
 
         let command = CommandRepository::new(&db, user.to_owned());
 
-        let stats = StatsRepository::new(&db);
+        let stats = StatsRepository::new(&db, client);
 
         let jukebox = JukeboxRepository::new(&db);
 
