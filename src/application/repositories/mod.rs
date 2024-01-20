@@ -11,7 +11,7 @@ pub mod user;
 
 pub async fn ensure_database_created(client: &Client) -> Result<(), Error> {
     client
-        .batch_execute(include_str!("queries\\create.sql"))
+        .batch_execute(include_str!("queries/create.sql"))
         .await?;
 
     Ok(())

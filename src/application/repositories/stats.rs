@@ -43,7 +43,7 @@ impl StatsRepository {
 
         self.client
             .execute(
-                include_str!("queries\\insert_user_activity.sql"),
+                include_str!("queries/insert_user_activity.sql"),
                 &[
                     &(activity.guild_id as i64),
                     &(activity.user_id as i64),
@@ -90,7 +90,7 @@ impl StatsRepository {
         let rows = self
             .client
             .query(
-                include_str!("queries\\filter_guild_stats.sql"),
+                include_str!("queries/filter_guild_stats.sql"),
                 &[&(guild_id as i64)],
             )
             .await?;
