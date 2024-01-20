@@ -91,5 +91,5 @@ async fn is_someone_online(http: Arc<Http>, cache: Arc<Cache>) -> Result<bool, E
 
     warn!("Users online: {}", count);
 
-    Ok(count > usize::MIN)
+    Ok(count > 0)
 }
