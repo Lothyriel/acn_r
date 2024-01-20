@@ -6,7 +6,7 @@ use poise::{
     serenity_prelude::{Cache, GuildId, Http, UserId, VoiceState},
 };
 
-use crate::extensions::std_ext::join_errors;
+use crate::extensions::std_ext::collapse_errors;
 
 #[async_trait]
 pub trait GuildExt {
@@ -56,9 +56,9 @@ pub async fn get_all_online_users(
         Ok(online_users)
     });
 
-    let all_online_users = join_errors(get_online_users_results)?;
+    let online_users_results = collapse_errors(get_online_users_results)?;
 
-    Ok(all_online_users.flatten())
+    Ok(online_users_results.into_iter().flatten())
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]

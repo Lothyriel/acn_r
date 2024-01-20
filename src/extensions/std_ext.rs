@@ -1,20 +1,4 @@
-use anyhow::{anyhow, Error};
-
-pub fn join_errors<T, I>(input: I) -> Result<impl Iterator<Item = T>, Error>
-where
-    I: IntoIterator<Item = Result<T, Error>>,
-{
-    let mut iter = input.into_iter();
-
-    match iter.any(|r| r.is_err()) {
-        false => Ok(iter.filter_map(Result::ok)),
-        true => {
-            let error_messages = iter.filter_map(Result::err).map(|e| format!("{e}"));
-
-            Err(anyhow!("Errors: {}", error_messages.join(" | ")))
-        }
-    }
-}
+use anyhow::Error;
 
 pub trait JoinString {
     fn join(self, separator: &str) -> String;
@@ -30,4 +14,13 @@ impl<S: Iterator<Item = String>> JoinString for S {
             }
         })
     }
+}
+
+pub fn collapse_errors<T, V>(values: V) -> Result<Vec<T>, Error>
+where
+    V: Iterator<Item = Result<T, Error>>,
+{
+    let result: Result<_, _> = values.into_iter().collect();
+
+    Ok(result?)
 }

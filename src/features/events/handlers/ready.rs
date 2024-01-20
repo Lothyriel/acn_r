@@ -4,7 +4,8 @@ use log::warn;
 use poise::serenity_prelude::Context;
 
 use crate::{
-    application::dependency_configuration::DependencyContainer, extensions::std_ext::join_errors,
+    application::dependency_configuration::DependencyContainer,
+    extensions::std_ext::collapse_errors,
 };
 
 pub async fn handler(
@@ -22,7 +23,7 @@ pub async fn handler(
 
     let tasks_results = join_all(tasks).await;
 
-    _ = join_errors(tasks_results)?;
+    _ = collapse_errors(tasks_results.into_iter())?;
 
     Ok(())
 }

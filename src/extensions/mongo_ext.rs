@@ -7,7 +7,7 @@ use mongodb::{
 use poise::async_trait;
 use serde::de::DeserializeOwned;
 
-use crate::extensions::std_ext::join_errors;
+use super::std_ext::collapse_errors;
 
 #[async_trait]
 pub trait CollectionExt<T> {
@@ -30,8 +30,6 @@ impl<T: DeserializeOwned + Send + Sync> CollectionExt<T> for Collection<T> {
             .into_iter()
             .map(|d| from_document(d).map_err(|e| anyhow!(e)));
 
-        let successes = join_errors(entities)?;
-
-        Ok(successes.collect())
+        collapse_errors(entities)
     }
 }
