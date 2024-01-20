@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use futures::TryStreamExt;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
+use tokio_postgres::Client;
 
 use anyhow::Error;
 use mongodb::{bson::doc, Collection, Database};
@@ -17,11 +18,13 @@ use crate::application::models::{
 pub struct StatsRepository {
     russian_roulette: Collection<RussianRoulette>,
     user_activity: Collection<UserActivity>,
+    client: Arc<Client>,
 }
 
 impl StatsRepository {
-    pub fn new(database: &Database) -> Self {
+    pub fn new(database: &Database, client: Client) -> Self {
         Self {
+            client: Arc::new(client),
             user_activity: database.collection("UserActivity"),
             russian_roulette: database.collection("RussianRoulette"),
         }
@@ -38,6 +41,18 @@ impl StatsRepository {
     pub async fn add_activity_2(&self, update_dto: &UserActivityDto) -> Result<(), Error> {
         let activity = get_activity(update_dto)?;
 
+        self.client
+            .execute(
+                include_str!("queries\\insert_user_activity.sql"),
+                &[
+                    &(activity.guild_id as i64),
+                    &(activity.user_id as i64),
+                    &activity.date,
+                    &activity.activity_type.to_string(),
+                ],
+            )
+            .await?;
+
         Ok(())
     }
 
@@ -52,9 +67,9 @@ impl StatsRepository {
         guild_id: u64,
         target: Option<u64>,
     ) -> Result<StatsDto, Error> {
-        let activities_by_user = self.get_activities_2(guild_id, target).await?;
+        let activities = self.get_activities_2(guild_id, target).await?;
 
-        sort_activity(activities_by_user, guild_id)
+        sort_activity(activities, guild_id)
     }
 
     pub async fn get_guild_stats(
@@ -62,24 +77,56 @@ impl StatsRepository {
         guild_id: u64,
         target: Option<u64>,
     ) -> Result<StatsDto, Error> {
-        let activities_by_user = self.get_activities(guild_id, target).await?;
+        let activities = self.get_activities(guild_id, target).await?;
 
-        sort_activity(activities_by_user, guild_id)
+        sort_activity(activities, guild_id)
     }
 
     pub async fn get_activities_2(
         &self,
         guild_id: u64,
-        target: Option<u64>,
-    ) -> Result<HashMap<u64, Vec<UserActivity>>, Error> {
-        todo!()
+        _target: Option<u64>,
+    ) -> Result<Vec<UserActivity>, Error> {
+        let rows = self
+            .client
+            .query(
+                include_str!("queries\\filter_guild_stats.sql"),
+                &[&(guild_id as i64)],
+            )
+            .await?;
+
+        let activities = rows.into_iter().map(|r| {
+            let user_id: i64 = r.get(0);
+
+            if user_id <= 0 {
+                return Err(anyhow!("Falei pra você usar string..."));
+            }
+
+            let date = r.get(1);
+            let activity_type: &str = r.get(2);
+
+            let activity_type = match activity_type {
+                "Connected" => Activity::Connected,
+                "Disconnected" => Activity::Disconnected,
+                _ => return Err(anyhow!("Should not get this ActivityType here")),
+            };
+
+            Ok(UserActivity {
+                guild_id,
+                user_id: user_id as u64,
+                date,
+                activity_type,
+            })
+        });
+
+        activities.collect()
     }
 
     pub async fn get_activities(
         &self,
         guild_id: u64,
         target: Option<u64>,
-    ) -> Result<HashMap<u64, Vec<UserActivity>>, Error> {
+    ) -> Result<Vec<UserActivity>, Error> {
         let mut filters = vec![
             doc! {"guild_id": guild_id as i64},
             doc! {"activity_type": {"$in": [Activity::Connected.to_string(), Activity::Disconnected.to_string()]}},
@@ -94,23 +141,16 @@ impl StatsRepository {
             .find(doc! {"$and": filters}, None)
             .await?;
 
-        let guild_activity: Vec<_> = cursor.try_collect().await?;
-
-        let stats_by_user = guild_activity
-            .into_iter()
-            .fold(HashMap::new(), |mut map, e| {
-                map.entry(e.user_id).or_insert(Vec::new()).push(e);
-                map
-            });
-
-        Ok(stats_by_user)
+        Ok(cursor.try_collect().await?)
     }
 }
 
-fn sort_activity(
-    activities_by_user: HashMap<u64, Vec<UserActivity>>,
-    guild_id: u64,
-) -> Result<StatsDto, Error> {
+fn sort_activity(activities: Vec<UserActivity>, guild_id: u64) -> Result<StatsDto, Error> {
+    let activities_by_user = activities.into_iter().fold(HashMap::new(), |mut map, e| {
+        map.entry(e.user_id).or_insert(Vec::new()).push(e);
+        map
+    });
+
     let first_activity_date = activities_by_user
         .iter()
         .flat_map(|a| a.1)
