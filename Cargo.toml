@@ -22,4 +22,4 @@ poise = { version = "0.5.5", features = ["cache"] }
 lavalink-rs = { git = "https://github.com/DoggySazHi/lavalink-rs-moogan", branch = "master" }
 songbird = "0.3.2"
 rand = "0.8.5"
-postgres = "0.19"
+tokio-postgres = { version = "0.7", features = ["with-chrono-0_4"] }

@@ -9,11 +9,18 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: acn
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-    volumes:
-      - mongodb_data:/data/db
+
+  postgres:
+    image: postgres
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: acn
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
 
   lavalink:
-    image: fredboat/lavalink:latest
+    image: fredboat/lavalink:3.7.8
     restart: unless-stopped
     mem_limit: 400m
     ports:
@@ -21,6 +28,3 @@ services:
     environment:
       SERVER_PORT: 2333
       LAVALINK_SERVER_PASSWORD: ${LAVALINK_PASSWORD}
-
-volumes:
-  mongodb_data:
