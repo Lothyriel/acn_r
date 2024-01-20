@@ -3,7 +3,7 @@ use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
 use crate::application::{
     models::{
-        dto::user::{UpdateNickDto, UpdateUserDto},
+        dto::user::{UpdateNickDto, UserActivityDto},
         entities::{
             nickname::NicknameChange,
             user::{Signature, User},
@@ -55,32 +55,32 @@ impl UserRepository {
         Ok(possible_last_change.map(|n| n.nickname))
     }
 
-    pub async fn update_user(&self, update_user_dto: UpdateUserDto) -> Result<(), Error> {
-        if let Some(guild_info) = &update_user_dto.guild_info {
+    pub async fn update_user(&self, user_activity: &UserActivityDto) -> Result<(), Error> {
+        if let Some(guild_info) = &user_activity.guild_info {
             self.guild_repository
                 .add_guild(
                     guild_info.guild_id,
                     guild_info.guild_name.as_str(),
-                    update_user_dto.date,
+                    user_activity.date,
                 )
                 .await?;
 
             let update_dto = UpdateNickDto {
-                user_id: update_user_dto.user_id,
+                user_id: user_activity.user_id,
                 guild_id: Some(guild_info.guild_id),
-                new_nickname: update_user_dto.nickname,
-                date: update_user_dto.date,
+                new_nickname: user_activity.nickname.to_owned(),
+                date: user_activity.date,
             };
 
             self.update_nickname(update_dto).await?;
         }
 
-        if self.user_exists(update_user_dto.user_id).await? {
+        if self.user_exists(user_activity.user_id).await? {
             return Ok(());
         }
 
         let user = User {
-            id: update_user_dto.user_id,
+            id: user_activity.user_id,
         };
 
         self.users.insert_one(user, None).await?;

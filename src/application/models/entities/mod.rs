@@ -6,4 +6,5 @@ pub mod nickname;
 pub mod reaction;
 pub mod russian_roulette;
 pub mod user;
+pub mod user_activity;
 pub mod voice;

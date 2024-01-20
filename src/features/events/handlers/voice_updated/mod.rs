@@ -11,7 +11,7 @@ use crate::{
         dependency_configuration::DependencyContainer,
         infra::{deploy_service::DeployServices, lavalink_ctx::LavalinkCtx},
         models::{
-            dto::user::{GuildInfo, UpdateUserDto},
+            dto::user::{GuildInfo, UserActivityDto},
             entities::user::Activity,
         },
         repositories::jukebox::JukeboxRepository,
@@ -38,7 +38,12 @@ pub async fn handler(
 
     let guild = ctx.http.get_guild(member.guild_id.0).await?;
 
-    let dto = UpdateUserDto {
+    let activity = match old {
+        Some(old_activity) => get_activity(old_activity, new),
+        None => Activity::Connected,
+    };
+
+    let dto = UserActivityDto {
         user_id: new.user_id.0,
         guild_info: Some(GuildInfo {
             guild_id: guild.id.0,
@@ -46,9 +51,12 @@ pub async fn handler(
         }),
         nickname: member.display_name().to_string(),
         date: chrono::Utc::now(),
+        activity: Some(activity),
     };
 
-    data.repositories.user.update_user(dto).await?;
+    data.repositories.stats.add_activity(&dto).await?;
+
+    data.repositories.user.update_user(&dto).await?;
 
     let tasks = vec![
         |c| tokio::spawn(dispatches::songbird_reconnect::handler(c)),
@@ -106,11 +114,11 @@ async fn dispatch_tasks(tasks: Tasks, data: Arc<DispatchData>) -> Result<(), Err
         .into_iter()
         .map(|c| c(data.to_owned()).map_err(|e| anyhow!(e)));
 
-    let join_results = join_all(tasks).await;
+    let joins_results = join_all(tasks).await;
 
-    let a = join_errors(join_results)?;
+    let tasks_results = join_errors(joins_results)?;
 
-    _ = join_errors(a)?;
+    _ = join_errors(tasks_results)?;
 
     Ok(())
 }

@@ -3,7 +3,7 @@ use mongodb::{Collection, Database};
 
 use crate::application::{
     models::{
-        dto::{command_use::CommandUseDto, user::UpdateUserDto},
+        dto::{command_use::CommandUseDto, user::UserActivityDto},
         entities::command::{CommandError, CommandUse},
     },
     repositories::user::UserRepository,
@@ -36,14 +36,15 @@ impl CommandRepository {
 
         self.commands_use.insert_one(command_use, None).await?;
 
-        let add = UpdateUserDto {
+        let add = UserActivityDto {
             guild_info: command_use_dto.guild_info,
             user_id: command_use_dto.user_id,
             nickname: command_use_dto.user_nickname,
             date: command_use_dto.date,
+            activity: None,
         };
 
-        self.user_repository.update_user(add).await?;
+        self.user_repository.update_user(&add).await?;
 
         Ok(())
     }
