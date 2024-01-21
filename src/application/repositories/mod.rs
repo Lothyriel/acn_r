@@ -18,9 +18,8 @@ pub async fn ensure_database_created(client: &Client) -> Result<(), Error> {
 }
 
 pub async fn get_client(settings: &PostgresSettings) -> Result<tokio_postgres::Client, Error> {
-    let (client, connection) = tokio_postgres::connect(&settings.get_connection_string()?, NoTls)
-        .await
-        .unwrap();
+    let (client, connection) =
+        tokio_postgres::connect(&settings.get_connection_string()?, NoTls).await?;
 
     tokio::spawn(async move {
         if let Err(e) = connection.await {
