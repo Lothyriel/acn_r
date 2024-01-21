@@ -53,7 +53,7 @@ pub struct MongoSettings {
     pub connection_string: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct PostgresSettings {
     pub user: String,
     pub url: String,

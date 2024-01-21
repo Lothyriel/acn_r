@@ -5,7 +5,6 @@ use poise::serenity_prelude::UserId;
 use songbird::Songbird;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tokio_postgres::Client;
 
 use crate::application::{
     infra::{
@@ -21,7 +20,7 @@ use crate::application::{
     },
 };
 
-use super::repositories::get_client;
+use super::{infra::appsettings::PostgresSettings, repositories::get_client};
 
 pub struct DependencyContainer {
     pub services: ServicesContainer,
@@ -37,9 +36,7 @@ impl DependencyContainer {
     ) -> Result<Self, Error> {
         let repositories = RepositoriesContainer::build(&settings).await?;
 
-        let services = ServicesContainer::build(settings, songbird, id, deploy_file)
-            .await
-            .unwrap();
+        let services = ServicesContainer::build(settings, songbird, id, deploy_file).await?;
 
         Ok(Self {
             services,
@@ -102,17 +99,17 @@ impl RepositoriesContainer {
 
         super::repositories::ensure_database_created(&client).await?;
 
-        Ok(Self::build_with_db(db, client))
+        Ok(Self::build_with_db(db, settings.pg_settings.to_owned()))
     }
 
-    pub fn build_with_db(db: Database, client: Client) -> Self {
+    pub fn build_with_db(db: Database, pg_settings: PostgresSettings) -> Self {
         let guild = GuildRepository::new(&db);
 
         let user = UserRepository::new(&db, guild.to_owned());
 
         let command = CommandRepository::new(&db, user.to_owned());
 
-        let stats = StatsRepository::new(&db, client);
+        let stats = StatsRepository::new(&db, pg_settings);
 
         let jukebox = JukeboxRepository::new(&db);
 

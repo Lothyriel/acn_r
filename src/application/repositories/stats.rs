@@ -1,30 +1,36 @@
 use anyhow::anyhow;
 use futures::TryStreamExt;
-use std::{collections::HashMap, sync::Arc};
-use tokio_postgres::Client;
+use std::collections::HashMap;
 
 use anyhow::Error;
 use mongodb::{bson::doc, Collection, Database};
 
-use crate::application::models::{
-    dto::{
-        stats::{StatsDto, UserStats},
-        user::UserActivityDto,
+use crate::application::{
+    infra::appsettings::PostgresSettings,
+    models::{
+        dto::{
+            stats::{StatsDto, UserStats},
+            user::UserActivityDto,
+        },
+        entities::{
+            russian_roulette::RussianRoulette, user::Activity, user_activity::UserActivity,
+        },
     },
-    entities::{russian_roulette::RussianRoulette, user::Activity, user_activity::UserActivity},
 };
+
+use super::get_client;
 
 #[derive(Clone)]
 pub struct StatsRepository {
     russian_roulette: Collection<RussianRoulette>,
     user_activity: Collection<UserActivity>,
-    client: Arc<Client>,
+    pg_settings: PostgresSettings,
 }
 
 impl StatsRepository {
-    pub fn new(database: &Database, client: Client) -> Self {
+    pub fn new(database: &Database, pg_settings: PostgresSettings) -> Self {
         Self {
-            client: Arc::new(client),
+            pg_settings,
             user_activity: database.collection("UserActivity"),
             russian_roulette: database.collection("RussianRoulette"),
         }
@@ -41,7 +47,8 @@ impl StatsRepository {
     pub async fn add_activity_2(&self, update_dto: &UserActivityDto) -> Result<(), Error> {
         let activity = get_activity(update_dto)?;
 
-        self.client
+        get_client(&self.pg_settings)
+            .await?
             .execute(
                 include_str!("queries/insert_user_activity.sql"),
                 &[
@@ -87,8 +94,8 @@ impl StatsRepository {
         guild_id: u64,
         _target: Option<u64>,
     ) -> Result<Vec<UserActivity>, Error> {
-        let rows = self
-            .client
+        let rows = get_client(&self.pg_settings)
+            .await?
             .query(
                 include_str!("queries/filter_guild_stats.sql"),
                 &[&(guild_id as i64)],
