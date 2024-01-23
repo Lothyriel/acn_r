@@ -8,7 +8,7 @@ use crate::{
         infra::{appsettings::AppSettings, env},
     },
     extensions::serenity::{context_ext::get_songbird_client, Command},
-    features::commands::{help, jukebox, misc, r34, stats},
+    features::commands::{help, jukebox, misc, r34},
 };
 
 use self::events::{after, check, error, handlers::invoker};
@@ -27,12 +27,7 @@ fn register_commands(groups: Vec<Vec<Command>>) -> Vec<Command> {
 }
 
 fn register_groups() -> Vec<Vec<Command>> {
-    vec![
-        r34::group(),
-        misc::group(),
-        jukebox::group(),
-        stats::group(),
-    ]
+    vec![r34::group(), misc::group(), jukebox::group()]
 }
 
 pub async fn start() -> Result<(), Error> {
@@ -64,7 +59,7 @@ pub async fn start() -> Result<(), Error> {
 
                 let songbird = get_songbird_client(ctx).await?;
 
-                DependencyContainer::build(settings, songbird, ready.user.id, "acn.yml").await
+                DependencyContainer::build(settings, songbird, ready.user.id).await
             })
         });
 

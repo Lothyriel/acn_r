@@ -29,7 +29,6 @@ pub struct AppSettings {
     pub lavalink_settings: LavalinkSettings,
     pub mongo_settings: MongoSettings,
     pub github_settings: GithubSettings,
-    pub pg_settings: PostgresSettings,
 }
 
 impl AppSettings {
@@ -51,25 +50,6 @@ pub struct MongoSettings {
     pub user: String,
     pub url: String,
     pub connection_string: String,
-}
-
-#[derive(Deserialize, Clone)]
-pub struct PostgresSettings {
-    pub user: String,
-    pub url: String,
-    pub connection_string: String,
-}
-
-impl PostgresSettings {
-    pub fn get_connection_string(&self) -> Result<String, Error> {
-        let connection_string = self
-            .connection_string
-            .replace("{PASSWORD}", &env::get("PG_PASSWORD")?)
-            .replace("{USER}", &self.user)
-            .replace("{URL}", &self.url);
-
-        Ok(connection_string)
-    }
 }
 
 #[derive(Deserialize)]

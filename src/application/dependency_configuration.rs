@@ -16,11 +16,11 @@ use crate::application::{
     },
     repositories::{
         command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
-        stats::StatsRepository, user::UserRepository,
+        user::UserRepository,
     },
 };
 
-use super::{infra::appsettings::PostgresSettings, repositories::get_client};
+use super::repositories::stats::StatsRepository;
 
 pub struct DependencyContainer {
     pub services: ServicesContainer,
@@ -32,11 +32,10 @@ impl DependencyContainer {
         settings: AppSettings,
         songbird: Arc<Songbird>,
         id: UserId,
-        deploy_file: &str,
     ) -> Result<Self, Error> {
         let repositories = RepositoriesContainer::build(&settings).await?;
 
-        let services = ServicesContainer::build(settings, songbird, id, deploy_file).await?;
+        let services = ServicesContainer::build(settings, songbird, id).await?;
 
         Ok(Self {
             services,
@@ -59,7 +58,6 @@ impl ServicesContainer {
         settings: AppSettings,
         songbird: Arc<Songbird>,
         bot_id: UserId,
-        deploy_file: &str,
     ) -> Result<Self, Error> {
         let http_client = reqwest::Client::new();
 
@@ -69,8 +67,7 @@ impl ServicesContainer {
 
         let app_configurations = Arc::new(RwLock::new(Default::default()));
 
-        let deploy_services =
-            DeployServices::new(github_client, app_configurations.to_owned(), deploy_file);
+        let deploy_services = DeployServices::new(github_client, app_configurations.to_owned());
 
         Ok(Self {
             deploy_services,
@@ -87,29 +84,25 @@ pub struct RepositoriesContainer {
     pub user: UserRepository,
     pub command: CommandRepository,
     pub guild: GuildRepository,
-    pub stats: StatsRepository,
     pub jukebox: JukeboxRepository,
+    pub stats: StatsRepository,
 }
 
 impl RepositoriesContainer {
     pub async fn build(settings: &AppSettings) -> Result<Self, Error> {
         let db = Self::database(&settings.mongo_settings).await?;
 
-        let client = get_client(&settings.pg_settings).await?;
-
-        super::repositories::ensure_database_created(&client).await?;
-
-        Ok(Self::build_with_db(db, settings.pg_settings.to_owned()))
+        Ok(Self::build_with_db(db))
     }
 
-    pub fn build_with_db(db: Database, pg_settings: PostgresSettings) -> Self {
+    pub fn build_with_db(db: Database) -> Self {
         let guild = GuildRepository::new(&db);
 
         let user = UserRepository::new(&db, guild.to_owned());
 
         let command = CommandRepository::new(&db, user.to_owned());
 
-        let stats = StatsRepository::new(&db, pg_settings);
+        let stats = StatsRepository::new(&db);
 
         let jukebox = JukeboxRepository::new(&db);
 

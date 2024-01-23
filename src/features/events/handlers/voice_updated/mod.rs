@@ -54,10 +54,6 @@ pub async fn handler(
         activity: Some(activity),
     };
 
-    data.repositories.stats.add_activity_2(&dto).await?;
-
-    data.repositories.stats.add_activity(&dto).await?;
-
     data.repositories.user.update_user(&dto).await?;
 
     let tasks = vec![
