@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::{bail, Error};
 use serde::Deserialize;
 use std::path::PathBuf;
 
@@ -17,9 +17,7 @@ fn try_get_file(max_depth: usize, filename: String) -> Result<PathBuf, Error> {
         }
     }
 
-    let error = anyhow!("The file {} was not found in depth {}", filename, max_depth);
-
-    Err(error)
+    bail!("The file {} was not found in depth {}", filename, max_depth)
 }
 
 #[derive(Deserialize)]

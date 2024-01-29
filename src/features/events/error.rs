@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::{anyhow, bail, Error};
 
 use crate::{
     application::models::dto::command_use::CommandUseDto,
@@ -14,11 +14,11 @@ use crate::{
 async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
     match err {
         poise::FrameworkError::Command { error, ctx } => handle_command_error(ctx, error).await,
-        poise::FrameworkError::EventHandler { error, event, .. } => Err(anyhow!(
+        poise::FrameworkError::EventHandler { error, event, .. } => bail!(
             "EventHandler returned error during {} event: {}",
             event.name(),
             error
-        )),
+        ),
         error => poise::builtins::on_error(error)
             .await
             .map_err(|e| anyhow!("Error while handling error: {}", e)),
@@ -50,7 +50,7 @@ async fn handle_command_error(ctx: Context<'_>, error: Error) -> Result<(), Erro
         .add_command_error(dto, message.as_str())
         .await?;
 
-    Err(anyhow!(message))
+    bail!(message)
 }
 
 pub async fn handler(err: FrameworkError<'_>) {

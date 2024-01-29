@@ -1,6 +1,6 @@
 use std::{borrow::BorrowMut, sync::Arc};
 
-use anyhow::{anyhow, Error};
+use anyhow::{anyhow, bail, Error};
 use lavalink_rs::{
     async_trait,
     gateway::LavalinkEventHandler,
@@ -211,11 +211,11 @@ impl LavalinkCtx {
 
                 Ok(())
             }
-            Err(error) => Err(anyhow!(
+            Err(error) => bail!(
                 "Guild {} | Error joining the channel: {}",
                 self.guild_id,
                 error
-            )),
+            ),
         }
     }
 
