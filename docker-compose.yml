@@ -9,6 +9,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: acn
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
 
   lavalink:
     image: fredboat/lavalink:3.7.8
@@ -19,3 +21,6 @@ services:
     environment:
       SERVER_PORT: 2333
       LAVALINK_SERVER_PASSWORD: ${LAVALINK_PASSWORD}
+
+volumes:
+  mongodb_data:
