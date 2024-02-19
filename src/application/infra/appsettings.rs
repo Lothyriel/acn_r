@@ -26,7 +26,6 @@ pub struct AppSettings {
     pub prefix: String,
     pub lavalink_settings: LavalinkSettings,
     pub mongo_settings: MongoSettings,
-    pub github_settings: GithubSettings,
 }
 
 impl AppSettings {
@@ -48,13 +47,6 @@ pub struct MongoSettings {
     pub user: String,
     pub url: String,
     pub connection_string: String,
-}
-
-#[derive(Deserialize)]
-pub struct GithubSettings {
-    pub username: String,
-    pub repository: String,
-    pub branch_name: String,
 }
 
 #[derive(Deserialize)]
