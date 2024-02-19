@@ -9,7 +9,7 @@ RUN apt-get install -y cmake
 RUN cargo build --release
 
 # Prod stage
-FROM gcr.io/distroless/cc
+FROM debian:stable-slim
 COPY --from=builder /target/release/acn /
 COPY appsettings_prd.json .
 
