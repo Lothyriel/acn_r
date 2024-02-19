@@ -4,13 +4,10 @@ use mongodb::Database;
 use poise::serenity_prelude::UserId;
 use songbird::Songbird;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
 use crate::application::{
     infra::{
-        appsettings::{AppConfigurations, AppSettings, MongoSettings},
-        deploy_service::DeployServices,
-        http_clients::github_client::GithubClient,
+        appsettings::{AppSettings, MongoSettings},
         lavalink_ctx,
         mongo_client::create_mongo_client,
     },
@@ -47,9 +44,7 @@ impl DependencyContainer {
 pub struct ServicesContainer {
     pub bot_id: UserId,
     pub allowed_ids: Vec<u64>,
-    pub app_configurations: Arc<RwLock<AppConfigurations>>,
     pub lava_client: LavalinkClient,
-    pub deploy_services: DeployServices,
     pub songbird: Arc<Songbird>,
 }
 
@@ -59,22 +54,12 @@ impl ServicesContainer {
         songbird: Arc<Songbird>,
         bot_id: UserId,
     ) -> Result<Self, Error> {
-        let http_client = reqwest::Client::new();
-
         let lava_client = lavalink_ctx::get_lavalink_client(&settings, songbird.to_owned()).await?;
 
-        let github_client = Arc::new(GithubClient::new(http_client, settings.github_settings));
-
-        let app_configurations = Arc::new(RwLock::new(Default::default()));
-
-        let deploy_services = DeployServices::new(github_client, app_configurations.to_owned());
-
         Ok(Self {
-            deploy_services,
             lava_client,
             bot_id,
             allowed_ids: settings.allowed_ids,
-            app_configurations,
             songbird,
         })
     }

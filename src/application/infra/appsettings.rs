@@ -62,8 +62,3 @@ pub struct LavalinkSettings {
     pub url: String,
     pub port: u16,
 }
-
-#[derive(Default)]
-pub struct AppConfigurations {
-    pub deploy_ready: bool,
-}

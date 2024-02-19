@@ -9,7 +9,7 @@ use songbird::Songbird;
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::{deploy_service::DeployServices, lavalink_ctx::LavalinkCtx},
+        infra::lavalink_ctx::LavalinkCtx,
         models::{
             dto::user::{GuildInfo, UserActivityDto},
             entities::user::Activity,
@@ -60,7 +60,6 @@ pub async fn handler(
         |c| tokio::spawn(dispatches::songbird_reconnect::handler(c)),
         |c| tokio::spawn(dispatches::songbird_disconnect::handler(c)),
         |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),
-        |c| tokio::spawn(dispatches::deploy::handler(c)),
     ];
 
     let dispatch_data = get_dispatch_data(old, new, ctx, data).await?;
@@ -95,7 +94,6 @@ async fn get_dispatch_data(
         channel_id: new.channel_id,
         user_id: new.user_id,
         jukebox_repository: data.repositories.jukebox.to_owned(),
-        deploy_services: data.services.deploy_services.to_owned(),
         lava_client: data.services.lava_client.to_owned(),
         bot_id: data.services.bot_id,
         guild_id: member.guild_id,
@@ -129,7 +127,6 @@ pub struct DispatchData {
     lava_client: LavalinkClient,
 
     jukebox_repository: JukeboxRepository,
-    deploy_services: DeployServices,
     bot_id: UserId,
 
     user_id: UserId,
