@@ -20,7 +20,5 @@ pub fn collapse_errors<T, V>(values: V) -> Result<Vec<T>, Error>
 where
     V: Iterator<Item = Result<T, Error>>,
 {
-    let result: Result<_, _> = values.into_iter().collect();
-
-    Ok(result?)
+    values.into_iter().collect()
 }
