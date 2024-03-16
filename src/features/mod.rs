@@ -11,7 +11,7 @@ use crate::{
     features::commands::*,
 };
 
-use self::events::{after, check, error, handlers::invoker};
+use self::events::*;
 
 mod commands;
 mod events;
@@ -37,7 +37,7 @@ pub async fn start() -> Result<(), Error> {
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             event_handler: |ctx, event, _, user_data| {
-                Box::pin(invoker::songbird_handler(ctx, event, user_data))
+                Box::pin(handlers::invoker::songbird_handler(ctx, event, user_data))
             },
             commands: register_commands(register_groups()),
             on_error: |error| Box::pin(error::handler(error)),
