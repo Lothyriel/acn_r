@@ -8,7 +8,7 @@ use crate::{
         infra::{appsettings::AppSettings, env},
     },
     extensions::serenity::{context_ext::get_songbird_client, Command},
-    features::commands::{help, jukebox, misc, r34},
+    features::commands::*,
 };
 
 use self::events::{after, check, error, handlers::invoker};
