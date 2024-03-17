@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 use poise::serenity_prelude::Mentionable;
 use rand::Rng;
@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-async fn after(ctx: Context<'_>) -> Result<(), Error> {
+async fn after(ctx: Context<'_>) -> Result<()> {
     let now = chrono::Utc::now();
 
     let guild_info = ctx.get_guild_info();
@@ -27,7 +27,7 @@ async fn after(ctx: Context<'_>) -> Result<(), Error> {
     let dto = CommandUseDto {
         date: now,
         guild_info,
-        user_id: ctx.author().id.0,
+        user_id: ctx.author().id.get(),
         user_nickname: nickname,
         command: command_name,
         args: ctx.get_command_args().await,
@@ -38,7 +38,7 @@ async fn after(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-async fn attempt_russian_roulette(ctx: Context<'_>, now: DateTime<Utc>) -> Result<(), Error> {
+async fn attempt_russian_roulette(ctx: Context<'_>, now: DateTime<Utc>) -> Result<()> {
     let random_number: f32 = rand::thread_rng().gen();
 
     let shot = random_number < 0.01;
@@ -57,8 +57,8 @@ async fn attempt_russian_roulette(ctx: Context<'_>, now: DateTime<Utc>) -> Resul
 
     let attempt = RussianRoulette {
         shot,
-        guild_id: ctx.guild_id().map(|g| g.0),
-        user_id: ctx.author().id.0,
+        guild_id: ctx.guild_id().map(|g| g.get()),
+        user_id: ctx.author().id.get(),
         date: now,
         command: ctx.command().name.to_owned(),
         number_drawn: random_number,

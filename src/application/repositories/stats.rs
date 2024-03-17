@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::Result;
 use mongodb::{Collection, Database};
 
 use crate::application::models::entities::russian_roulette::RussianRoulette;
@@ -15,7 +15,7 @@ impl StatsRepository {
         }
     }
 
-    pub async fn add_russian_roulette(&self, attempt: RussianRoulette) -> Result<(), Error> {
+    pub async fn add_russian_roulette(&self, attempt: RussianRoulette) -> Result<()> {
         self.russian_roulette.insert_one(attempt, None).await?;
 
         Ok(())

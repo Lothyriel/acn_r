@@ -1,10 +1,11 @@
-use anyhow::Error;
+use anyhow::Result;
 use log::error;
+
 pub trait LogExt {
     fn log(self);
 }
 
-impl LogExt for Result<(), Error> {
+impl LogExt for Result<()> {
     fn log(self) {
         match self {
             Ok(_) => (),

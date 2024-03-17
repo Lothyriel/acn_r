@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
@@ -18,7 +18,7 @@ impl GuildRepository {
         }
     }
 
-    pub async fn add_guild(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<(), Error> {
+    pub async fn add_guild(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<()> {
         self.update_name(id, name, date).await?;
 
         if self.guild_exists(id).await? {
@@ -31,16 +31,16 @@ impl GuildRepository {
         Ok(())
     }
 
-    async fn guild_exists(&self, guild_id: u64) -> Result<bool, Error> {
+    async fn guild_exists(&self, guild_id: u64) -> Result<bool> {
         Ok(self.get_guild(guild_id).await?.is_some())
     }
 
-    async fn get_guild(&self, guild_id: u64) -> Result<Option<Guild>, Error> {
+    async fn get_guild(&self, guild_id: u64) -> Result<Option<Guild>> {
         let filter = doc! {"id": guild_id as i64};
         Ok(self.guilds.find_one(filter, None).await?)
     }
 
-    async fn update_name(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<(), Error> {
+    async fn update_name(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<()> {
         if let Some(last_name) = self.get_last_name(id).await? {
             if last_name == name {
                 return Ok(());
@@ -58,7 +58,7 @@ impl GuildRepository {
         Ok(())
     }
 
-    async fn get_last_name(&self, guild_id: u64) -> Result<Option<String>, Error> {
+    async fn get_last_name(&self, guild_id: u64) -> Result<Option<String>> {
         let filter = doc! {"guild_id": guild_id as i64};
         let options = FindOneOptions::builder().sort(doc! { "date": -1 }).build();
 

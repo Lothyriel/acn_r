@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::Result;
 
 pub trait JoinString {
     fn join(self, separator: &str) -> String;
@@ -16,9 +16,9 @@ impl<S: Iterator<Item = String>> JoinString for S {
     }
 }
 
-pub fn collapse_errors<T, V>(values: V) -> Result<Vec<T>, Error>
+pub fn collapse_errors<T, V>(values: V) -> Result<Vec<T>>
 where
-    V: Iterator<Item = Result<T, Error>>,
+    V: Iterator<Item = Result<T>>,
 {
     values.into_iter().collect()
 }

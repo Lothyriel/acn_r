@@ -1,5 +1,5 @@
-use anyhow::Error;
-use poise::{serenity_prelude::Context, Event};
+use anyhow::Result;
+use poise::serenity_prelude::{Context, Event};
 
 use crate::{
     application::dependency_configuration::DependencyContainer,
@@ -13,7 +13,7 @@ pub async fn songbird_handler(
     ctx: &Context,
     event: &Event<'_>,
     data: &DependencyContainer,
-) -> Result<(), Error> {
+) -> Result<()> {
     match event {
         Event::Message { new_message } => message::handler(ctx, data, new_message).await,
         Event::Ready { data_about_bot } => {

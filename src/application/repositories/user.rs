@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::Result;
 use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
 
 use crate::application::{
@@ -30,7 +30,7 @@ impl UserRepository {
         }
     }
 
-    pub async fn get_last_signature(&self, user_id: u64) -> Result<Option<Signature>, Error> {
+    pub async fn get_last_signature(&self, user_id: u64) -> Result<Option<Signature>> {
         let filter = doc! {"user_id": user_id as i64};
 
         let options = FindOneOptions::builder().sort(doc! { "date": -1 }).build();
@@ -40,13 +40,13 @@ impl UserRepository {
         Ok(user)
     }
 
-    pub async fn add_signature(&self, signature: Signature) -> Result<(), Error> {
+    pub async fn add_signature(&self, signature: Signature) -> Result<()> {
         self.signatures.insert_one(signature, None).await?;
 
         Ok(())
     }
 
-    pub async fn get_last_name(&self, user_id: u64) -> Result<Option<String>, Error> {
+    pub async fn get_last_name(&self, user_id: u64) -> Result<Option<String>> {
         let filter = doc! {"user_id": user_id as i64};
         let options = FindOneOptions::builder().sort(doc! { "date": -1 }).build();
 
@@ -55,7 +55,7 @@ impl UserRepository {
         Ok(possible_last_change.map(|n| n.nickname))
     }
 
-    pub async fn update_user(&self, user_activity: &UserActivityDto) -> Result<(), Error> {
+    pub async fn update_user(&self, user_activity: &UserActivityDto) -> Result<()> {
         if let Some(guild_info) = &user_activity.guild_info {
             self.guild_repository
                 .add_guild(
@@ -87,7 +87,7 @@ impl UserRepository {
         Ok(())
     }
 
-    pub async fn update_nickname(&self, update_dto: UpdateNickDto) -> Result<(), Error> {
+    pub async fn update_nickname(&self, update_dto: UpdateNickDto) -> Result<()> {
         if let Some(last_name) = self.get_last_name(update_dto.user_id).await? {
             if last_name == update_dto.new_nickname {
                 return Ok(());
@@ -106,11 +106,11 @@ impl UserRepository {
         Ok(())
     }
 
-    async fn user_exists(&self, guild_id: u64) -> Result<bool, Error> {
+    async fn user_exists(&self, guild_id: u64) -> Result<bool> {
         Ok(self.get_user(guild_id).await?.is_some())
     }
 
-    async fn get_user(&self, id: u64) -> Result<Option<User>, Error> {
+    async fn get_user(&self, id: u64) -> Result<Option<User>> {
         let doc = doc! {"id": id as i64};
         Ok(self.users.find_one(doc, None).await?)
     }

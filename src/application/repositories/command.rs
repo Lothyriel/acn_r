@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::Result;
 use mongodb::{Collection, Database};
 
 use crate::application::{
@@ -25,7 +25,7 @@ impl CommandRepository {
         }
     }
 
-    pub async fn add_command_use(&self, command_use_dto: CommandUseDto) -> Result<(), Error> {
+    pub async fn add_command_use(&self, command_use_dto: CommandUseDto) -> Result<()> {
         let command_use = CommandUse {
             guild_id: command_use_dto.guild_info.as_ref().map(|g| g.guild_id),
             user_id: command_use_dto.user_id,
@@ -49,7 +49,7 @@ impl CommandRepository {
         Ok(())
     }
 
-    pub async fn add_command_error(&self, dto: CommandUseDto, error: &str) -> Result<(), Error> {
+    pub async fn add_command_error(&self, dto: CommandUseDto, error: &str) -> Result<()> {
         let command_error = CommandError {
             guild_id: dto.guild_info.map(|g| g.guild_id),
             user_id: dto.user_id,

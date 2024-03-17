@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod stats {
-    use anyhow::Error;
+    use anyhow::Result;
 
     #[tokio::test]
-    async fn test() -> Result<(), Error> {
+    async fn test() -> Result<()> {
         Ok(())
     }
 }

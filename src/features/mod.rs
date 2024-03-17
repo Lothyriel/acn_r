@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::{Error, Result};
 use poise::serenity_prelude::{ClientBuilder, GatewayIntents};
 use songbird::SerenityInit;
 
@@ -30,7 +30,7 @@ fn register_groups() -> Vec<Vec<Command>> {
     vec![r34::group(), misc::group(), jukebox::group()]
 }
 
-pub async fn start() -> Result<(), Error> {
+pub async fn start() -> Result<()> {
     let settings = AppSettings::load()?;
     let token = env::get("TOKEN_BOT")?;
 
@@ -45,7 +45,7 @@ fn get_framework(settings: &AppSettings) -> poise::FrameworkBuilder<DependencyCo
     poise::Framework::builder()
         .options(get_options(settings))
         .setup(|ctx, ready, framework| {
-            Box::pin(async move {
+            Box::pin(async {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
                 DependencyContainer::build(settings, ready.user.id).await

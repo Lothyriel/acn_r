@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::Result;
 use poise::serenity_prelude::{Context, GuildId, Member, User};
 
 use crate::extensions::serenity::guild_ext::GuildExt;
@@ -8,7 +8,7 @@ pub async fn handler(
     id: &GuildId,
     user: &User,
     member: &Option<Member>,
-) -> Result<(), Error> {
+) -> Result<()> {
     let name = member
         .as_ref()
         .map(|m| m.display_name().to_string())
