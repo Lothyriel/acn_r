@@ -6,7 +6,7 @@ use poise::serenity_prelude::{ChannelId, Guild, GuildId, User};
 use songbird::Songbird;
 
 use crate::{
-    application::{infra::lavalink_ctx::AudioPlayer, models::dto::user::GuildInfo},
+    application::{infra::audio::player::AudioPlayer, models::dto::user::GuildInfo},
     extensions::{serenity::Context, std_ext::JoinString},
 };
 

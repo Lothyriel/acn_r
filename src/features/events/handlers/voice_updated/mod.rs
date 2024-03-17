@@ -8,7 +8,7 @@ use songbird::Songbird;
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::lavalink_ctx::AudioPlayer,
+        infra::player::AudioPlayer,
         models::{
             dto::user::{GuildInfo, UserActivityDto},
             entities::user::Activity,
