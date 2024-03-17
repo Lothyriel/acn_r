@@ -12,7 +12,7 @@ pub async fn playlist(
     #[description = "A song URL or YouTube search query"]
     query: String,
 ) -> CommandResult {
-    let songbird = ctx.get_lavalink().await?;
+    let songbird = ctx.get_player().await?;
 
     songbird.playlist(ctx, query).await
 }

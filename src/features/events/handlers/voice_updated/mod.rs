@@ -2,21 +2,20 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Error};
 use futures::{future::join_all, TryFutureExt};
-use lavalink_rs::LavalinkClient;
 use poise::serenity_prelude::{Cache, ChannelId, Context, GuildId, Http, UserId, VoiceState};
 use songbird::Songbird;
 
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::lavalink_ctx::LavalinkCtx,
+        infra::lavalink_ctx::AudioPlayer,
         models::{
             dto::user::{GuildInfo, UserActivityDto},
             entities::user::Activity,
         },
         repositories::jukebox::JukeboxRepository,
     },
-    extensions::log_ext::LogExt,
+    extensions::{log_ext::LogExt, serenity::context_ext::get_songbird_client},
 };
 
 mod dispatches;
@@ -36,7 +35,7 @@ pub async fn handler(
         )
     })?;
 
-    let guild = ctx.http.get_guild(member.guild_id.0).await?;
+    let guild = ctx.http.get_guild(member.guild_id.get()).await?;
 
     let activity = match old {
         Some(old_activity) => get_activity(old_activity, new),
@@ -44,9 +43,9 @@ pub async fn handler(
     };
 
     let dto = UserActivityDto {
-        user_id: new.user_id.0,
+        user_id: new.user_id.get(),
         guild_info: Some(GuildInfo {
-            guild_id: guild.id.0,
+            guild_id: guild.id.get(),
             guild_name: guild.name,
         }),
         nickname: member.display_name().to_string(),
@@ -88,15 +87,14 @@ async fn get_dispatch_data(
     })?;
 
     let dispatch_data = DispatchData {
-        songbird: data.services.songbird.to_owned(),
         cache: ctx.cache.to_owned(),
         http: ctx.http.to_owned(),
         channel_id: new.channel_id,
         user_id: new.user_id,
         jukebox_repository: data.repositories.jukebox.to_owned(),
-        lava_client: data.services.lava_client.to_owned(),
         bot_id: data.services.bot_id,
         guild_id: member.guild_id,
+        songbird: get_songbird_client(ctx),
         activity,
     };
 
@@ -124,7 +122,6 @@ pub struct DispatchData {
     cache: Arc<Cache>,
     http: Arc<Http>,
     songbird: Arc<Songbird>,
-    lava_client: LavalinkClient,
 
     jukebox_repository: JukeboxRepository,
     bot_id: UserId,
@@ -136,15 +133,13 @@ pub struct DispatchData {
 }
 
 impl DispatchData {
-    pub async fn get_lavalink_ctx(&self) -> LavalinkCtx {
-        let lava_client = self.lava_client.to_owned();
+    pub async fn get_player(&self) -> AudioPlayer {
         let jukebox_repository = self.jukebox_repository.to_owned();
 
-        LavalinkCtx::new(
-            self.guild_id.0,
-            self.user_id.0,
+        AudioPlayer::new(
+            self.guild_id.get(),
+            self.user_id.get(),
             self.songbird.to_owned(),
-            lava_client,
             jukebox_repository,
         )
     }

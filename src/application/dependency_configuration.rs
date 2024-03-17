@@ -1,23 +1,18 @@
 use anyhow::Error;
-use lavalink_rs::LavalinkClient;
 use mongodb::Database;
 use poise::serenity_prelude::UserId;
-use songbird::Songbird;
-use std::sync::Arc;
+use reqwest::Client;
 
-use crate::application::{
+use super::{
     infra::{
         appsettings::{AppSettings, MongoSettings},
-        lavalink_ctx,
         mongo_client::create_mongo_client,
     },
     repositories::{
         command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
-        user::UserRepository,
+        stats::StatsRepository, user::UserRepository,
     },
 };
-
-use super::repositories::stats::StatsRepository;
 
 pub struct DependencyContainer {
     pub services: ServicesContainer,
@@ -25,14 +20,10 @@ pub struct DependencyContainer {
 }
 
 impl DependencyContainer {
-    pub async fn build(
-        settings: AppSettings,
-        songbird: Arc<Songbird>,
-        id: UserId,
-    ) -> Result<Self, Error> {
+    pub async fn build(settings: AppSettings, id: UserId) -> Result<Self, Error> {
         let repositories = RepositoriesContainer::build(&settings).await?;
 
-        let services = ServicesContainer::build(settings, songbird, id).await?;
+        let services = ServicesContainer::build(settings, id);
 
         Ok(Self {
             services,
@@ -44,24 +35,16 @@ impl DependencyContainer {
 pub struct ServicesContainer {
     pub bot_id: UserId,
     pub allowed_ids: Vec<u64>,
-    pub lava_client: LavalinkClient,
-    pub songbird: Arc<Songbird>,
+    pub http_client: Client,
 }
 
 impl ServicesContainer {
-    async fn build(
-        settings: AppSettings,
-        songbird: Arc<Songbird>,
-        bot_id: UserId,
-    ) -> Result<Self, Error> {
-        let lava_client = lavalink_ctx::get_lavalink_client(&settings, songbird.to_owned()).await?;
-
-        Ok(Self {
-            lava_client,
+    fn build(settings: AppSettings, bot_id: UserId) -> Self {
+        Self {
+            http_client: Client::new(),
             bot_id,
             allowed_ids: settings.allowed_ids,
-            songbird,
-        })
+        }
     }
 }
 

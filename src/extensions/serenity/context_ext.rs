@@ -6,7 +6,7 @@ use poise::serenity_prelude::{ChannelId, Guild, GuildId, User};
 use songbird::Songbird;
 
 use crate::{
-    application::{infra::lavalink_ctx::LavalinkCtx, models::dto::user::GuildInfo},
+    application::{infra::lavalink_ctx::AudioPlayer, models::dto::user::GuildInfo},
     extensions::{serenity::Context, std_ext::JoinString},
 };
 
@@ -14,7 +14,7 @@ use crate::{
 pub trait ContextExt {
     async fn get_author_name(self) -> String;
     async fn get_command_args(self) -> String;
-    async fn get_lavalink(self) -> Result<LavalinkCtx, Error>;
+    async fn get_player(self) -> Result<AudioPlayer, Error>;
     async fn assure_connected(self) -> Result<Option<ChannelId>, Error>;
     async fn get_user(self, user_id: u64) -> Result<User, Error>;
     fn get_guild_info(self) -> Option<GuildInfo>;
@@ -34,11 +34,10 @@ impl ContextExt for Context<'_> {
     async fn get_command_args(self) -> String {
         match self {
             poise::Context::Application(ctx) => {
-                let args = ctx.args.iter().flat_map(|a| {
-                    a.value
-                        .as_ref()
-                        .map(|v| format!("{v}").trim_matches('"').to_owned())
-                });
+                let args = ctx
+                    .args
+                    .iter()
+                    .flat_map(|v| format!("{v}").trim_matches('"').to_owned());
 
                 args.join(" ")
             }
@@ -46,22 +45,19 @@ impl ContextExt for Context<'_> {
         }
     }
 
-    async fn get_lavalink(self) -> Result<LavalinkCtx, Error> {
-        let guild_id = self.assure_guild_context()?.0;
-
-        let lava_client = self.data().services.lava_client.to_owned();
+    async fn get_player(self) -> Result<AudioPlayer, Error> {
+        let guild_id = self.assure_guild_context()?;
 
         let jukebox_repository = self.data().repositories.jukebox.to_owned();
 
-        let user_id = self.author().id.0;
+        let user_id = self.author().id;
 
-        let songbird = self.data().services.songbird.to_owned();
+        let songbird = get_songbird_client(self).await?;
 
-        Ok(LavalinkCtx::new(
+        Ok(AudioPlayer::new(
             guild_id,
             user_id,
             songbird,
-            lava_client,
             jukebox_repository,
         ))
     }
@@ -100,7 +96,7 @@ impl ContextExt for Context<'_> {
     }
 
     fn get_guild_info(self) -> Option<GuildInfo> {
-        let guild_id = self.guild_id().map(|g| g.0);
+        let guild_id = self.guild_id().map(|g| g.get());
         let guild_name = self.guild_id().and_then(|g| g.name(self));
 
         guild_id.and_then(|i| {

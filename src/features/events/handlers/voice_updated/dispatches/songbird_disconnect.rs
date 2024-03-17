@@ -35,8 +35,8 @@ pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
         .count();
 
     if online_count == 1 {
-        let lava = dispatch_data.get_lavalink_ctx().await;
-        lava.stop_player().await?;
+        let player = dispatch_data.get_player().await;
+        player.stop_player().await?;
     }
 
     Ok(())

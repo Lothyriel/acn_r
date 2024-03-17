@@ -21,8 +21,9 @@ pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<(), Error> {
         None => return Ok(()),
     };
 
-    let songbird_ctx = dispatch_data.get_lavalink_ctx().await;
+    let player = dispatch_data.get_player().await;
 
-    let _ = songbird_ctx.join_voice_channel(channel).await;
-    songbird_ctx.join_voice_channel(channel).await
+    //  BUG: não sei por que só funcina chamando duas vezes
+    let _ = player.join_voice_channel(channel).await;
+    player.join_voice_channel(channel).await
 }

@@ -7,7 +7,7 @@ use crate::{
         dependency_configuration::DependencyContainer,
         infra::{appsettings::AppSettings, env},
     },
-    extensions::serenity::{context_ext::get_songbird_client, Command},
+    extensions::serenity::Command,
     features::commands::*,
 };
 
@@ -48,9 +48,7 @@ fn get_framework(settings: &AppSettings) -> poise::FrameworkBuilder<DependencyCo
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
-                let songbird = get_songbird_client(ctx).await?;
-
-                DependencyContainer::build(settings, songbird, ready.user.id).await
+                DependencyContainer::build(settings, ready.user.id).await
             })
         })
 }

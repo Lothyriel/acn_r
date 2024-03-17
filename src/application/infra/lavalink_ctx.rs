@@ -1,21 +1,18 @@
 use std::{borrow::BorrowMut, sync::Arc};
 
 use anyhow::{anyhow, bail, Error};
-use lavalink_rs::{
-    async_trait,
-    gateway::LavalinkEventHandler,
-    model::{Track, TrackFinish, TrackQueue},
-    LavalinkClient,
-};
-use poise::serenity_prelude::{ChannelId, Http, Mentionable, MessageBuilder};
+use poise::serenity_prelude::{ChannelId, Mentionable, MessageBuilder};
 use rand::seq::SliceRandom;
-use songbird::Songbird;
+use reqwest::Client;
+use songbird::{
+    input::{AuxMetadata, YoutubeDl},
+    tracks::{TrackHandle, TrackState},
+    Event, EventContext, EventHandler, Songbird, TrackEvent,
+};
 
 use crate::{
     application::{
-        infra::{appsettings::AppSettings, env},
-        models::entities::jukebox_use::JukeboxUse,
-        repositories::jukebox::JukeboxRepository,
+        models::entities::jukebox_use::JukeboxUse, repositories::jukebox::JukeboxRepository,
     },
     extensions::{
         log_ext::LogExt,
@@ -23,90 +20,63 @@ use crate::{
     },
 };
 
-struct LavalinkHandler {
+struct SongbirdEventHandler {
+    guild_id: u64,
     songbird: Arc<Songbird>,
 }
 
-impl LavalinkHandler {
+impl EventHandler for SongbirdEventHandler {
+    async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
+        match ctx {
+            EventContext::Track(t) => self.track_finish_handler(t, self.guild_id).await.log(),
+            e => log::warn!("This happened {}", e),
+        };
+
+        None
+    }
+}
+
+impl SongbirdEventHandler {
+    fn new(guild_id: u64, songbird: Arc<Songbird>) -> Self {
+        Self { guild_id, songbird }
+    }
+
     async fn track_finish_handler(
         &self,
-        client: LavalinkClient,
+        tracks_info: &[(&TrackState, &TrackHandle)],
         guild_id: u64,
     ) -> Result<(), Error> {
-        let empty = {
-            let node = client.nodes().await;
-
-            let guild_node = node
-                .get(&guild_id)
-                .ok_or_else(|| anyhow!("Can't get guild loop for {}", guild_id))?;
-
-            guild_node.queue.is_empty()
-        };
+        let empty = { todo!("get guild queue and see if its empty") };
 
         if empty {
             self.songbird.remove(guild_id).await?;
-
-            let nodes = client.nodes().await;
-            nodes.remove(&guild_id);
-
-            let loops = client.loops().await;
-            loops.remove(&guild_id);
-
-            client.destroy(guild_id).await?;
         }
 
         Ok(())
     }
 }
 
-#[async_trait]
-impl LavalinkEventHandler for LavalinkHandler {
-    async fn track_finish(&self, client: LavalinkClient, event: TrackFinish) {
-        self.track_finish_handler(client, event.guild_id.0)
-            .await
-            .log()
-    }
-}
-
-pub async fn get_lavalink_client(
-    settings: &AppSettings,
-    songbird: Arc<Songbird>,
-) -> Result<LavalinkClient, Error> {
-    let app_info = Http::new(env::get("TOKEN_BOT")?.as_str())
-        .get_current_application_info()
-        .await?;
-
-    let lava_client = LavalinkClient::builder(app_info.id.0)
-        .set_host(&settings.lavalink_settings.url)
-        .set_port(settings.lavalink_settings.port)
-        .set_password(env::get("LAVALINK_PASSWORD")?)
-        .build(LavalinkHandler { songbird })
-        .await?;
-
-    Ok(lava_client)
-}
-
-pub struct LavalinkCtx {
+pub struct AudioPlayer {
     guild_id: u64,
     user_id: u64,
     songbird: Arc<Songbird>,
-    lava_client: LavalinkClient,
     jukebox_repository: JukeboxRepository,
+    http_client: Client,
 }
 
-impl LavalinkCtx {
+impl AudioPlayer {
     pub fn new(
         guild_id: u64,
         user_id: u64,
         songbird: Arc<Songbird>,
-        lava_client: LavalinkClient,
         jukebox_repository: JukeboxRepository,
+        http_client: Client,
     ) -> Self {
         Self {
+            http_client,
             guild_id,
             user_id,
             songbird,
-            lava_client,
             jukebox_repository,
         }
     }
@@ -201,29 +171,30 @@ impl LavalinkCtx {
     }
 
     pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<(), Error> {
-        let (_, info) = self.songbird.join_gateway(self.guild_id, channel_id).await;
-
-        match info {
-            Ok(connection_info) => {
-                self.lava_client
-                    .create_session_with_songbird(&connection_info)
-                    .await?;
-
-                Ok(())
-            }
+        let handle = match self.songbird.join(self.guild_id, channel_id).await {
+            Ok(h) => Ok(h),
             Err(error) => bail!(
                 "Guild {} | Error joining the channel: {}",
                 self.guild_id,
                 error
             ),
-        }
+        };
+
+        let handle = handle.lock().await;
+
+        handle.add_global_event(
+            Event::Track(TrackEvent::End),
+            SongbirdEventHandler::new(self.guild_id, self.songbird.clone()),
+        );
+
+        Ok(())
     }
 
     async fn assure_connected(&self, ctx: Context<'_>) -> Result<(), Error> {
         let channel = match ctx.assure_connected().await? {
             Some(c) => c,
             None => {
-                ctx.say("Join a voice channel.").await?;
+                ctx.say("Please join a voice channel.").await?;
                 return Ok(());
             }
         };
@@ -234,7 +205,7 @@ impl LavalinkCtx {
 
                 match guard.current_connection() {
                     Some(current_connection) => {
-                        current_connection.channel_id.map(|c| c.0) != Some(channel.0)
+                        current_connection.channel_id.map(|c| c.0) != Some(channel.get())
                     }
                     None => true,
                 }
@@ -264,9 +235,11 @@ impl LavalinkCtx {
     }
 
     async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
-        let query_information = self.lava_client.auto_search_tracks(&query).await?;
+        let search_results = YoutubeDl::new_search(self.http_client, query)
+            .search(1)
+            .await?;
 
-        match query_information.tracks.first() {
+        match search_results.first() {
             Some(track) => self.add_to_queue(ctx, track).await,
             None => {
                 let reply = "Could not find any video of the search query.";
@@ -295,7 +268,7 @@ impl LavalinkCtx {
         Ok(())
     }
 
-    async fn add_to_queue(&self, ctx: Context<'_>, track: &Track) -> Result<(), Error> {
+    async fn add_to_queue(&self, ctx: Context<'_>, track: &AuxMetadata) -> Result<(), Error> {
         self.add_track_to_queue(track).await?;
 
         ctx.say(format!("Added to queue: {}", get_track_name(track)))
@@ -304,14 +277,17 @@ impl LavalinkCtx {
         Ok(())
     }
 
-    async fn add_track_to_queue(&self, track: &Track) -> Result<(), Error> {
-        self.lava_client
-            .play(self.guild_id, track.to_owned())
-            .requester(self.user_id)
-            .queue()
-            .await?;
+    async fn add_track_to_queue(&self, track: &AuxMetadata) -> Result<(), Error> {
+        let handle = self
+            .songbird
+            .get(self.guild_id)
+            .ok_or_else(anyhow!("Error obtaining songbird guild call"))?;
 
-        self.add_jukebox_use(track);
+        let handle = handle.lock().await;
+
+        handle.play_input(track);
+
+        self.insert_jukebox_use(track);
 
         Ok(())
     }
@@ -350,7 +326,7 @@ impl LavalinkCtx {
         Ok(())
     }
 
-    fn add_jukebox_use(&self, track: &Track) {
+    fn insert_jukebox_use(&self, track: &Track) {
         let service = self.jukebox_repository.to_owned();
 
         let j_use = JukeboxUse::new(self.guild_id, self.user_id, track);
