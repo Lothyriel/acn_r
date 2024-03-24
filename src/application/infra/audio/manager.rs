@@ -5,8 +5,13 @@ use std::{
 };
 
 use anyhow::{anyhow, Error, Result};
+use poise::serenity_prelude::GuildId;
 use rand::seq::SliceRandom;
-use songbird::id::GuildId;
+use reqwest::Client;
+use songbird::{
+    input::{AuxMetadata, YoutubeDl},
+    Songbird,
+};
 use tokio::sync::mpsc::{self, Receiver, Sender};
 
 use crate::{
@@ -19,11 +24,12 @@ pub struct AudioManager {
 }
 
 impl AudioManager {
-    pub fn new() -> Self {
+    pub fn new(songbird: Arc<Songbird>) -> Self {
         let (sender, receiver) = mpsc::channel(100);
 
         Self {
             manager: Arc::new(InnerAudioManager {
+                songbird: songbird.clone(),
                 guilds: HashMap::new(),
                 sender,
                 receiver,
@@ -39,7 +45,7 @@ impl AudioManager {
         tokio::spawn(async move {
             loop {
                 match self.manager.receiver.recv().await {
-                    Some(m) => self.manager.handle_message(m).log(),
+                    Some(m) => self.manager.handle_message(m).await.log(),
                     None => break log::error!("Channel is closed??"),
                 }
             }
@@ -49,8 +55,10 @@ impl AudioManager {
 
 struct InnerAudioManager {
     guilds: HashMap<GuildId, GuildAudio>,
+    songbird: Arc<Songbird>,
     sender: Sender<Message>,
     receiver: Receiver<Message>,
+    client: Client,
 }
 
 pub struct Message {
@@ -72,12 +80,12 @@ pub enum Action {
 }
 
 impl InnerAudioManager {
-    fn handle_message(&self, message: Message) -> Result<()> {
+    async fn handle_message(&mut self, message: Message) -> Result<()> {
         let id = message.guild_id;
 
         match message.action {
             Action::RemoveGuild => self.remove(id),
-            Action::AddTrack(t) => self.add(id, t)?,
+            Action::AddTrack(t) => self.add(id, t).await?,
             Action::SkipTrack => self.skip(id)?,
             Action::ShufflePlaylist => self.shuffle(id)?,
         };
@@ -89,10 +97,21 @@ impl InnerAudioManager {
         self.guilds.remove(&id);
     }
 
-    fn add(&self, id: GuildId, track: TrackMetadata) -> Result<()> {
+    async fn add(&mut self, id: GuildId, track: TrackMetadata) -> Result<()> {
         let guild = self.get_guild(&id)?;
 
+        let src = YoutubeDl::new(self.client.clone(), track.uri.clone()).into();
+
         guild.queue.push_back(track);
+
+        let handle = self
+            .songbird
+            .get(id)
+            .ok_or_else(|| anyhow!("Error obtaining songbird guild call"))?;
+
+        let mut handle = handle.lock().await;
+
+        handle.play_input(src);
 
         Ok(())
     }
@@ -105,9 +124,9 @@ impl InnerAudioManager {
         Ok(())
     }
 
-    fn get_guild(&self, id: &GuildId) -> Result<&GuildAudio, Error> {
+    fn get_guild(&self, id: &GuildId) -> Result<&mut GuildAudio, Error> {
         self.guilds
-            .get(id)
+            .get_mut(id)
             .ok_or_else(|| anyhow!("Guild not found in audio manager"))
     }
 

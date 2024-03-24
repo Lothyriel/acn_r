@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use poise::serenity_prelude::UserId;
 use serde::{Deserialize, Serialize};
@@ -24,7 +25,7 @@ impl JukeboxUse {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TrackMetadata {
     pub author: String,
     pub title: String,
@@ -36,17 +37,19 @@ pub struct TrackMetadata {
 }
 
 impl TrackMetadata {
-    fn from(value: AuxMetadata, requester: UserId) -> Self {
+    pub fn new(value: &AuxMetadata, requester: UserId) -> Result<Self> {
         log::error!("testando dados metadata: {:?}", value);
 
-        TrackMetadata {
+        Ok(TrackMetadata {
             requester,
             author: value.artist.unwrap_or_default(),
             title: value.title.unwrap_or_default(),
             date: value.date.unwrap_or_default(),
             track: value.track.unwrap_or_default(),
-            uri: value.source_url.unwrap_or_default(),
+            uri: value
+                .source_url
+                .ok_or_else(|| anyhow!("Uri not present in track metadata"))?,
             lenght: value.duration.unwrap_or_default().as_millis() as usize,
-        }
+        })
     }
 }

@@ -5,7 +5,6 @@ use poise::async_trait;
 use poise::serenity_prelude::{ChannelId, GuildId, GuildRef, User, UserId};
 use songbird::Songbird;
 
-use crate::application::infra::audio::manager::AudioManager;
 use crate::{
     application::{infra::audio::player::AudioPlayer, models::dto::user::GuildInfo},
     extensions::{serenity::Context, std_ext::JoinString},
@@ -52,7 +51,7 @@ impl ContextExt for Context<'_> {
 
         let songbird = get_songbird_client(self.serenity_context()).await?;
 
-        let manager = AudioManager::new();
+        let manager = self.data().services.audio_manager;
 
         let jukebox = self.data().repositories.jukebox;
 
