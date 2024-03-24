@@ -1,4 +1,6 @@
-use anyhow::{bail, Error};
+use anyhow::{bail, Result};
+use mongodb::{options::ClientOptions, Client};
+use poise::serenity_prelude::UserId;
 use serde::Deserialize;
 use std::path::PathBuf;
 
@@ -6,7 +8,7 @@ use crate::application::infra::env;
 
 const APPSETTINGS_PATH: &str = "appsettings_{ENV}.json";
 
-fn try_get_file(max_depth: usize, filename: String) -> Result<PathBuf, Error> {
+fn try_get_file(max_depth: usize, filename: String) -> Result<PathBuf> {
     for i in 0..max_depth {
         let try_path = format!("{}{}", "../".repeat(i), &filename);
         let possible_path = std::path::Path::new(&try_path);
@@ -22,14 +24,13 @@ fn try_get_file(max_depth: usize, filename: String) -> Result<PathBuf, Error> {
 
 #[derive(Deserialize)]
 pub struct AppSettings {
-    pub allowed_ids: Vec<u64>,
+    pub allowed_ids: Vec<UserId>,
     pub prefix: String,
-    pub lavalink_settings: LavalinkSettings,
     pub mongo_settings: MongoSettings,
 }
 
 impl AppSettings {
-    pub fn load() -> Result<Self, Error> {
+    pub fn load() -> Result<Self> {
         env::init()?;
         let env = env::get("ENV")?;
 
@@ -44,13 +45,15 @@ impl AppSettings {
 
 #[derive(Deserialize)]
 pub struct MongoSettings {
-    pub user: String,
-    pub url: String,
     pub connection_string: String,
 }
 
-#[derive(Deserialize)]
-pub struct LavalinkSettings {
-    pub url: String,
-    pub port: u16,
+impl MongoSettings {
+    pub async fn create_mongo_client(settings: &MongoSettings) -> Result<Client> {
+        let password = env::get("MONGO_PASSWORD")?;
+        let connection_string = settings.connection_string.replace("{PASSWORD}", &password);
+
+        let options = ClientOptions::parse(connection_string).await?;
+        Ok(Client::with_options(options)?)
+    }
 }
