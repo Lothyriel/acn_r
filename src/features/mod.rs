@@ -39,6 +39,9 @@ pub async fn start() -> Result<()> {
         .framework(get_framework(&settings))
         .await?
         .start()
+        .await?;
+
+    Ok(())
 }
 
 fn get_framework(settings: &AppSettings) -> poise::FrameworkBuilder<DependencyContainer, Error> {
