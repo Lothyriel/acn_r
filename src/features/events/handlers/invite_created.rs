@@ -6,7 +6,7 @@ pub async fn handler(ctx: &Context, event: &InviteCreateEvent) -> Result<(), Err
         .channel_id
         .name(ctx)
         .await
-        .unwrap_or_else(|| event.channel_id.to_string());
+        .unwrap_or_else(|_| event.channel_id.to_string());
 
     let inviter = event.inviter.as_ref().ok_or_else(|| {
         anyhow!(

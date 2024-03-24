@@ -10,9 +10,19 @@ pub async fn handler(data: Arc<DispatchData>) -> Result<()> {
 }
 
 async fn disconnect(data: Arc<DispatchData>) -> Result<bool> {
-    let guild = data.http.get_guild(data.guild_id.get()).await?;
+    let guild = data.http.get_guild(data.guild_id).await?;
 
-    if guild.afk_channel_id == data.channel_id {
+    let guild_afk_channel = match guild.afk_metadata.map(|g| g.afk_channel_id) {
+        Some(c) => c,
+        None => return Ok(false),
+    };
+
+    let channel = match data.channel_id {
+        Some(c) => c,
+        None => return Ok(false),
+    };
+
+    if guild_afk_channel == channel {
         guild
             .id
             .disconnect_member(data.http.to_owned(), data.user_id)

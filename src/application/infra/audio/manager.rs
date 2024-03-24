@@ -1,6 +1,7 @@
 use std::{
     borrow::BorrowMut,
     collections::{HashMap, VecDeque},
+    sync::Arc,
 };
 
 use anyhow::{anyhow, Error, Result};
@@ -12,8 +13,9 @@ use crate::{
     application::models::entities::jukebox_use::TrackMetadata, extensions::log_ext::LogExt,
 };
 
+#[derive(Clone)]
 pub struct AudioManager {
-    manager: InnerAudioManager,
+    manager: Arc<InnerAudioManager>,
 }
 
 impl AudioManager {
@@ -21,11 +23,11 @@ impl AudioManager {
         let (sender, receiver) = mpsc::channel(100);
 
         Self {
-            manager: InnerAudioManager {
+            manager: Arc::new(InnerAudioManager {
                 guilds: HashMap::new(),
                 sender,
                 receiver,
-            },
+            }),
         }
     }
 

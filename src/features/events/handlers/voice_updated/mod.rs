@@ -8,7 +8,7 @@ use songbird::Songbird;
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::audio::player::AudioPlayer,
+        infra::audio::{manager::AudioManager, player::AudioPlayer},
         models::{
             dto::user::{GuildInfo, UserActivityDto},
             entities::user::Activity,
@@ -35,7 +35,7 @@ pub async fn handler(
         )
     })?;
 
-    let guild = ctx.http.get_guild(member.guild_id.get()).await?;
+    let guild = ctx.http.get_guild(member.guild_id).await?;
 
     let activity = match old {
         Some(old_activity) => get_activity(old_activity, new),
@@ -94,8 +94,9 @@ async fn get_dispatch_data(
         jukebox_repository: data.repositories.jukebox.to_owned(),
         bot_id: data.services.bot_id,
         guild_id: member.guild_id,
-        songbird: get_songbird_client(ctx),
+        songbird: get_songbird_client(ctx).await?,
         activity,
+        manager: data.services.audio_manager.clone(),
     };
 
     Ok(dispatch_data)
@@ -122,7 +123,7 @@ pub struct DispatchData {
     cache: Arc<Cache>,
     http: Arc<Http>,
     songbird: Arc<Songbird>,
-
+    manager: AudioManager,
     jukebox_repository: JukeboxRepository,
     bot_id: UserId,
 
@@ -137,9 +138,9 @@ impl DispatchData {
         let jukebox_repository = self.jukebox_repository.to_owned();
 
         AudioPlayer::new(
-            self.guild_id.get(),
-            self.user_id.get(),
-            self.songbird.to_owned(),
+            self.guild_id,
+            self.user_id,
+            self.manager.clone(),
             jukebox_repository,
         )
     }
