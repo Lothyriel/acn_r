@@ -7,9 +7,7 @@ use crate::extensions::serenity::{
 
 #[command(prefix_command, slash_command, guild_only, category = "Jukebox")]
 pub async fn shuffle(ctx: Context<'_>) -> CommandResult {
-    let songbird = ctx.get_player().await?;
+    let player = ctx.get_player().await?;
 
-    songbird.shuffle(ctx).await?;
-
-    Ok(())
+    player.shuffle(ctx).await
 }

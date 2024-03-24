@@ -1,12 +1,10 @@
 use poise::command;
 
-use crate::extensions::serenity::{CommandResult, Context};
+use crate::extensions::serenity::{context_ext::ContextExt, CommandResult, Context};
 
 #[command(prefix_command, slash_command, guild_only, category = "Jukebox")]
 pub async fn stop(ctx: Context<'_>) -> CommandResult {
-    let songbird = ctx.get_player().await?;
+    let player = ctx.get_player().await?;
 
-    songbird.stop(ctx).await?;
-
-    Ok(())
+    player.stop(ctx).await
 }

@@ -16,7 +16,7 @@ pub async fn set_signature(
 
     let signature = Signature {
         date: chrono::Utc::now(),
-        user_id: ctx.author().id.0,
+        user_id: ctx.author().id.get(),
         emojis: emojis.to_owned(),
     };
 
