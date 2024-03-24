@@ -1,17 +1,17 @@
 use anyhow::Result;
-use poise::serenity_prelude::Member;
+use poise::serenity_prelude::GuildMemberUpdateEvent;
 
 use crate::application::{
     dependency_configuration::DependencyContainer, models::dto::user::UpdateNickDto,
 };
 
-pub async fn handler(new: &Member, data: &DependencyContainer) -> Result<()> {
+pub async fn handler(new: &GuildMemberUpdateEvent, data: &DependencyContainer) -> Result<()> {
     let user_repository = &data.repositories.user;
 
     let dto = UpdateNickDto {
         user_id: new.user.id.get(),
         guild_id: Some(new.guild_id.get()),
-        new_nickname: new.display_name().to_string(),
+        new_nickname: new.nick.as_ref().unwrap_or_else(|| &new.user.name).clone(),
         date: chrono::Utc::now(),
     };
 
