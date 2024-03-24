@@ -1,18 +1,19 @@
-use std::{borrow::BorrowMut, sync::Arc};
+use std::sync::Arc;
 
 use anyhow::{anyhow, bail, Error};
-use poise::serenity_prelude::{ChannelId, Mentionable, MessageBuilder};
-use rand::seq::SliceRandom;
+use log::error;
+use poise::serenity_prelude::{ChannelId, GuildId, Mentionable, MessageBuilder, UserId};
 use reqwest::Client;
 use songbird::{
-    input::{AuxMetadata, YoutubeDl},
+    input::{AuxMetadata, Compose, YoutubeDl},
     tracks::{TrackHandle, TrackState},
     Event, EventContext, EventHandler, Songbird, TrackEvent,
 };
 
 use crate::{
     application::{
-        models::entities::jukebox_use::JukeboxUse, repositories::jukebox::JukeboxRepository,
+        models::entities::jukebox_use::{JukeboxUse, TrackMetadata},
+        repositories::jukebox::JukeboxRepository,
     },
     extensions::{
         log_ext::LogExt,
@@ -20,8 +21,10 @@ use crate::{
     },
 };
 
+use super::manager::AudioManager;
+
 struct SongbirdEventHandler {
-    guild_id: u64,
+    guild_id: GuildId,
     songbird: Arc<Songbird>,
 }
 
@@ -29,7 +32,8 @@ impl EventHandler for SongbirdEventHandler {
     async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
         match ctx {
             EventContext::Track(t) => self.track_finish_handler(t, self.guild_id).await.log(),
-            e => log::warn!("This happened {}", e),
+
+            e => log::warn!("This happened {:?}", e),
         };
 
         None
@@ -37,14 +41,14 @@ impl EventHandler for SongbirdEventHandler {
 }
 
 impl SongbirdEventHandler {
-    fn new(guild_id: u64, songbird: Arc<Songbird>) -> Self {
+    fn new(guild_id: GuildId, songbird: Arc<Songbird>) -> Self {
         Self { guild_id, songbird }
     }
 
     async fn track_finish_handler(
         &self,
         tracks_info: &[(&TrackState, &TrackHandle)],
-        guild_id: u64,
+        guild_id: GuildId,
     ) -> Result<(), Error> {
         let empty = { todo!("get guild queue and see if its empty") };
 
@@ -57,26 +61,25 @@ impl SongbirdEventHandler {
 }
 
 pub struct AudioPlayer {
-    guild_id: u64,
-    user_id: u64,
-    songbird: Arc<Songbird>,
+    guild_id: GuildId,
+    user_id: UserId,
     jukebox_repository: JukeboxRepository,
     http_client: Client,
+    manager: AudioManager,
 }
 
 impl AudioPlayer {
     pub fn new(
-        guild_id: u64,
-        user_id: u64,
-        songbird: Arc<Songbird>,
+        guild_id: GuildId,
+        user_id: UserId,
+        manager: AudioManager,
         jukebox_repository: JukeboxRepository,
-        http_client: Client,
     ) -> Self {
         Self {
-            http_client,
+            manager,
+            http_client: Client::new(),
             guild_id,
             user_id,
-            songbird,
             jukebox_repository,
         }
     }
@@ -102,7 +105,7 @@ impl AudioPlayer {
             Some(track) => format!(
                 "{} Skipped: {}",
                 ctx.author().mention(),
-                get_track_name(&track.track)
+                get_track_metadata(&track.track)
             ),
             None => "Nothing to skip.".to_owned(),
         };
@@ -127,7 +130,7 @@ impl AudioPlayer {
                     message_builder.push_line("Queue: ");
 
                     for (i, track) in node.queue.iter().take(10).enumerate() {
-                        let track_name = get_track_name(&track.track);
+                        let track_name = get_track_metadata(&track.track);
 
                         let requester = track
                             .requester
@@ -172,7 +175,7 @@ impl AudioPlayer {
 
     pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<(), Error> {
         let handle = match self.songbird.join(self.guild_id, channel_id).await {
-            Ok(h) => Ok(h),
+            Ok(h) => h,
             Err(error) => bail!(
                 "Guild {} | Error joining the channel: {}",
                 self.guild_id,
@@ -180,7 +183,7 @@ impl AudioPlayer {
             ),
         };
 
-        let handle = handle.lock().await;
+        let mut handle = handle.lock().await;
 
         handle.add_global_event(
             Event::Track(TrackEvent::End),
@@ -205,7 +208,7 @@ impl AudioPlayer {
 
                 match guard.current_connection() {
                     Some(current_connection) => {
-                        current_connection.channel_id.map(|c| c.0) != Some(channel.get())
+                        current_connection.channel_id.map(|c| c.0.get()) != Some(channel.get())
                     }
                     None => true,
                 }
@@ -223,28 +226,21 @@ impl AudioPlayer {
     pub async fn stop_player(&self) -> Result<(), Error> {
         self.songbird.remove(self.guild_id).await?;
 
-        let nodes = self.lava_client.nodes().await;
-        nodes.remove(&self.guild_id);
-
-        let loops = self.lava_client.loops().await;
-        loops.remove(&self.guild_id);
-
-        self.lava_client.destroy(self.guild_id).await?;
+        self.manager.skip();
 
         Ok(())
     }
 
     async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<(), Error> {
-        let search_results = YoutubeDl::new_search(self.http_client, query)
-            .search(1)
-            .await?;
+        let src = YoutubeDl::new_search(self.http_client.clone(), query);
 
-        match search_results.first() {
-            Some(track) => self.add_to_queue(ctx, track).await,
-            None => {
-                let reply = "Could not find any video of the search query.";
+        match src.aux_metadata().await {
+            Ok(metadata) => self.add_to_queue(ctx, src, metadata).await,
+            Err(e) => {
+                error!("{}", e);
 
-                ctx.say(reply).await?;
+                ctx.say("Could not find any video of the search query.")
+                    .await?;
 
                 Ok(())
             }
@@ -268,26 +264,37 @@ impl AudioPlayer {
         Ok(())
     }
 
-    async fn add_to_queue(&self, ctx: Context<'_>, track: &AuxMetadata) -> Result<(), Error> {
-        self.add_track_to_queue(track).await?;
+    async fn add_to_queue(
+        &self,
+        ctx: Context<'_>,
+        track: YoutubeDl,
+        metadata: AuxMetadata,
+    ) -> Result<(), Error> {
+        let metadata = metadata.into();
 
-        ctx.say(format!("Added to queue: {}", get_track_name(track)))
-            .await?;
+        let message = format!("Added to queue: {:?}", metadata);
+
+        self.add_track_to_queue(track, metadata).await?;
+
+        ctx.say(message).await?;
 
         Ok(())
     }
 
-    async fn add_track_to_queue(&self, track: &AuxMetadata) -> Result<(), Error> {
+    async fn add_track_to_queue(
+        &self,
+        track: YoutubeDl,
+        metadata: TrackMetadata,
+    ) -> Result<(), Error> {
         let handle = self
             .songbird
             .get(self.guild_id)
-            .ok_or_else(anyhow!("Error obtaining songbird guild call"))?;
+            .ok_or_else(|| anyhow!("Error obtaining songbird guild call"))?;
 
-        let handle = handle.lock().await;
+        let mut handle = handle.lock().await;
+        handle.play_input(track.into());
 
-        handle.play_input(track);
-
-        self.insert_jukebox_use(track);
+        self.insert_jukebox_use(metadata);
 
         Ok(())
     }
@@ -311,34 +318,18 @@ impl AudioPlayer {
     }
 
     async fn shuffle_playlist(&self) -> Result<(), Error> {
-        let nodes = self.lava_client.nodes().await;
-
-        let mut node = nodes
-            .get_mut(&self.guild_id)
-            .ok_or_else(|| anyhow!("[Shuffle] Couldn't get node for {}", self.guild_id))?;
-
-        let now_playing = node.queue.remove(0);
-
-        node.queue.shuffle(rand::thread_rng().borrow_mut());
-
-        node.queue.insert(0, now_playing);
+        self.manager
+            .get_sender()
+            .send(Message::new(Action::ShufflePlaylist, self.guild_id));
 
         Ok(())
     }
 
-    fn insert_jukebox_use(&self, track: &Track) {
+    fn insert_jukebox_use(&self, track: TrackMetadata) {
         let service = self.jukebox_repository.to_owned();
 
-        let j_use = JukeboxUse::new(self.guild_id, self.user_id, track);
+        let j_use = JukeboxUse::new(self.guild_id.0.get(), self.user_id, track);
 
         tokio::spawn(async move { service.add_jukebox_use(j_use).await.log() });
     }
-}
-
-fn get_track_name(track: &Track) -> &str {
-    track
-        .info
-        .as_ref()
-        .map(|i| i.title.as_str())
-        .unwrap_or_else(|| track.track.as_str())
 }

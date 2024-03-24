@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
-use lavalink_rs::model::Track;
+use poise::serenity_prelude::UserId;
 use serde::{Deserialize, Serialize};
+use songbird::input::AuxMetadata;
 
 #[derive(Serialize, Deserialize)]
 pub struct JukeboxUse {
@@ -8,34 +9,44 @@ pub struct JukeboxUse {
     pub user_id: u64,
     pub track_data: String,
     pub date: DateTime<Utc>,
-    pub info: Option<TrackInfo>,
+    pub info: TrackMetadata,
 }
 
 impl JukeboxUse {
-    pub fn new(guild_id: u64, user_id: u64, track: &Track) -> Self {
+    pub fn new(guild_id: u64, user_id: u64, track: TrackMetadata) -> Self {
         Self {
-            track_data: track.track.to_owned(),
+            track_data: track.track,
             date: chrono::Utc::now(),
-            info: get_track_info(track),
+            info: track,
             guild_id,
             user_id,
         }
     }
 }
 
-fn get_track_info(track: &Track) -> Option<TrackInfo> {
-    track.info.as_ref().map(|i| TrackInfo {
-        length_in_ms: i.length,
-        author: i.author.to_owned(),
-        title: i.title.to_owned(),
-        uri: i.uri.to_owned(),
-    })
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct TrackInfo {
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TrackMetadata {
     pub author: String,
     pub title: String,
+    pub date: String,
+    pub track: String,
     pub uri: String,
-    pub length_in_ms: u64,
+    pub lenght: usize,
+    pub requester: UserId,
+}
+
+impl TrackMetadata {
+    fn from(value: AuxMetadata, requester: UserId) -> Self {
+        log::error!("testando dados metadata: {:?}", value);
+
+        TrackMetadata {
+            requester,
+            author: value.artist.unwrap_or_default(),
+            title: value.title.unwrap_or_default(),
+            date: value.date.unwrap_or_default(),
+            track: value.track.unwrap_or_default(),
+            uri: value.source_url.unwrap_or_default(),
+            lenght: value.duration.unwrap_or_default().as_millis() as usize,
+        }
+    }
 }
