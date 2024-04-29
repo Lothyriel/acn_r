@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{bail, Result};
 use log::error;
-use poise::serenity_prelude::{ChannelId, GuildId, Mentionable, MessageBuilder, UserId};
+use poise::serenity_prelude::{ChannelId, GuildId, MessageBuilder, UserId};
 use reqwest::Client;
 use songbird::{
     input::{AuxMetadata, Compose, YoutubeDl},
@@ -21,7 +21,7 @@ use crate::{
     },
 };
 
-use super::manager::{Action, AudioManager, Message};
+use super::manager::AudioManager;
 
 struct SongbirdEventHandler {
     guild_id: GuildId,
@@ -85,8 +85,6 @@ impl AudioPlayer {
     }
 
     pub async fn shuffle(&self, ctx: Context<'_>) -> Result<()> {
-        self.send_message(Action::ShufflePlaylist).await?;
-
         ctx.say("Shuffled queue!").await?;
 
         Ok(())
@@ -101,13 +99,6 @@ impl AudioPlayer {
     }
 
     pub async fn skip(&self, ctx: Context<'_>) -> Result<()> {
-        let message = match self.skip_track().await? {
-            Some(track) => format!("{} Skipped: {}", ctx.author().mention(), track.name),
-            None => "Nothing to skip.".to_owned(),
-        };
-
-        ctx.say(message).await?;
-
         Ok(())
     }
 
@@ -216,8 +207,6 @@ impl AudioPlayer {
     }
 
     pub async fn stop_player(&self) -> Result<()> {
-        self.songbird.remove(self.guild_id).await?;
-
         self.manager.stop();
 
         Ok(())
@@ -268,18 +257,7 @@ impl AudioPlayer {
     async fn add_track_to_queue(&self, metadata: &AuxMetadata) -> Result<()> {
         let metadata = TrackMetadata::new(metadata, self.user_id)?;
 
-        self.send_message(Action::AddTrack(metadata.clone()));
-
         self.insert_jukebox_use(metadata);
-
-        Ok(())
-    }
-
-    async fn send_message(&self, action: Action) -> Result<(), anyhow::Error> {
-        self.manager
-            .get_sender()
-            .send(Message::new(action, self.guild_id))
-            .await?;
 
         Ok(())
     }

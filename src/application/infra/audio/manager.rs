@@ -1,21 +1,17 @@
 use std::{
     borrow::BorrowMut,
     collections::{HashMap, VecDeque},
-    sync::Arc,
+    sync::{Arc, RwLock},
 };
 
 use anyhow::{anyhow, Error, Result};
-use poise::serenity_prelude::GuildId;
+use poise::serenity_prelude::{GuildId, Mentionable};
 use rand::seq::SliceRandom;
 use reqwest::Client;
-use songbird::{
-    input::{AuxMetadata, YoutubeDl},
-    Songbird,
-};
-use tokio::sync::mpsc::{self, Receiver, Sender};
+use songbird::{input::YoutubeDl, Songbird};
 
 use crate::{
-    application::models::entities::jukebox_use::TrackMetadata, extensions::log_ext::LogExt,
+    application::models::entities::jukebox_use::TrackMetadata, extensions::serenity::Context,
 };
 
 #[derive(Clone)]
@@ -25,74 +21,23 @@ pub struct AudioManager {
 
 impl AudioManager {
     pub fn new(songbird: Arc<Songbird>) -> Self {
-        let (sender, receiver) = mpsc::channel(100);
-
         Self {
             manager: Arc::new(InnerAudioManager {
                 songbird: songbird.clone(),
                 guilds: HashMap::new(),
-                sender,
-                receiver,
+                client: Client::new(),
             }),
         }
-    }
-
-    pub fn get_sender(&self) -> Sender<Message> {
-        self.manager.sender.clone()
-    }
-
-    pub fn start(&self) {
-        tokio::spawn(async move {
-            loop {
-                match self.manager.receiver.recv().await {
-                    Some(m) => self.manager.handle_message(m).await.log(),
-                    None => break log::error!("Channel is closed??"),
-                }
-            }
-        });
     }
 }
 
 struct InnerAudioManager {
-    guilds: HashMap<GuildId, GuildAudio>,
+    guilds: HashMap<GuildId, GuildQueue>,
     songbird: Arc<Songbird>,
-    sender: Sender<Message>,
-    receiver: Receiver<Message>,
     client: Client,
 }
 
-pub struct Message {
-    action: Action,
-    guild_id: GuildId,
-}
-
-impl Message {
-    pub fn new(action: Action, guild_id: GuildId) -> Self {
-        Self { action, guild_id }
-    }
-}
-
-pub enum Action {
-    RemoveGuild,
-    AddTrack(TrackMetadata),
-    SkipTrack,
-    ShufflePlaylist,
-}
-
 impl InnerAudioManager {
-    async fn handle_message(&mut self, message: Message) -> Result<()> {
-        let id = message.guild_id;
-
-        match message.action {
-            Action::RemoveGuild => self.remove(id),
-            Action::AddTrack(t) => self.add(id, t).await?,
-            Action::SkipTrack => self.skip(id)?,
-            Action::ShufflePlaylist => self.shuffle(id)?,
-        };
-
-        Ok(())
-    }
-
     fn remove(&self, id: GuildId) {
         self.guilds.remove(&id);
     }
@@ -116,15 +61,23 @@ impl InnerAudioManager {
         Ok(())
     }
 
-    fn skip(&self, id: GuildId) -> Result<(), Error> {
-        let guild = self.get_guild(&id)?;
+    async fn skip(&self, id: GuildId, ctx: Context<'_>) -> Result<(), Error> {
+        let message = match self.skip_track(id)? {
+            Some(track) => format!("{} Skipped: {}", ctx.author().mention(), track.track),
+            None => "Nothing to skip.".to_owned(),
+        };
 
-        guild.queue.pop_front();
+        ctx.say(message).await?;
 
         Ok(())
     }
 
-    fn get_guild(&self, id: &GuildId) -> Result<&mut GuildAudio, Error> {
+    fn skip_track(&self, id: GuildId) -> Result<Option<TrackMetadata>, Error> {
+        let guild = self.get_guild(&id)?;
+        Ok(guild.queue.pop_front())
+    }
+
+    fn get_guild(&self, id: &GuildId) -> Result<&mut GuildQueue, Error> {
         self.guilds
             .get_mut(id)
             .ok_or_else(|| anyhow!("Guild not found in audio manager"))
@@ -147,8 +100,35 @@ impl InnerAudioManager {
 
         Ok(())
     }
+
+    async fn stop(&mut self, id: GuildId) -> Result<()> {
+        self.guilds.remove(&id);
+
+        self.songbird.remove(id).await?;
+
+        Ok(())
+    }
 }
 
-struct GuildAudio {
-    queue: VecDeque<TrackMetadata>,
-}
+struct GuildsQueueManager(Arc<RwLock<InnerManager>>);
+
+//implement
+//stop -- remove guild from HashMap
+//play -- add music to Queue (and guild on hashmap if doenst exist)
+//playlist -- play but many
+//skip -- skip music from front of the Queue and play next
+//queue -- show queue
+//shuffle -- shuffles the queue
+
+struct InnerManager(HashMap<GuildId, GuildQueue>);
+//implement
+//get queue
+//get or insert queue (for play)
+//remove queue (for stop)
+
+struct GuildQueue(RwLock<VecDeque<TrackMetadata>>);
+//implement
+//shuffle queue
+//add track
+//add many track
+//get queue metadata
