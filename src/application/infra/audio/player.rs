@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use log::error;
-use poise::serenity_prelude::{ChannelId, GuildId, MessageBuilder, UserId};
+use poise::serenity_prelude::{ChannelId, GuildId, Mentionable, MessageBuilder, UserId};
 use reqwest::Client;
 use songbird::{
     input::{AuxMetadata, Compose, YoutubeDl},
@@ -66,6 +66,7 @@ pub struct AudioPlayer {
     jukebox_repository: JukeboxRepository,
     http_client: Client,
     manager: AudioManager,
+    songbird: Arc<Songbird>,
 }
 
 impl AudioPlayer {
@@ -74,6 +75,7 @@ impl AudioPlayer {
         user_id: UserId,
         manager: AudioManager,
         jukebox_repository: JukeboxRepository,
+        songbird: Arc<Songbird>,
     ) -> Self {
         Self {
             manager,
@@ -81,6 +83,7 @@ impl AudioPlayer {
             guild_id,
             user_id,
             jukebox_repository,
+            songbird,
         }
     }
 
@@ -98,7 +101,14 @@ impl AudioPlayer {
         Ok(())
     }
 
-    pub async fn skip(&self, ctx: Context<'_>) -> Result<()> {
+    async fn skip(&self, id: GuildId, ctx: Context<'_>) -> Result<()> {
+        let message = match self.manager.skip(id)? {
+            Some(track) => format!("{} Skipped: {}", ctx.author().mention(), track.track),
+            None => "Nothing to skip.".to_owned(),
+        };
+
+        ctx.say(message).await?;
+
         Ok(())
     }
 
@@ -207,16 +217,16 @@ impl AudioPlayer {
     }
 
     pub async fn stop_player(&self) -> Result<()> {
-        self.manager.stop();
+        self.manager.remove(self.guild_id);
 
         Ok(())
     }
 
     async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<()> {
-        let src = YoutubeDl::new_search(self.http_client.clone(), query);
+        let mut src = YoutubeDl::new_search(self.http_client.clone(), query);
 
         match src.aux_metadata().await {
-            Ok(metadata) => self.add_to_queue(ctx, metadata).await,
+            Ok(metadata) => self.add_to_queue(ctx, &metadata).await,
             Err(e) => {
                 error!("{}", e);
 
@@ -257,9 +267,18 @@ impl AudioPlayer {
     async fn add_track_to_queue(&self, metadata: &AuxMetadata) -> Result<()> {
         let metadata = TrackMetadata::new(metadata, self.user_id)?;
 
+        let handle = self
+            .songbird
+            .get(self.guild_id)
+            .ok_or_else(|| anyhow!("Error obtaining songbird guild call"))?;
+
+        let mut handle = handle.lock().await;
+
+        handle.play_input(metadata.track.clone().into());
+
         self.insert_jukebox_use(metadata);
 
-        Ok(())
+        self.manager.add(self.guild_id, track);
     }
 
     fn insert_jukebox_use(&self, track: TrackMetadata) {
