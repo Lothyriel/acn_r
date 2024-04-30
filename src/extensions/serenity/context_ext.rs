@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 use poise::async_trait;
-use poise::serenity_prelude::{ChannelId, GuildId, GuildRef, User, UserId};
+use poise::serenity_prelude::{ChannelId, GuildId, GuildRef};
 use songbird::Songbird;
 
 use crate::{
@@ -16,7 +16,6 @@ pub trait ContextExt {
     async fn get_command_args(&self) -> String;
     async fn get_player(&self) -> Result<AudioPlayer>;
     async fn assure_connected(&self) -> Result<Option<ChannelId>>;
-    async fn get_user(&self, user_id: UserId) -> Result<User>;
     fn get_guild_info(&self) -> Option<GuildInfo>;
     fn assure_cached_guild(&self) -> Result<GuildRef<'_>>;
     fn assure_guild_context(&self) -> Result<GuildId>;
@@ -45,17 +44,17 @@ impl ContextExt for Context<'_> {
     async fn get_player(&self) -> Result<AudioPlayer> {
         let guild_id = self.assure_guild_context()?;
 
-        let jukebox_repository = self.data().repositories.jukebox.to_owned();
-
         let user_id = self.author().id;
 
         let songbird = get_songbird_client(self.serenity_context()).await?;
 
-        let manager = self.data().services.audio_manager;
+        let manager = self.data().services.audio_manager.clone();
 
-        let jukebox = self.data().repositories.jukebox;
+        let jukebox = self.data().repositories.jukebox.clone();
 
-        Ok(AudioPlayer::new(guild_id, user_id, manager, jukebox))
+        Ok(AudioPlayer::new(
+            guild_id, user_id, manager, jukebox, songbird,
+        ))
     }
 
     async fn assure_connected(&self) -> Result<Option<ChannelId>> {
@@ -67,17 +66,6 @@ impl ContextExt for Context<'_> {
             .and_then(|voice_state| voice_state.channel_id);
 
         Ok(channel)
-    }
-
-    async fn get_user(&self, user_id: UserId) -> Result<User> {
-        let cached_user = self.serenity_context().cache.user(user_id);
-
-        let user = match cached_user {
-            Some(u) => u.to_owned(),
-            None => self.http().get_user(user_id).await?,
-        };
-
-        Ok(user)
     }
 
     fn assure_cached_guild(&self) -> Result<GuildRef<'_>> {
