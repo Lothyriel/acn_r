@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, bail, Result};
 use log::error;
-use poise::serenity_prelude::{ChannelId, GuildId, Mentionable, MessageBuilder, UserId};
+use poise::serenity_prelude::{
+    async_trait, ChannelId, GuildId, Mentionable, MessageBuilder, UserId,
+};
 use reqwest::Client;
 use songbird::{
     input::{AuxMetadata, Compose, YoutubeDl},
@@ -23,11 +25,13 @@ use crate::{
 
 use super::manager::AudioManager;
 
+#[derive(Clone)]
 struct SongbirdEventHandler {
     guild_id: GuildId,
     songbird: Arc<Songbird>,
 }
 
+#[async_trait]
 impl EventHandler for SongbirdEventHandler {
     async fn act(&self, ctx: &EventContext<'_>) -> Option<Event> {
         match ctx {
@@ -101,8 +105,8 @@ impl AudioPlayer {
         Ok(())
     }
 
-    async fn skip(&self, id: GuildId, ctx: Context<'_>) -> Result<()> {
-        let message = match self.manager.skip(id)? {
+    pub async fn skip(&self, ctx: Context<'_>) -> Result<()> {
+        let message = match self.manager.skip(self.guild_id).await? {
             Some(track) => format!("{} Skipped: {}", ctx.author().mention(), track.track),
             None => "Nothing to skip.".to_owned(),
         };
@@ -114,31 +118,26 @@ impl AudioPlayer {
 
     pub async fn show_queue(&self, ctx: Context<'_>) -> Result<()> {
         let queue_description = {
-            let nodes = self.manager;
-
             let mut message_builder = MessageBuilder::new();
 
-            match node.queue.is_empty() {
+            let queue = self.manager.get_queue(self.guild_id).await?;
+
+            match queue.is_empty() {
                 false => {
                     message_builder.push_line("Queue: ");
 
-                    for (i, track) in node.queue.iter().take(10).enumerate() {
-                        let track_name: TrackMetadata = track.track.into();
-
-                        let requester = track
-                            .requester
-                            .map(|r| format!("<@{}>", r.0))
-                            .unwrap_or_else(|| "Unknown".to_owned());
+                    for (i, track) in queue.iter().take(10).enumerate() {
+                        let track_name = &track.track;
 
                         let now = if i == usize::MIN { "▶️" } else { "" };
 
-                        let line = format!("- {} {} | By: {}", now, track_name, requester);
+                        let line = format!("- {} {} | By: {}", now, track_name, track.requester);
 
                         message_builder.push_line(line);
                     }
 
-                    if node.queue.len() > 10 {
-                        message_builder.push(format!("{} more tracks...", node.queue.len() - 10));
+                    if queue.len() > 10 {
+                        message_builder.push(format!("{} more tracks...", queue.len() - 10));
                     }
                 }
                 true => {
@@ -226,7 +225,7 @@ impl AudioPlayer {
         let mut src = YoutubeDl::new_search(self.http_client.clone(), query);
 
         match src.aux_metadata().await {
-            Ok(metadata) => self.add_to_queue(ctx, &metadata).await,
+            Ok(metadata) => self.add_to_queue(ctx, metadata).await,
             Err(e) => {
                 error!("{}", e);
 
@@ -243,18 +242,20 @@ impl AudioPlayer {
             .search(Some(10))
             .await?;
 
-        for track in src.iter() {
+        let tracks_count = src.len();
+
+        for track in src.into_iter() {
             self.add_track_to_queue(track).await?;
         }
 
-        let reply = format!("Added {} tracks to the queue", src.len());
+        let reply = format!("Added {} tracks to the queue", tracks_count);
 
         ctx.say(reply).await?;
 
         Ok(())
     }
 
-    async fn add_to_queue(&self, ctx: Context<'_>, metadata: &AuxMetadata) -> Result<()> {
+    async fn add_to_queue(&self, ctx: Context<'_>, metadata: AuxMetadata) -> Result<()> {
         let message = format!("Added to queue: {:?}", metadata);
 
         self.add_track_to_queue(metadata).await?;
@@ -264,7 +265,7 @@ impl AudioPlayer {
         Ok(())
     }
 
-    async fn add_track_to_queue(&self, metadata: &AuxMetadata) -> Result<()> {
+    async fn add_track_to_queue(&self, metadata: AuxMetadata) -> Result<()> {
         let metadata = TrackMetadata::new(metadata, self.user_id)?;
 
         let handle = self
@@ -276,15 +277,17 @@ impl AudioPlayer {
 
         handle.play_input(metadata.track.clone().into());
 
-        self.insert_jukebox_use(metadata);
+        self.insert_jukebox_use(&metadata);
 
-        self.manager.add(self.guild_id, track);
+        self.manager.add(self.guild_id, metadata);
+
+        Ok(())
     }
 
-    fn insert_jukebox_use(&self, track: TrackMetadata) {
+    fn insert_jukebox_use(&self, track: &TrackMetadata) {
         let service = self.jukebox_repository.to_owned();
 
-        let j_use = JukeboxUse::new(self.guild_id.get(), self.user_id.get(), track);
+        let j_use = JukeboxUse::new(self.guild_id.get(), self.user_id.get(), track.clone());
 
         tokio::spawn(async move { service.add_jukebox_use(j_use).await.log() });
     }
