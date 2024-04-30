@@ -36,7 +36,7 @@ pub async fn start() -> Result<()> {
 
     ClientBuilder::new(token, GatewayIntents::all())
         .register_songbird()
-        .framework(get_framework(&settings))
+        .framework(get_framework(settings))
         .await?
         .start()
         .await?;
@@ -44,9 +44,9 @@ pub async fn start() -> Result<()> {
     Ok(())
 }
 
-fn get_framework(settings: &AppSettings) -> poise::FrameworkBuilder<DependencyContainer, Error> {
+fn get_framework(settings: AppSettings) -> poise::Framework<DependencyContainer, Error> {
     poise::Framework::builder()
-        .options(get_options(settings))
+        .options(get_options(&settings))
         .setup(|ctx, ready, framework| {
             Box::pin(async {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
@@ -54,6 +54,7 @@ fn get_framework(settings: &AppSettings) -> poise::FrameworkBuilder<DependencyCo
                 DependencyContainer::build(settings, ready.user.id).await
             })
         })
+        .build()
 }
 
 fn get_options(settings: &AppSettings) -> poise::FrameworkOptions<DependencyContainer, Error> {
