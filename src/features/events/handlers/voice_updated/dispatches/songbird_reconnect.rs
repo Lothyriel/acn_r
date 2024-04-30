@@ -24,6 +24,6 @@ pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<()> {
     let player = dispatch_data.get_player().await;
 
     //  BUG: não sei por que só funcina chamando duas vezes
-    let _ = player.join_voice_channel(channel).await;
+    //  let _ = player.join_voice_channel(channel).await;
     player.join_voice_channel(channel).await
 }

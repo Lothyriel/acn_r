@@ -25,7 +25,10 @@ pub async fn songbird_handler(
             old_if_available: _,
             new: _,
             event: _,
-        } => todo!("implementar !historic"),
+        } => {
+            log::error!("implementar !historic");
+            Ok(())
+        }
         FullEvent::GuildMemberAddition { new_member } => {
             member_added::handler(ctx, new_member).await
         }

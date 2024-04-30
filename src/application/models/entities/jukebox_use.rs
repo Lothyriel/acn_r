@@ -32,7 +32,7 @@ pub struct TrackMetadata {
     pub date: String,
     pub track: String,
     pub uri: String,
-    pub lenght: usize,
+    pub length: usize,
     pub requester: UserId,
 }
 
@@ -49,7 +49,7 @@ impl TrackMetadata {
             uri: value
                 .source_url
                 .ok_or_else(|| anyhow!("Uri not present in track metadata"))?,
-            lenght: value.duration.unwrap_or_default().as_millis() as usize,
+            length: value.duration.unwrap_or_default().as_millis() as usize,
         })
     }
 }

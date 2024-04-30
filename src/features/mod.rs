@@ -48,7 +48,7 @@ fn get_framework(settings: AppSettings) -> poise::Framework<DependencyContainer,
     poise::Framework::builder()
         .options(get_options(&settings))
         .setup(|ctx, ready, framework| {
-            Box::pin(async {
+            Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
                 DependencyContainer::build(settings, ready.user.id).await

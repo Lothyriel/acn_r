@@ -57,7 +57,7 @@ pub async fn handler(
 
     let tasks = vec![
         |c| tokio::spawn(dispatches::songbird_reconnect::handler(c)),
-        |c| tokio::spawn(dispatches::songbird_disconnect::handler(c)),
+        //|c| tokio::spawn(dispatches::songbird_disconnect::handler(c)),
         |c| tokio::spawn(dispatches::afk_disconnect::handler(c)),
     ];
 
@@ -142,6 +142,7 @@ impl DispatchData {
             self.user_id,
             self.manager.clone(),
             jukebox_repository,
+            self.songbird.clone(),
         )
     }
 }

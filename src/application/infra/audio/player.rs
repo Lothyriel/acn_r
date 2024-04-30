@@ -216,7 +216,7 @@ impl AudioPlayer {
     }
 
     pub async fn stop_player(&self) -> Result<()> {
-        self.manager.remove(self.guild_id);
+        self.manager.remove(self.guild_id).await;
 
         Ok(())
     }
@@ -266,7 +266,7 @@ impl AudioPlayer {
     }
 
     async fn add_track_to_queue(&self, metadata: AuxMetadata) -> Result<()> {
-        let metadata = TrackMetadata::new(metadata, self.user_id)?;
+        let track = TrackMetadata::new(metadata.clone(), self.user_id)?;
 
         let handle = self
             .songbird
@@ -275,13 +275,11 @@ impl AudioPlayer {
 
         let mut handle = handle.lock().await;
 
-        handle.play_input(metadata.track.clone().into());
+        handle.play_input(YoutubeDl::new(self.http_client.clone(), track.uri.clone()).into());
 
-        self.insert_jukebox_use(&metadata);
+        self.insert_jukebox_use(&track);
 
-        self.manager.add(self.guild_id, metadata);
-
-        Ok(())
+        self.manager.add(self.guild_id, track).await
     }
 
     fn insert_jukebox_use(&self, track: &TrackMetadata) {
