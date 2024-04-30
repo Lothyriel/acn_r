@@ -7,7 +7,6 @@ use super::{
     infra::{
         appsettings::{AppSettings, MongoSettings},
         audio::manager::AudioManager,
-        mongo_client::create_mongo_client,
     },
     repositories::{
         command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
@@ -21,7 +20,7 @@ pub struct DependencyContainer {
 }
 
 impl DependencyContainer {
-    pub async fn build(settings: &AppSettings, id: UserId) -> Result<Self> {
+    pub async fn build(settings: AppSettings, id: UserId) -> Result<Self> {
         let repositories = RepositoriesContainer::build(&settings).await?;
 
         let services = ServicesContainer::build(settings, id);
@@ -41,16 +40,12 @@ pub struct ServicesContainer {
 }
 
 impl ServicesContainer {
-    fn build(settings: &AppSettings, bot_id: UserId) -> Self {
-        let audio_manager = AudioManager::new();
-
-        audio_manager.start();
-
+    fn build(settings: AppSettings, bot_id: UserId) -> Self {
         Self {
             http_client: Client::new(),
             bot_id,
             allowed_ids: settings.allowed_ids,
-            audio_manager,
+            audio_manager: AudioManager::new(),
         }
     }
 }
@@ -91,6 +86,10 @@ impl RepositoriesContainer {
     }
 
     pub async fn database(settings: &MongoSettings) -> Result<Database> {
-        Ok(create_mongo_client(settings).await?.database("acn_r"))
+        let client = MongoSettings::create_mongo_client(settings)
+            .await?
+            .database("acn_r");
+
+        Ok(client)
     }
 }
