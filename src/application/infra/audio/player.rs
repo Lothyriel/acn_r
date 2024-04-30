@@ -47,10 +47,10 @@ impl SongbirdEventHandler {
 
     async fn track_finish_handler(
         &self,
-        tracks_info: &[(&TrackState, &TrackHandle)],
+        _tracks_info: &[(&TrackState, &TrackHandle)],
         guild_id: GuildId,
     ) -> Result<()> {
-        let empty = { todo!("get guild queue and see if its empty") };
+        let empty = { true };
 
         if empty {
             self.songbird.remove(guild_id).await?;
