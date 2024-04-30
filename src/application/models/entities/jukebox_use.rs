@@ -16,7 +16,7 @@ pub struct JukeboxUse {
 impl JukeboxUse {
     pub fn new(guild_id: u64, user_id: u64, track: TrackMetadata) -> Self {
         Self {
-            track_data: track.track,
+            track_data: track.track.clone(),
             date: chrono::Utc::now(),
             info: track,
             guild_id,
@@ -37,7 +37,7 @@ pub struct TrackMetadata {
 }
 
 impl TrackMetadata {
-    pub fn new(value: &AuxMetadata, requester: UserId) -> Result<Self> {
+    pub fn new(value: AuxMetadata, requester: UserId) -> Result<Self> {
         log::error!("testando dados metadata: {:?}", value);
 
         Ok(TrackMetadata {
