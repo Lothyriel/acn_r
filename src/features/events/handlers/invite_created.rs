@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Error};
+use anyhow::{anyhow, Result};
 use poise::serenity_prelude::{Context, InviteCreateEvent, Mentionable};
 
-pub async fn handler(ctx: &Context, event: &InviteCreateEvent) -> Result<(), Error> {
+pub async fn handler(ctx: &Context, event: &InviteCreateEvent) -> Result<()> {
     let identifier = event
         .channel_id
         .name(ctx)
