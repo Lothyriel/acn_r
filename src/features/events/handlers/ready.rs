@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub async fn handler(ctx: &Context, container: &DependencyContainer, username: &str) -> Result<()> {
-    let allowed_ids = &container.services.allowed_ids;
+    let allowed_ids = &container.allowed_ids;
 
     let message = format!("Estamos totalmente dentro! {}", username);
 
