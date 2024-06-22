@@ -1,14 +1,15 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, Error};
+use anyhow::{anyhow, Result};
 use futures::{future::join_all, TryFutureExt};
+use lavalink_rs::client::LavalinkClient;
 use poise::serenity_prelude::{Cache, ChannelId, Context, GuildId, Http, UserId, VoiceState};
 use songbird::Songbird;
 
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::audio::{manager::AudioManager, player::AudioPlayer},
+        infra::player::AudioPlayer,
         models::{
             dto::user::{GuildInfo, UserActivityDto},
             entities::user::Activity,
@@ -25,7 +26,7 @@ pub async fn handler(
     old: &Option<VoiceState>,
     new: &VoiceState,
     data: &DependencyContainer,
-) -> Result<(), Error> {
+) -> Result<()> {
     let user = new.user_id.to_user(ctx).await?;
 
     let member = new.member.as_ref().ok_or_else(|| {
@@ -71,7 +72,7 @@ async fn get_dispatch_data(
     new: &VoiceState,
     ctx: &Context,
     data: &DependencyContainer,
-) -> Result<DispatchData, Error> {
+) -> Result<DispatchData> {
     let activity = match old {
         Some(old_activity) => get_activity(old_activity, new),
         None => Activity::Connected,
@@ -92,19 +93,19 @@ async fn get_dispatch_data(
         channel_id: new.channel_id,
         user_id: new.user_id,
         jukebox_repository: data.repositories.jukebox.to_owned(),
-        bot_id: data.services.bot_id,
+        bot_id: data.bot_id,
         guild_id: member.guild_id,
         songbird: get_songbird_client(ctx).await?,
+        lavalink: data.lavalink_client.clone(),
         activity,
-        manager: data.services.audio_manager.clone(),
     };
 
     Ok(dispatch_data)
 }
 
-type Tasks = Vec<fn(Arc<DispatchData>) -> tokio::task::JoinHandle<Result<(), Error>>>;
+type Tasks = Vec<fn(Arc<DispatchData>) -> tokio::task::JoinHandle<Result<(), anyhow::Error>>>;
 
-async fn dispatch_tasks(tasks: Tasks, data: Arc<DispatchData>) -> Result<(), Error> {
+async fn dispatch_tasks(tasks: Tasks, data: Arc<DispatchData>) -> Result<()> {
     let tasks = tasks
         .into_iter()
         .map(|c| c(data.to_owned()).map_err(|e| anyhow!(e)));
@@ -123,7 +124,7 @@ pub struct DispatchData {
     cache: Arc<Cache>,
     http: Arc<Http>,
     songbird: Arc<Songbird>,
-    manager: AudioManager,
+    lavalink: LavalinkClient,
     jukebox_repository: JukeboxRepository,
     bot_id: UserId,
 
@@ -134,14 +135,15 @@ pub struct DispatchData {
 }
 
 impl DispatchData {
-    pub async fn get_player(&self) -> AudioPlayer {
+    pub fn get_player(&self) -> AudioPlayer {
         let jukebox_repository = self.jukebox_repository.to_owned();
 
         AudioPlayer::new(
             self.guild_id,
             self.user_id,
-            self.manager.clone(),
             jukebox_repository,
+            self.songbird.clone(),
+            self.lavalink.clone(),
         )
     }
 }
