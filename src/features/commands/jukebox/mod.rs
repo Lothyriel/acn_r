@@ -1,7 +1,6 @@
 use crate::extensions::serenity::Command;
 
 mod play;
-mod playlist;
 mod queue;
 mod shuffle;
 mod skip;
@@ -14,6 +13,5 @@ pub fn group() -> Vec<Command> {
         queue::queue(),
         stop::stop(),
         shuffle::shuffle(),
-        playlist::playlist(),
     ]
 }
