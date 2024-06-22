@@ -7,15 +7,15 @@ services:
     ports:
       - 27017:27017
     environment:
-      MONGO_INITDB_ROOT_USERNAME: acn
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ""
+      MONGO_INITDB_ROOT_PASSWORD: ""
     volumes:
       - mongodb_data:/data/db
 
   lavalink:
-    image: fredboat/lavalink:3.7.8
+    image: fredboat/lavalink
     restart: unless-stopped
-    mem_limit: 400m
+    mem_limit: 2000m
     ports:
       - 2333:2333
     environment:
