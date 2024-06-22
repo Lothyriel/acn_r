@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Result};
 
 use crate::{
-    application::models::entities::user::Activity, extensions::serenity::guild_ext::GuildExt,
+    application::models::entities::user::Activity,
     features::events::handlers::voice_updated::DispatchData,
 };
 
@@ -16,26 +16,30 @@ pub async fn handler(dispatch_data: Arc<DispatchData>) -> Result<()> {
         return Ok(());
     }
 
-    let voice_states = dispatch_data
-        .guild_id
-        .get_voice_states(dispatch_data.cache.to_owned())?;
+    let online_count = {
+        let guild_cache = dispatch_data
+            .cache
+            .guild(dispatch_data.guild_id)
+            .ok_or_else(|| anyhow!("Couldn't get guild {} from cache", dispatch_data.guild_id))?;
 
-    let state = match voice_states.get(&dispatch_data.bot_id) {
-        Some(v) => v,
-        None => return Ok(()),
+        let state = match guild_cache.voice_states.get(&dispatch_data.bot_id) {
+            Some(v) => v,
+            None => return Ok(()),
+        };
+
+        let channel = state
+            .channel_id
+            .ok_or_else(|| anyhow!("Voice state should have a channel id"))?;
+
+        guild_cache
+            .voice_states
+            .values()
+            .filter(|v| v.channel_id == Some(channel))
+            .count()
     };
 
-    let channel = state
-        .channel_id
-        .ok_or_else(|| anyhow!("Voice state should have a channel id"))?;
-
-    let online_count = voice_states
-        .values()
-        .filter(|v| v.channel_id == Some(channel))
-        .count();
-
     if online_count == 1 {
-        let player = dispatch_data.get_player().await;
+        let player = dispatch_data.get_player();
         player.stop_player().await?;
     }
 
