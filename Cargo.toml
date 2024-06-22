@@ -15,9 +15,9 @@ anyhow = "1.0.68"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.91"
 mongodb = { version = "2.5.0", features = ["bson-chrono-0_4"] }
-mongodb-gridfs = "0.2.5"
 futures = "0.3.28"
 poise = { version = "0.6.1", features = ["cache"] }
 songbird = "0.4.1"
 rand = "0.8.5"
+lavalink-rs = { version = "0.12.0", features = ["serenity", "songbird"] }
 reqwest = { version = "0.11.26", default-features = false }
