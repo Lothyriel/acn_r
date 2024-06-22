@@ -1,14 +1,11 @@
 use anyhow::Result;
+use lavalink_rs::client::LavalinkClient;
 use mongodb::Database;
 use poise::serenity_prelude::UserId;
 use reqwest::Client;
 
 use super::{
-    infra::{
-        appsettings::{AppSettings, MongoSettings},
-        audio::manager::AudioManager,
-        mongo_client::create_mongo_client,
-    },
+    infra::appsettings::{create_mongo_client, AppSettings},
     repositories::{
         command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
         stats::StatsRepository, user::UserRepository,
@@ -16,42 +13,28 @@ use super::{
 };
 
 pub struct DependencyContainer {
-    pub services: ServicesContainer,
+    pub bot_id: UserId,
+    pub allowed_ids: Vec<UserId>,
     pub repositories: RepositoriesContainer,
+    pub http_client: Client,
+    pub lavalink_client: LavalinkClient,
 }
 
 impl DependencyContainer {
-    pub async fn build(settings: &AppSettings, id: UserId) -> Result<Self> {
-        let repositories = RepositoriesContainer::build(&settings).await?;
-
-        let services = ServicesContainer::build(settings, id);
+    pub async fn build(
+        settings: AppSettings,
+        lavalink_client: LavalinkClient,
+        id: UserId,
+    ) -> Result<Self> {
+        let repositories = RepositoriesContainer::build().await?;
 
         Ok(Self {
-            services,
             repositories,
-        })
-    }
-}
-
-pub struct ServicesContainer {
-    pub bot_id: UserId,
-    pub allowed_ids: Vec<UserId>,
-    pub http_client: Client,
-    pub audio_manager: AudioManager,
-}
-
-impl ServicesContainer {
-    fn build(settings: &AppSettings, bot_id: UserId) -> Self {
-        let audio_manager = AudioManager::new();
-
-        audio_manager.start();
-
-        Self {
+            bot_id: id,
+            allowed_ids: settings.allowed_ids.to_owned(),
+            lavalink_client,
             http_client: Client::new(),
-            bot_id,
-            allowed_ids: settings.allowed_ids,
-            audio_manager,
-        }
+        })
     }
 }
 
@@ -64,8 +47,8 @@ pub struct RepositoriesContainer {
 }
 
 impl RepositoriesContainer {
-    pub async fn build(settings: &AppSettings) -> Result<Self> {
-        let db = Self::database(&settings.mongo_settings).await?;
+    pub async fn build() -> Result<Self> {
+        let db = create_mongo_client().await?.database("acn_r");
 
         Ok(Self::build_with_db(db))
     }
@@ -88,9 +71,5 @@ impl RepositoriesContainer {
             stats,
             jukebox,
         }
-    }
-
-    pub async fn database(settings: &MongoSettings) -> Result<Database> {
-        Ok(create_mongo_client(settings).await?.database("acn_r"))
     }
 }
