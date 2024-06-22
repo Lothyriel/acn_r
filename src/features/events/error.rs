@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Error};
+use anyhow::{anyhow, bail, Result};
 
 use crate::{
     application::models::dto::command_use::CommandUseDto,
@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
+async fn error(err: FrameworkError<'_>) -> Result<()> {
     match err {
         FrameworkError::Command { error, ctx, .. } => handle_command_error(ctx, error).await,
         poise::FrameworkError::EventHandler {
@@ -31,7 +31,7 @@ async fn error(err: FrameworkError<'_>) -> Result<(), Error> {
     }
 }
 
-async fn handle_command_error(ctx: Context<'_>, error: Error) -> Result<(), Error> {
+async fn handle_command_error(ctx: Context<'_>, error: anyhow::Error) -> Result<()> {
     let dto = CommandUseDto {
         date: chrono::Utc::now(),
         command: ctx.command().name.to_owned(),
