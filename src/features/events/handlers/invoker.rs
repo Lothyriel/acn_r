@@ -22,10 +22,18 @@ pub async fn songbird_handler(
             todo!("SALVAR ISSO AQUI NO BANCO")
         }
         FullEvent::MessageUpdate {
-            old_if_available: _,
-            new: _,
-            event: _,
-        } => todo!("implementar !historic"),
+            old_if_available,
+            new,
+            event,
+        } => {
+            log::warn!(
+                "message update {:?} {:?} {:?}",
+                old_if_available,
+                new,
+                event
+            );
+            Ok(())
+        }
         FullEvent::GuildMemberAddition { new_member } => {
             member_added::handler(ctx, new_member).await
         }
