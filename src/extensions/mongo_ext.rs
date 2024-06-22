@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::{anyhow, Result};
 use futures::TryStreamExt;
 use mongodb::{
     bson::{doc, from_document, Document},
@@ -11,12 +11,12 @@ use super::std_ext::collapse_errors;
 
 #[async_trait]
 pub trait CollectionExt<T> {
-    async fn random_sample(self, size: u32, filter: Document) -> Result<Vec<T>, Error>;
+    async fn random_sample(self, size: u32, filter: Document) -> Result<Vec<T>>;
 }
 
 #[async_trait]
 impl<T: DeserializeOwned + Send + Sync> CollectionExt<T> for Collection<T> {
-    async fn random_sample(self, size: u32, filter: Document) -> Result<Vec<T>, Error> {
+    async fn random_sample(self, size: u32, filter: Document) -> Result<Vec<T>> {
         let pipeline = [
             doc! { "$match": filter, },
             doc! { "$sample": { "size": size } },
