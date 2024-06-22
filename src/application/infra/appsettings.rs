@@ -26,7 +26,6 @@ fn try_get_file(max_depth: usize, filename: String) -> Result<PathBuf> {
 pub struct AppSettings {
     pub allowed_ids: Vec<UserId>,
     pub prefix: String,
-    pub mongo_settings: MongoSettings,
 }
 
 impl AppSettings {
@@ -43,17 +42,11 @@ impl AppSettings {
     }
 }
 
-#[derive(Deserialize)]
-pub struct MongoSettings {
-    pub connection_string: String,
-}
+pub async fn create_mongo_client() -> Result<Client> {
+    let connection_string = env::get("MONGO_CONNECTION_STRING")
+        .unwrap_or_else(|_| "mongodb://localhost/?retryWrites=true".to_owned());
 
-impl MongoSettings {
-    pub async fn create_mongo_client(settings: &MongoSettings) -> Result<Client> {
-        let password = env::get("MONGO_PASSWORD")?;
-        let connection_string = settings.connection_string.replace("{PASSWORD}", &password);
+    let options = ClientOptions::parse(connection_string).await?;
 
-        let options = ClientOptions::parse(connection_string).await?;
-        Ok(Client::with_options(options)?)
-    }
+    Ok(Client::with_options(options)?)
 }
