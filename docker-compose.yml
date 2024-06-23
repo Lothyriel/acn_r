@@ -9,18 +9,12 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ""
       MONGO_INITDB_ROOT_PASSWORD: ""
-    volumes:
-      - mongodb_data:/data/db
 
   lavalink:
     image: mrleo1nid/lavalink
     restart: unless-stopped
-    mem_limit: 2000m
+    mem_limit: 1024m
     ports:
       - 2333:2333
     environment:
       SERVER_PORT: 2333
-      LAVALINK_SERVER_PASSWORD: ${LAVALINK_PASSWORD}
-
-volumes:
-  mongodb_data:
