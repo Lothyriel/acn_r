@@ -1,0 +1,28 @@
+version: '3.4'
+
+services:
+  acn_r:
+    build: https://github.com/Lothyriel/acn_r.git
+    restart: unless-stopped
+    environment:
+      ENV: "prd"
+      LAVALINK_ADDRESS: "lavalink"
+      BOT_TOKEN: ${TOKEN_BOT}
+      MONGO_CONNECTION_STRING: ${MONGO_CONNECTION_STRING}
+    networks:
+      - acn
+
+  lavalink:
+    image: mrleo1nid/lavalink
+    restart: unless-stopped
+    mem_limit: 1024m
+    ports:
+      - 2333:2333
+    environment:
+      SERVER_PORT: 2333
+    networks:
+      - acn
+
+networks:
+  acn:
+    driver: bridge
