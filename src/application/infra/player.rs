@@ -49,7 +49,7 @@ impl AudioPlayer {
     }
 
     pub async fn shuffle(&self, ctx: Context<'_>) -> Result<()> {
-        ctx.say("Shuffled queue!").await?;
+        ctx.say("Queue shuffled!").await?;
 
         bail!("todo!")
     }
@@ -63,7 +63,7 @@ impl AudioPlayer {
     }
 
     pub async fn skip(&self, _ctx: Context<'_>) -> Result<()> {
-        Ok(())
+        bail!("todo")
     }
 
     pub async fn show_queue(&self, ctx: Context<'_>) -> Result<()> {
@@ -229,11 +229,6 @@ impl AudioPlayer {
             .get_player_context(self.guild_id)
             .ok_or_else(|| anyhow!("Error getting player context"))
     }
-}
-
-struct PlayerContextData {
-    channel: ChannelId,
-    http: Arc<Http>,
 }
 
 #[hook]
