@@ -15,11 +15,9 @@ pub async fn songbird_handler(
     data: &DependencyContainer,
 ) -> Result<()> {
     match event {
-        FullEvent::GuildAuditLogEntryCreate {
-            entry: _,
-            guild_id: _,
-        } => {
-            todo!("SALVAR ISSO AQUI NO BANCO")
+        FullEvent::GuildAuditLogEntryCreate { entry, guild_id } => {
+            log::warn!("audit log from guild: {} | {:?}", guild_id, entry);
+            Ok(())
         }
         FullEvent::MessageUpdate {
             old_if_available,
