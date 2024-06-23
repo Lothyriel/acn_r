@@ -68,12 +68,10 @@ async fn get_lavalink_client(ctx: &Context) -> Result<LavalinkClient> {
     };
 
     let node_local = NodeBuilder {
-        hostname: "192.168.3.10:2333".to_string(),
-        is_ssl: false,
+        hostname: env::get("LAVALINK_ADDRESS")? + ":2333",
         events: Events::default(),
-        password: env::get("LAVALINK_PASSWORD")?,
         user_id: ctx.cache.current_user().id.into(),
-        session_id: None,
+        ..Default::default()
     };
 
     let client = LavalinkClient::new(
