@@ -9,7 +9,7 @@ services:
     environment:
       ENV: "prd"
       LAVALINK_ADDRESS: "lavalink"
-      BOT_TOKEN: ${TOKEN_BOT}
+      TOKEN_BOT: ${TOKEN_BOT}
       MONGO_CONNECTION_STRING: ${MONGO_CONNECTION_STRING}
     networks:
       - acn
