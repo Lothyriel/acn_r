@@ -68,7 +68,7 @@ async fn get_lavalink_client(ctx: &Context) -> Result<LavalinkClient> {
     };
 
     let node_local = NodeBuilder {
-        hostname: env::get("LAVALINK_ADDRESS")? + ":2333",
+        hostname: env::get("LAVALINK_ADDRESS").unwrap_or_else(|_| "localhost".to_owned()) + ":2333",
         events: Events::default(),
         user_id: ctx.cache.current_user().id.into(),
         ..Default::default()

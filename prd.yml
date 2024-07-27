@@ -2,7 +2,9 @@ version: '3.4'
 
 services:
   acn_r:
-    build: https://github.com/Lothyriel/acn_r.git
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       ENV: "prd"

@@ -31,7 +31,7 @@ pub struct AppSettings {
 impl AppSettings {
     pub fn load() -> Result<Self> {
         env::init()?;
-        let env = env::get("ENV").unwrap_or_else(|_| "dev".to_string());
+        let env = env::get("ENV")?;
 
         let filename = APPSETTINGS_PATH.replace("{ENV}", env.as_str());
 
