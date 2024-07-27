@@ -18,3 +18,4 @@ services:
       - 2333:2333
     environment:
       SERVER_PORT: 2333
+      LAVALINK_SERVER_PASSWORD: ""
