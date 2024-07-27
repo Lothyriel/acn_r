@@ -18,8 +18,6 @@ services:
     image: mrleo1nid/lavalink
     restart: unless-stopped
     mem_limit: 1024m
-    ports:
-      - 2333:2333
     environment:
       SERVER_PORT: 2333
       LAVALINK_SERVER_PASSWORD: ""
