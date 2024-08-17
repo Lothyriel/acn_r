@@ -219,6 +219,12 @@ impl AudioPlayer {
 
         self.jukebox_repository.add_jukebox_use(jukebox_use).await?;
 
+        if let Ok(player_data) = player.get_player().await {
+            if player_data.track.is_none() && queue.get_track(0).await.is_ok_and(|x| x.is_some()) {
+                player.skip()?;
+            }
+        }
+
         ctx.say(msg).await?;
 
         Ok(())
