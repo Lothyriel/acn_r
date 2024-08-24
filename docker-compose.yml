@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   mongodb:
     image: mongo
@@ -11,7 +9,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ""
 
   lavalink:
-    image: ghcr.io/lavalink-devs/lavalink:4
+    image: ghcr.io/lavalink-devs/lavalink
     restart: unless-stopped
     mem_limit: 1024m
     ports:
@@ -19,3 +17,6 @@ services:
     environment:
       SERVER_PORT: 2333
       LAVALINK_SERVER_PASSWORD: ""
+      LAVALINK_SERVER_SOURCES_YOUTUBE: false
+      LAVALINK_PLUGINS_0_DEPENDENCY: "dev.lavalink.youtube:youtube-plugin:1.7.1"
+      LAVALINK_PLUGINS_0_SNAPSHOT: false
