@@ -11,7 +11,7 @@ pub async fn handler(new: &GuildMemberUpdateEvent, data: &DependencyContainer) -
     let dto = UpdateNickDto {
         user_id: new.user.id.get(),
         guild_id: Some(new.guild_id.get()),
-        new_nickname: new.nick.as_ref().unwrap_or_else(|| &new.user.name).clone(),
+        new_nickname: new.nick.as_ref().unwrap_or(&new.user.name).clone(),
         date: chrono::Utc::now(),
     };
 

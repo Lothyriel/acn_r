@@ -19,19 +19,6 @@ pub async fn songbird_handler(
             log::warn!("audit log from guild: {} | {:?}", guild_id, entry);
             Ok(())
         }
-        FullEvent::MessageUpdate {
-            old_if_available,
-            new,
-            event,
-        } => {
-            log::warn!(
-                "message update {:?} {:?} {:?}",
-                old_if_available,
-                new,
-                event
-            );
-            Ok(())
-        }
         FullEvent::GuildMemberAddition { new_member } => {
             member_added::handler(ctx, new_member).await
         }

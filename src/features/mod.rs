@@ -9,7 +9,7 @@ use songbird::SerenityInit;
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
-        infra::{appsettings::AppSettings, env},
+        infra::{appsettings::AppSettings, env, player},
     },
     extensions::serenity::Command,
     features::commands::*,
@@ -63,7 +63,8 @@ fn get_framework(settings: AppSettings) -> poise::Framework<DependencyContainer,
 
 async fn get_lavalink_client(ctx: &Context) -> Result<LavalinkClient> {
     let events = Events {
-        track_start: None,
+        track_start: Some(player::track_start),
+        stats: Some(player::stats),
         ..Default::default()
     };
 

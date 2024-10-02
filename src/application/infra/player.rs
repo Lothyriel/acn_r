@@ -1,16 +1,16 @@
-use std::sync::Arc;
-
 use anyhow::{anyhow, bail, Result};
 use futures::StreamExt;
 use lavalink_rs::{
     client::LavalinkClient,
     hook,
-    model::events::TrackStart,
+    model::events::{Stats, TrackStart},
     player_context::{PlayerContext, TrackInQueue},
     prelude::{SearchEngines, TrackLoadData},
 };
 use poise::serenity_prelude::{ChannelId, GuildId, Http, MessageBuilder, UserId};
+use rand::seq::SliceRandom;
 use songbird::Songbird;
+use std::sync::Arc;
 
 use crate::{
     application::{
@@ -49,21 +49,45 @@ impl AudioPlayer {
     }
 
     pub async fn shuffle(&self, ctx: Context<'_>) -> Result<()> {
+        let player_ctx = self.get_player_ctx()?;
+
+        let queue_ref = player_ctx.get_queue();
+
+        let mut queue = queue_ref.get_queue().await?;
+
+        queue.make_contiguous().shuffle(&mut rand::thread_rng());
+
+        queue_ref.replace(queue)?;
+
         ctx.say("Queue shuffled!").await?;
-
-        bail!("todo!")
-    }
-
-    pub async fn stop(&self, ctx: Context<'_>) -> Result<()> {
-        self.stop_player().await?;
-
-        ctx.say("Player stopped! Queue cleared!").await?;
 
         Ok(())
     }
 
-    pub async fn skip(&self, _ctx: Context<'_>) -> Result<()> {
-        bail!("todo")
+    pub async fn stop(&self, ctx: Context<'_>) -> Result<()> {
+        let msg = match self.stop_player().await? {
+            true => "Player stopped! Queue cleared!",
+            false => "Nothing to clear",
+        };
+
+        ctx.say(msg).await?;
+
+        Ok(())
+    }
+
+    pub async fn skip(&self, ctx: Context<'_>) -> Result<()> {
+        let player = self.get_player_ctx()?;
+
+        let now_playing = player.get_player().await?.track;
+
+        if let Some(np) = now_playing {
+            player.skip()?;
+            ctx.say(format!("Skipped {}", np.info.title)).await?;
+        } else {
+            ctx.say("Nothing to skip").await?;
+        }
+
+        Ok(())
     }
 
     pub async fn show_queue(&self, ctx: Context<'_>) -> Result<()> {
@@ -81,17 +105,23 @@ impl AudioPlayer {
             match count == 0 {
                 false => {
                     message_builder.push_line("Queue: ");
+                    message_builder.push_line("");
 
                     let lines: Vec<_> = queue
-                        .enumerate()
                         .take(MAX_QUEUE_DESCRIPTION_SIZE)
-                        .map(|(i, track)| {
-                            let now = if i == 0 { "▶️" } else { "" };
+                        .map(|track| {
+                            let info = track.track.info;
 
-                            format!(
-                                "- {} {:?} | By: <@{}>",
-                                now, track.track, track.track.info.title
-                            )
+                            let uri = info
+                                .uri
+                                .as_deref()
+                                .unwrap_or("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+
+                            let total_seconds = info.length / 1000;
+                            let minutes = total_seconds / 60;
+                            let seconds = total_seconds % 60;
+
+                            format!("{:02}:{:02} - [{}]({})", minutes, seconds, info.title, uri,)
                         })
                         .collect()
                         .await;
@@ -118,61 +148,83 @@ impl AudioPlayer {
     }
 
     pub async fn play(&self, ctx: Context<'_>, query: String) -> Result<()> {
-        self.assure_connected(ctx).await?;
-
-        self.queue_music(ctx, query).await
+        match self.assure_connected(ctx).await? {
+            true => self.queue_music(ctx, query).await,
+            false => Ok(()),
+        }
     }
 
-    pub async fn join_voice_channel(&self, channel_id: ChannelId) -> Result<()> {
+    pub async fn join_voice_channel(&self, channel_id: ChannelId, http: Arc<Http>) -> Result<()> {
         let (connection_info, _) = self
             .songbird
             .join_gateway(self.guild_id, channel_id)
             .await?;
 
         self.lavalink
-            .create_player_context(self.guild_id, connection_info)
+            .create_player_context_with_data::<(ChannelId, std::sync::Arc<Http>)>(
+                self.guild_id,
+                connection_info,
+                std::sync::Arc::new((channel_id, http)),
+            )
             .await
             .map_err(|e| anyhow!("Guild {} | Error joining the channel: {}", self.guild_id, e))?;
 
         Ok(())
     }
 
-    async fn assure_connected(&self, ctx: Context<'_>) -> Result<()> {
-        let channel = match ctx.assure_connected().await? {
+    async fn assure_connected(&self, ctx: Context<'_>) -> Result<bool> {
+        let channel = match ctx.get_author_voice_channel().await? {
             Some(c) => c,
             None => {
                 ctx.say("Please join a voice channel.").await?;
-                return Ok(());
+                return Ok(false);
             }
         };
 
-        // let should_join = match self.songbird.get(self.guild_id) {
-        //     Some(call) => {
-        //         let guard = call.lock().await;
-        //
-        //         match guard.current_connection() {
-        //             Some(current_connection) => {
-        //                 current_connection.channel_id.map(|c| c.0.get()) != Some(channel.get())
-        //             }
-        //             None => true,
-        //         }
-        //     }
-        //     None => true,
-        // };
+        let should_join = match self.songbird.get(self.guild_id) {
+            Some(call) => {
+                let guard = call.lock().await;
 
-        // if true {
-        self.join_voice_channel(channel).await?;
-        // }
+                match guard.current_connection() {
+                    Some(current_connection) => {
+                        current_connection.channel_id.map(|c| c.0.get()) != Some(channel.get())
+                    }
+                    None => true,
+                }
+            }
+            None => true,
+        };
 
-        Ok(())
+        if should_join {
+            self.join_voice_channel(channel, ctx.serenity_context().http.clone())
+                .await?;
+        }
+
+        Ok(true)
     }
 
-    pub async fn stop_player(&self) -> Result<()> {
-        bail!("todo!")
+    pub async fn stop_player(&self) -> Result<bool> {
+        let player_ctx = self.get_player_ctx()?;
+
+        let now_playing = player_ctx.get_player().await?.track;
+
+        let result = if now_playing.is_some() {
+            player_ctx.stop_now().await?;
+            let queue = player_ctx.get_queue();
+            queue.clear()?;
+            self.lavalink.delete_player(self.guild_id).await?;
+
+            self.songbird.remove(self.guild_id).await?;
+            true
+        } else {
+            false
+        };
+
+        Ok(result)
     }
 
     async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<()> {
-        let player = self.get_player_ctx()?;
+        let player_ctx = self.get_player_ctx()?;
 
         let query = SearchEngines::YouTube.to_query(&query)?;
 
@@ -194,8 +246,14 @@ impl AudioPlayer {
             _ => {
                 let track = &tracks[0].track;
                 format!(
-                    "Added {} - {} to the queue",
-                    track.info.title, track.info.author
+                    "{} Added [{}]({}) to the queue",
+                    ctx.author(),
+                    track.info.title,
+                    track
+                        .info
+                        .uri
+                        .as_deref()
+                        .unwrap_or("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
                 )
             }
         };
@@ -214,16 +272,12 @@ impl AudioPlayer {
             },
         };
 
-        let queue = player.get_queue();
+        let queue = player_ctx.get_queue();
         queue.append(tracks.into())?;
 
         self.jukebox_repository.add_jukebox_use(jukebox_use).await?;
 
-        if let Ok(player_data) = player.get_player().await {
-            if player_data.track.is_none() && queue.get_track(0).await.is_ok_and(|x| x.is_some()) {
-                player.skip()?;
-            }
-        }
+        player_ctx.play(&track).await?;
 
         ctx.say(msg).await?;
 
@@ -240,6 +294,11 @@ impl AudioPlayer {
 #[hook]
 pub async fn track_start(client: LavalinkClient, _session_id: String, event: &TrackStart) {
     track_start_handler(client, event).await.log();
+}
+
+#[hook]
+pub async fn stats(_client: LavalinkClient, _session_id: String, event: &Stats) {
+    log::warn!("{:?}", event);
 }
 
 async fn track_start_handler(client: LavalinkClient, event: &TrackStart) -> Result<()> {
@@ -260,14 +319,14 @@ async fn track_start_handler(client: LavalinkClient, event: &TrackStart) -> Resu
                 track.info.author,
                 track.info.title,
                 uri,
-                track.user_data.clone().unwrap()["requester_id"]
+                track.user_data.as_ref().unwrap()["requester_id"]
             )
         } else {
             format!(
                 "Now playing: {} - {} | Requested by <@!{}>",
                 track.info.author,
                 track.info.title,
-                track.user_data.clone().unwrap()["requester_id"]
+                track.user_data.as_ref().unwrap()["requester_id"]
             )
         }
     };

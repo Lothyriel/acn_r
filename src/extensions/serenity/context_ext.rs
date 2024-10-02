@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use poise::async_trait;
 use poise::serenity_prelude::{ChannelId, GuildId, GuildRef};
 use songbird::Songbird;
 
@@ -11,18 +10,17 @@ use crate::{
     extensions::{serenity::Context, std_ext::JoinString},
 };
 
-#[async_trait]
+#[allow(async_fn_in_trait)]
 pub trait ContextExt {
     async fn get_author_name(&self) -> String;
     async fn get_command_args(&self) -> String;
     async fn get_player(&self) -> Result<AudioPlayer>;
-    async fn assure_connected(&self) -> Result<Option<ChannelId>>;
+    async fn get_author_voice_channel(&self) -> Result<Option<ChannelId>>;
     fn get_guild_info(&self) -> Option<GuildInfo>;
     fn assure_cached_guild(&self) -> Result<GuildRef<'_>>;
     fn assure_guild_context(&self) -> Result<GuildId>;
 }
 
-#[async_trait]
 impl ContextExt for Context<'_> {
     async fn get_author_name(&self) -> String {
         self.author_member()
@@ -58,7 +56,7 @@ impl ContextExt for Context<'_> {
         ))
     }
 
-    async fn assure_connected(&self) -> Result<Option<ChannelId>> {
+    async fn get_author_voice_channel(&self) -> Result<Option<ChannelId>> {
         let guild = self.assure_cached_guild()?;
 
         let channel = guild
