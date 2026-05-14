@@ -22,3 +22,4 @@ rand = "0.10"
 lavalink-rs = { version = "0.15", features = ["serenity", "songbird"] }
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "query"] }
 rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs"] }
+unicode-segmentation = "1.12"
