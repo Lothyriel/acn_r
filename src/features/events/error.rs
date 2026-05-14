@@ -1,4 +1,5 @@
 use anyhow::{anyhow, bail, Result};
+use log::error;
 
 use crate::{
     application::models::dto::command_use::CommandUseDto,
@@ -49,6 +50,11 @@ async fn handle_command_error(ctx: Context<'_>, error: anyhow::Error) -> Result<
         .unwrap_or_else(|| format!("DM: {}", dto.user_id));
 
     let message = format!("{}: {}", id, error);
+
+    error!(
+        "Command failed | command={} user_id={} user_name={} location={} args={} error={}",
+        dto.command, dto.user_id, dto.user_nickname, id, dto.args, error
+    );
 
     ctx.say(&message).await?;
 

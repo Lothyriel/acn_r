@@ -1,5 +1,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use log::info;
 use poise::serenity_prelude::Mentionable;
 use crate::{
     application::models::{
@@ -30,6 +31,17 @@ async fn after(ctx: Context<'_>) -> Result<()> {
         command: command_name,
         args: ctx.get_command_args().await,
     };
+
+    let location = dto
+        .guild_info
+        .as_ref()
+        .map(|guild| format!("guild:{}", guild.guild_id))
+        .unwrap_or_else(|| "dm".to_owned());
+
+    info!(
+        "Command invoked | command={} user_id={} user_name={} location={} args={}",
+        dto.command, dto.user_id, dto.user_nickname, location, dto.args
+    );
 
     ctx.data().repositories.command.add_command_use(dto).await?;
 
