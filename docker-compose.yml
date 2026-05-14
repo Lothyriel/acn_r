@@ -1,12 +1,4 @@
 services:
-  mongodb:
-    image: docker.io/library/mongo:8.3.2
-    restart: unless-stopped
-    ports:
-      - 27017:27017
-    environment:
-      - GLIBC_TUNABLES=glibc.pthread.rseq=1
-
   lavalink:
     image: ghcr.io/lavalink-devs/lavalink:4.2.2
     restart: unless-stopped

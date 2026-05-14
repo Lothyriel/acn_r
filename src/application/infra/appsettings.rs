@@ -1,8 +1,11 @@
-use anyhow::{bail, Result};
-use mongodb::{options::ClientOptions, Client};
+use anyhow::{Result, bail};
 use poise::serenity_prelude::UserId;
 use serde::Deserialize;
-use std::path::PathBuf;
+use sqlx::{
+    Pool, Sqlite,
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
+};
+use std::{path::PathBuf, str::FromStr};
 
 use crate::application::infra::env;
 
@@ -42,11 +45,141 @@ impl AppSettings {
     }
 }
 
-pub async fn create_mongo_client() -> Result<Client> {
-    let connection_string = env::get("MONGO_CONNECTION_STRING")
-        .unwrap_or_else(|_| "mongodb://localhost/?retryWrites=true".to_owned());
+pub async fn create_sqlite_pool() -> Result<Pool<Sqlite>> {
+    let connection_string =
+        env::get("SQLITE_DATABASE_URL").unwrap_or_else(|_| "sqlite://acn_r.db".to_owned());
 
-    let options = ClientOptions::parse(connection_string).await?;
+    let options = SqliteConnectOptions::from_str(&connection_string)?.create_if_missing(true);
 
-    Ok(Client::with_options(options)?)
+    Ok(SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect_with(options)
+        .await?)
+}
+
+pub async fn initialize_database(pool: &Pool<Sqlite>) -> Result<()> {
+    sqlx::query("PRAGMA foreign_keys = ON;")
+        .execute(pool)
+        .await?;
+
+    sqlx::query("CREATE TABLE IF NOT EXISTS guilds (id INTEGER PRIMARY KEY NOT NULL)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS guild_name_changes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            name TEXT NOT NULL
+        )",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_guild_name_changes_lookup
+            ON guild_name_changes (guild_id, date DESC)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY NOT NULL)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS signatures (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            emojis TEXT NOT NULL,
+            date TEXT NOT NULL
+        )",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_signatures_lookup
+            ON signatures (user_id, date DESC)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS nickname_changes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            guild_id INTEGER,
+            nickname TEXT NOT NULL,
+            date TEXT NOT NULL
+        )",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_nickname_changes_lookup
+            ON nickname_changes (user_id, date DESC)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS command_uses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER,
+            user_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            name TEXT NOT NULL,
+            args TEXT NOT NULL
+        )",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS command_errors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER,
+            user_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            name TEXT NOT NULL,
+            args TEXT NOT NULL,
+            error TEXT NOT NULL
+        )",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS russian_roulette (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            shot INTEGER NOT NULL,
+            number_drawn REAL NOT NULL,
+            date TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            guild_id INTEGER,
+            command TEXT NOT NULL
+        )",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS jukebox_uses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guild_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            time TEXT NOT NULL,
+            author TEXT NOT NULL,
+            title TEXT NOT NULL,
+            uri TEXT,
+            seconds INTEGER NOT NULL
+        )",
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
 }

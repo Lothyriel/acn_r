@@ -1,7 +1,8 @@
 use anyhow::Result;
-use mongodb::{Collection, Database};
+use sqlx::{Pool, Sqlite};
 
 use crate::application::{
+    infra::sqlite::{encode_datetime, encode_id, encode_optional_id},
     models::{
         dto::{command_use::CommandUseDto, user::UserActivityDto},
         entities::command::{CommandError, CommandUse},
@@ -11,17 +12,15 @@ use crate::application::{
 
 #[derive(Clone)]
 pub struct CommandRepository {
-    commands_use: Collection<CommandUse>,
-    commands_errors: Collection<CommandError>,
+    db: Pool<Sqlite>,
     user_repository: UserRepository,
 }
 
 impl CommandRepository {
-    pub fn new(database: &Database, user_repository: UserRepository) -> Self {
+    pub fn new(database: &Pool<Sqlite>, user_repository: UserRepository) -> Self {
         Self {
+            db: database.clone(),
             user_repository,
-            commands_use: database.collection("CommandsUse"),
-            commands_errors: database.collection("CommandsErrors"),
         }
     }
 
@@ -34,7 +33,16 @@ impl CommandRepository {
             args: command_use_dto.args,
         };
 
-        self.commands_use.insert_one(command_use).await?;
+        sqlx::query(
+            "INSERT INTO command_uses (guild_id, user_id, date, name, args) VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind(encode_optional_id(command_use.guild_id)?)
+        .bind(encode_id(command_use.user_id)?)
+        .bind(encode_datetime(command_use.date))
+        .bind(command_use.name)
+        .bind(command_use.args)
+        .execute(&self.db)
+        .await?;
 
         let add = UserActivityDto {
             guild_info: command_use_dto.guild_info,
@@ -59,7 +67,17 @@ impl CommandRepository {
             error: error.to_owned(),
         };
 
-        self.commands_errors.insert_one(command_error).await?;
+        sqlx::query(
+            "INSERT INTO command_errors (guild_id, user_id, date, name, args, error) VALUES (?, ?, ?, ?, ?, ?)",
+        )
+        .bind(encode_optional_id(command_error.guild_id)?)
+        .bind(encode_id(command_error.user_id)?)
+        .bind(encode_datetime(command_error.date))
+        .bind(command_error.name)
+        .bind(command_error.args)
+        .bind(command_error.error)
+        .execute(&self.db)
+        .await?;
 
         Ok(())
     }
