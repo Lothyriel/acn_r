@@ -11,6 +11,7 @@ use lavalink_rs::{
 };
 use poise::serenity_prelude::{ChannelId, GuildId, Http, MessageBuilder, UserId};
 use rand::seq::SliceRandom;
+use serde_json::json;
 use songbird::Songbird;
 use std::sync::Arc;
 
@@ -242,7 +243,7 @@ impl AudioPlayer {
 
         let loaded_tracks = self.lavalink.load_tracks(self.guild_id, &query).await?;
 
-        let tracks: Vec<TrackInQueue> = match loaded_tracks.load_type {
+        let mut tracks: Vec<TrackInQueue> = match loaded_tracks.load_type {
             TrackLoadType::Track => match loaded_tracks.data {
                 Some(TrackLoadData::Track(track)) => vec![track.into()],
                 _ => bail!("Lavalink returned an invalid track response"),
@@ -286,6 +287,12 @@ impl AudioPlayer {
                 _ => bail!("Lavalink returned an unknown track loading error"),
             },
         };
+
+        let requester_id = ctx.author().id.get();
+
+        for track in &mut tracks {
+            track.track.user_data = Some(json!({ "requester_id": requester_id }));
+        }
 
         let msg = match tracks.len() {
             count if count > 1 => format!("Added {} tracks to the queue", count),
@@ -359,20 +366,28 @@ async fn track_start_handler(client: LavalinkClient, event: &TrackStart) -> Resu
     let msg = {
         let track = &event.track;
 
+        let requester = track
+            .user_data
+            .as_ref()
+            .and_then(|data| data.get("requester_id"))
+            .and_then(|value| value.as_u64())
+            .map(|id| format!(" | Requested by <@!{}>", id))
+            .unwrap_or_default();
+
         if let Some(uri) = &track.info.uri {
             format!(
-                "Now playing: [{} - {}](<{}>) | Requested by <@!{}>",
+                "Now playing: [{} - {}](<{}>){}",
                 track.info.author,
                 track.info.title,
                 uri,
-                track.user_data.as_ref().unwrap()["requester_id"]
+                requester
             )
         } else {
             format!(
-                "Now playing: {} - {} | Requested by <@!{}>",
+                "Now playing: {} - {}{}",
                 track.info.author,
                 track.info.title,
-                track.user_data.as_ref().unwrap()["requester_id"]
+                requester
             )
         }
     };
