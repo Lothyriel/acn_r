@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use mongodb::{bson::doc, Collection, Database};
+use mongodb::{Collection, Database, bson::doc};
 
 use crate::application::models::entities::{guild::Guild, guild_name::GuildNameChange};
 
@@ -41,10 +41,10 @@ impl GuildRepository {
     }
 
     async fn update_name(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<()> {
-        if let Some(last_name) = self.get_last_name(id).await? {
-            if last_name == name {
-                return Ok(());
-            }
+        if let Some(last_name) = self.get_last_name(id).await?
+            && last_name == name
+        {
+            return Ok(());
         }
 
         let new_name = GuildNameChange {

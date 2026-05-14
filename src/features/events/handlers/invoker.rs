@@ -47,8 +47,14 @@ pub async fn songbird_handler(
         FullEvent::WebhookUpdate {
             guild_id,
             belongs_to_channel_id: _,
-        } => Ok(log::error!("Webhook update {}", guild_id)),
-        FullEvent::Ratelimit { data } => Ok(log::error!("Rate limited {:?}", data)),
+        } => {
+            log::error!("Webhook update {}", guild_id);
+            Ok(())
+        }
+        FullEvent::Ratelimit { data } => {
+            log::error!("Rate limited {:?}", data);
+            Ok(())
+        }
         _ => Ok(()),
     }
 }
