@@ -14,10 +14,11 @@ env_logger = "0.11.0"
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-mongodb = { version = "3.6", features = ["bson-3"] }
+mongodb = { version = "3.6", features = ["bson-3", "rustls-tls-aws-lc"] }
 futures = "0.3"
 poise = { version = "0.6", features = ["cache"] }
 songbird = "0.6"
 rand = "0.10"
 lavalink-rs = { version = "0.15", features = ["serenity", "songbird"] }
-reqwest = { version = "0.13", default-features = false }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "query"] }
+rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs"] }
