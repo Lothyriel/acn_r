@@ -424,15 +424,7 @@ pub async fn stats(_client: LavalinkClient, _session_id: String, event: &Stats) 
     log::debug!("{:?}", event);
 }
 
-async fn track_start_handler(client: LavalinkClient, event: &TrackStart) -> Result<()> {
-    let player = client
-        .get_player_context(event.guild_id)
-        .ok_or_else(|| anyhow!("Couldn't get player context"))?;
-
-    let data = player.data::<(ChannelId, std::sync::Arc<Http>)>()?;
-
-    let (channel_id, http) = (&data.0, &data.1);
-
+async fn track_start_handler(_client: LavalinkClient, event: &TrackStart) -> Result<()> {
     let msg = {
         let track = &event.track;
 
@@ -457,7 +449,7 @@ async fn track_start_handler(client: LavalinkClient, event: &TrackStart) -> Resu
         }
     };
 
-    channel_id.say(http, msg).await?;
+    log::info!("{msg}");
 
     Ok(())
 }
