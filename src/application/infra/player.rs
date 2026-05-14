@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use futures::StreamExt;
 use lavalink_rs::{
     client::LavalinkClient,
@@ -22,7 +22,7 @@ use crate::{
     },
     extensions::{
         log_ext::LogExt,
-        serenity::{context_ext::ContextExt, Context},
+        serenity::{Context, context_ext::ContextExt},
     },
 };
 
@@ -128,27 +128,28 @@ impl AudioPlayer {
                         message_builder.push_line("Queue:");
                         message_builder.push_line("");
 
-                        let lines: Vec<_> = queue
-                            .take(MAX_QUEUE_DESCRIPTION_SIZE)
-                            .map(|track| {
-                                let info = track.track.info;
+                        let lines: Vec<_> =
+                            queue
+                                .take(MAX_QUEUE_DESCRIPTION_SIZE)
+                                .map(|track| {
+                                    let info = track.track.info;
 
-                                let uri = info
-                                    .uri
-                                    .as_deref()
-                                    .unwrap_or("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+                                    let uri = info
+                                        .uri
+                                        .as_deref()
+                                        .unwrap_or("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 
-                                let total_seconds = info.length / 1000;
-                                let minutes = total_seconds / 60;
-                                let seconds = total_seconds % 60;
+                                    let total_seconds = info.length / 1000;
+                                    let minutes = total_seconds / 60;
+                                    let seconds = total_seconds % 60;
 
-                                format!(
-                                    "{:02}:{:02} - [{}]({})",
-                                    minutes, seconds, info.title, uri,
-                                )
-                            })
-                            .collect()
-                            .await;
+                                    format!(
+                                        "{:02}:{:02} - [{}]({})",
+                                        minutes, seconds, info.title, uri,
+                                    )
+                                })
+                                .collect()
+                                .await;
 
                         for line in lines {
                             message_builder.push_line(line);
@@ -420,7 +421,7 @@ pub async fn track_start(client: LavalinkClient, _session_id: String, event: &Tr
 
 #[hook]
 pub async fn stats(_client: LavalinkClient, _session_id: String, event: &Stats) {
-    log::warn!("{:?}", event);
+    log::info!("{:?}", event);
 }
 
 async fn track_start_handler(client: LavalinkClient, event: &TrackStart) -> Result<()> {
@@ -446,17 +447,12 @@ async fn track_start_handler(client: LavalinkClient, event: &TrackStart) -> Resu
         if let Some(uri) = &track.info.uri {
             format!(
                 "Now playing: [{} - {}](<{}>){}",
-                track.info.author,
-                track.info.title,
-                uri,
-                requester
+                track.info.author, track.info.title, uri, requester
             )
         } else {
             format!(
                 "Now playing: {} - {}{}",
-                track.info.author,
-                track.info.title,
-                requester
+                track.info.author, track.info.title, requester
             )
         }
     };

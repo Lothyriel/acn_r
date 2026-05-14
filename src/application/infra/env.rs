@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use env_logger::Target;
 use log::LevelFilter;
 use std::env;
@@ -11,7 +11,7 @@ pub fn init() -> Result<()> {
     dotenv::dotenv().ok();
 
     env_logger::builder()
-        .filter_level(LevelFilter::Warn)
+        .filter_level(LevelFilter::Info)
         .target(Target::Stdout)
         .try_init()?;
 
