@@ -98,6 +98,7 @@ impl AudioPlayer {
 
         let queue_description = {
             let player = self.get_player_ctx()?;
+            let now_playing = player.get_player().await?.track;
 
             let queue = player.get_queue();
 
@@ -105,8 +106,60 @@ impl AudioPlayer {
 
             let mut message_builder = MessageBuilder::new();
 
-            match count == 0 {
-                false => {
+            match (now_playing, count == 0) {
+                (Some(track), _) => {
+                    let info = track.info;
+                    let uri = info
+                        .uri
+                        .as_deref()
+                        .unwrap_or("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+                    let total_seconds = info.length / 1000;
+                    let minutes = total_seconds / 60;
+                    let seconds = total_seconds % 60;
+
+                    message_builder.push_line("Now playing:");
+                    message_builder.push_line(format!(
+                        "{:02}:{:02} - [{}]({})",
+                        minutes, seconds, info.title, uri,
+                    ));
+
+                    if count > 0 {
+                        message_builder.push_line("");
+                        message_builder.push_line("Queue:");
+                        message_builder.push_line("");
+
+                        let lines: Vec<_> = queue
+                            .take(MAX_QUEUE_DESCRIPTION_SIZE)
+                            .map(|track| {
+                                let info = track.track.info;
+
+                                let uri = info
+                                    .uri
+                                    .as_deref()
+                                    .unwrap_or("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+
+                                let total_seconds = info.length / 1000;
+                                let minutes = total_seconds / 60;
+                                let seconds = total_seconds % 60;
+
+                                format!(
+                                    "{:02}:{:02} - [{}]({})",
+                                    minutes, seconds, info.title, uri,
+                                )
+                            })
+                            .collect()
+                            .await;
+
+                        for line in lines {
+                            message_builder.push_line(line);
+                        }
+
+                        if count > MAX_QUEUE_DESCRIPTION_SIZE {
+                            message_builder.push(format!("{} more tracks...", count - 10));
+                        }
+                    }
+                }
+                (None, false) => {
                     message_builder.push_line("Queue: ");
                     message_builder.push_line("");
 
@@ -137,7 +190,7 @@ impl AudioPlayer {
                         message_builder.push(format!("{} more tracks...", count - 10));
                     }
                 }
-                true => {
+                (None, true) => {
                     message_builder.push_line("EMPTY!!!");
                 }
             };
