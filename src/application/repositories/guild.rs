@@ -1,43 +1,35 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use mongodb::{Collection, Database, bson::doc};
+use sqlx::{Pool, Sqlite};
 
-use crate::application::models::entities::{guild::Guild, guild_name::GuildNameChange};
+use crate::application::{
+    infra::sqlite::{encode_datetime, encode_id},
+    models::entities::{guild::Guild, guild_name::GuildNameChange},
+};
 
 #[derive(Clone)]
 pub struct GuildRepository {
-    guilds: Collection<Guild>,
-    guild_name_changes: Collection<GuildNameChange>,
+    db: Pool<Sqlite>,
 }
 
 impl GuildRepository {
-    pub fn new(database: &Database) -> Self {
+    pub fn new(database: &Pool<Sqlite>) -> Self {
         Self {
-            guilds: database.collection("Guilds"),
-            guild_name_changes: database.collection("GuildNameChanges"),
+            db: database.clone(),
         }
     }
 
     pub async fn add_guild(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<()> {
         self.update_name(id, name, date).await?;
 
-        if self.guild_exists(id).await? {
-            return Ok(());
-        }
-
         let guild = Guild { id };
-        self.guilds.insert_one(guild).await?;
+
+        sqlx::query("INSERT OR IGNORE INTO guilds (id) VALUES (?)")
+            .bind(encode_id(guild.id)?)
+            .execute(&self.db)
+            .await?;
 
         Ok(())
-    }
-
-    async fn guild_exists(&self, guild_id: u64) -> Result<bool> {
-        Ok(self.get_guild(guild_id).await?.is_some())
-    }
-
-    async fn get_guild(&self, guild_id: u64) -> Result<Option<Guild>> {
-        let filter = doc! {"id": guild_id as i64};
-        Ok(self.guilds.find_one(filter).await?)
     }
 
     async fn update_name(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<()> {
@@ -53,19 +45,24 @@ impl GuildRepository {
             date,
         };
 
-        self.guild_name_changes.insert_one(new_name).await?;
+        sqlx::query("INSERT INTO guild_name_changes (guild_id, date, name) VALUES (?, ?, ?)")
+            .bind(encode_id(new_name.guild_id)?)
+            .bind(encode_datetime(new_name.date))
+            .bind(new_name.name)
+            .execute(&self.db)
+            .await?;
 
         Ok(())
     }
 
     async fn get_last_name(&self, guild_id: u64) -> Result<Option<String>> {
-        let filter = doc! {"guild_id": guild_id as i64};
-        let possible_last_change = self
-            .guild_name_changes
-            .find_one(filter)
-            .sort(doc! { "date": -1 })
-            .await?;
+        let possible_last_change = sqlx::query_scalar::<_, String>(
+            "SELECT name FROM guild_name_changes WHERE guild_id = ? ORDER BY date DESC LIMIT 1",
+        )
+        .bind(encode_id(guild_id)?)
+        .fetch_optional(&self.db)
+        .await?;
 
-        Ok(possible_last_change.map(|n| n.name))
+        Ok(possible_last_change)
     }
 }

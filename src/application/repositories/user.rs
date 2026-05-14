@@ -1,7 +1,8 @@
 use anyhow::Result;
-use mongodb::{Collection, Database, bson::doc};
+use sqlx::{Pool, Row, Sqlite};
 
 use crate::application::{
+    infra::sqlite::{decode_datetime, encode_datetime, encode_id, encode_optional_id},
     models::{
         dto::user::{UpdateNickDto, UserActivityDto},
         entities::{
@@ -14,49 +15,57 @@ use crate::application::{
 
 #[derive(Clone)]
 pub struct UserRepository {
-    users: Collection<User>,
-    signatures: Collection<Signature>,
-    nickname_changes: Collection<NicknameChange>,
+    db: Pool<Sqlite>,
     guild_repository: GuildRepository,
 }
 
 impl UserRepository {
-    pub fn new(database: &Database, guild_repository: GuildRepository) -> Self {
+    pub fn new(database: &Pool<Sqlite>, guild_repository: GuildRepository) -> Self {
         Self {
+            db: database.clone(),
             guild_repository,
-            users: database.collection("Users"),
-            signatures: database.collection("Signatures"),
-            nickname_changes: database.collection("NicknameChanges"),
         }
     }
 
     pub async fn get_last_signature(&self, user_id: u64) -> Result<Option<Signature>> {
-        let filter = doc! {"user_id": user_id as i64};
+        let signature = sqlx::query(
+            "SELECT emojis, date FROM signatures WHERE user_id = ? ORDER BY date DESC LIMIT 1",
+        )
+        .bind(encode_id(user_id)?)
+        .fetch_optional(&self.db)
+        .await?;
 
-        let user = self
-            .signatures
-            .find_one(filter)
-            .sort(doc! { "date": -1 })
-            .await?;
-
-        Ok(user)
+        signature
+            .map(|row| {
+                Ok(Signature {
+                    emojis: row.try_get("emojis")?,
+                    user_id,
+                    date: decode_datetime(&row.try_get::<String, _>("date")?)?,
+                })
+            })
+            .transpose()
     }
 
     pub async fn add_signature(&self, signature: Signature) -> Result<()> {
-        self.signatures.insert_one(signature).await?;
+        sqlx::query("INSERT INTO signatures (user_id, emojis, date) VALUES (?, ?, ?)")
+            .bind(encode_id(signature.user_id)?)
+            .bind(signature.emojis)
+            .bind(encode_datetime(signature.date))
+            .execute(&self.db)
+            .await?;
 
         Ok(())
     }
 
     pub async fn get_last_name(&self, user_id: u64) -> Result<Option<String>> {
-        let filter = doc! {"user_id": user_id as i64};
-        let possible_last_change = self
-            .nickname_changes
-            .find_one(filter)
-            .sort(doc! { "date": -1 })
-            .await?;
+        let possible_last_change = sqlx::query_scalar::<_, String>(
+            "SELECT nickname FROM nickname_changes WHERE user_id = ? ORDER BY date DESC LIMIT 1",
+        )
+        .bind(encode_id(user_id)?)
+        .fetch_optional(&self.db)
+        .await?;
 
-        Ok(possible_last_change.map(|n| n.nickname))
+        Ok(possible_last_change)
     }
 
     pub async fn update_user(&self, user_activity: &UserActivityDto) -> Result<()> {
@@ -79,15 +88,15 @@ impl UserRepository {
             self.update_nickname(update_dto).await?;
         }
 
-        if self.user_exists(user_activity.user_id).await? {
-            return Ok(());
-        }
-
         let user = User {
             id: user_activity.user_id,
         };
 
-        self.users.insert_one(user).await?;
+        sqlx::query("INSERT OR IGNORE INTO users (id) VALUES (?)")
+            .bind(encode_id(user.id)?)
+            .execute(&self.db)
+            .await?;
+
         Ok(())
     }
 
@@ -105,17 +114,16 @@ impl UserRepository {
             date: update_dto.date,
         };
 
-        self.nickname_changes.insert_one(nick).await?;
+        sqlx::query(
+            "INSERT INTO nickname_changes (user_id, guild_id, nickname, date) VALUES (?, ?, ?, ?)",
+        )
+        .bind(encode_id(nick.user_id)?)
+        .bind(encode_optional_id(nick.guild_id)?)
+        .bind(nick.nickname)
+        .bind(encode_datetime(nick.date))
+        .execute(&self.db)
+        .await?;
 
         Ok(())
-    }
-
-    async fn user_exists(&self, guild_id: u64) -> Result<bool> {
-        Ok(self.get_user(guild_id).await?.is_some())
-    }
-
-    async fn get_user(&self, id: u64) -> Result<Option<User>> {
-        let doc = doc! {"id": id as i64};
-        Ok(self.users.find_one(doc).await?)
     }
 }

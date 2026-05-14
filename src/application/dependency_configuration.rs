@@ -1,11 +1,11 @@
 use anyhow::Result;
 use lavalink_rs::client::LavalinkClient;
-use mongodb::Database;
 use poise::serenity_prelude::UserId;
 use reqwest::Client;
+use sqlx::{Pool, Sqlite};
 
 use super::{
-    infra::appsettings::{create_mongo_client, AppSettings},
+    infra::appsettings::{AppSettings, create_sqlite_pool, initialize_database},
     repositories::{
         command::CommandRepository, guild::GuildRepository, jukebox::JukeboxRepository,
         stats::StatsRepository, user::UserRepository,
@@ -48,12 +48,13 @@ pub struct RepositoriesContainer {
 
 impl RepositoriesContainer {
     pub async fn build() -> Result<Self> {
-        let db = create_mongo_client().await?.database("acn_r");
+        let db = create_sqlite_pool().await?;
+        initialize_database(&db).await?;
 
         Ok(Self::build_with_db(db))
     }
 
-    pub fn build_with_db(db: Database) -> Self {
+    pub fn build_with_db(db: Pool<Sqlite>) -> Self {
         let guild = GuildRepository::new(&db);
 
         let user = UserRepository::new(&db, guild.to_owned());
