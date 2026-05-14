@@ -294,7 +294,9 @@ impl AudioPlayer {
             track.track.user_data = Some(json!({ "requester_id": requester_id }));
         }
 
-        let msg = match tracks.len() {
+        let track_count = tracks.len();
+
+        let msg = match track_count {
             count if count > 1 => format!("Added {} tracks to the queue", count),
             _ => {
                 let track = &tracks[0].track;
@@ -325,12 +327,26 @@ impl AudioPlayer {
             },
         };
 
+        let has_active_track = player_ctx.get_player().await?.track.is_some();
         let queue = player_ctx.get_queue();
-        queue.append(tracks.into())?;
+
+        if has_active_track {
+            queue.append(tracks.into())?;
+        } else {
+            let mut tracks = tracks.into_iter();
+
+            let track_to_play = tracks
+                .next()
+                .ok_or_else(|| anyhow!("No tracks available to play"))?;
+
+            if !tracks.as_slice().is_empty() {
+                queue.append(tracks.collect::<Vec<_>>().into())?;
+            }
+
+            player_ctx.play(&track_to_play.track).await?;
+        }
 
         self.jukebox_repository.add_jukebox_use(jukebox_use).await?;
-
-        player_ctx.play(&track).await?;
 
         ctx.say(msg).await?;
 
