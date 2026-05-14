@@ -1,16 +1,30 @@
-# Build stage
-FROM rust:1.76 as builder
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 
-COPY src ./src
+WORKDIR /app
+
+FROM chef AS planner
+
 COPY Cargo.toml ./
+COPY src ./src
+RUN cargo chef prepare --recipe-path recipe.json
 
-RUN apt-get update
-RUN apt-get install -y cmake
+FROM chef AS builder
+
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+
+COPY Cargo.toml ./
+COPY src ./src
 RUN cargo build --release
 
-# Prod stage
-FROM debian:stable-slim
-COPY --from=builder /target/release/acn /
-COPY appsettings_prd.json .
+FROM debian:trixie-slim
 
-ENTRYPOINT ["./acn"]
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/acn /usr/local/bin/acn
+
+CMD ["acn"]
