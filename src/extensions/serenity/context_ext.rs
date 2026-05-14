@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use poise::serenity_prelude::{ChannelId, GuildId, GuildRef};
 use songbird::Songbird;
 

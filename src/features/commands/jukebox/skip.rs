@@ -1,6 +1,6 @@
 use poise::command;
 
-use crate::extensions::serenity::{context_ext::ContextExt, CommandResult, Context};
+use crate::extensions::serenity::{CommandResult, Context, context_ext::ContextExt};
 
 #[command(prefix_command, slash_command, guild_only, category = "Jukebox")]
 pub async fn skip(ctx: Context<'_>) -> CommandResult {

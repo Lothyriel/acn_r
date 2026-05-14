@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use poise::{
     async_trait,
     serenity_prelude::{GuildId, Http},

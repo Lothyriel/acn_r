@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result};
-use futures::{future::join_all, TryFutureExt};
+use anyhow::{Result, anyhow};
+use futures::{TryFutureExt, future::join_all};
 use lavalink_rs::client::LavalinkClient;
 use poise::serenity_prelude::{Cache, ChannelId, Context, GuildId, Http, UserId, VoiceState};
 use songbird::Songbird;

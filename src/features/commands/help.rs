@@ -8,8 +8,7 @@ pub async fn help(
     #[description = "O comando específico em questão"] command: Option<String>,
 ) -> CommandResult {
     let config = poise::builtins::HelpConfiguration {
-        extra_text_at_bottom:
-            "Se quiser saber algo sobre um comando em específico, passe o nome dele como argumento",
+        extra_text_at_bottom: "Se quiser saber algo sobre um comando em específico, passe o nome dele como argumento",
         ..Default::default()
     };
 

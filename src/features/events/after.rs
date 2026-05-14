@@ -1,16 +1,16 @@
-use anyhow::Result;
-use chrono::{DateTime, Utc};
-use log::info;
-use poise::serenity_prelude::Mentionable;
 use crate::{
     application::models::{
         dto::command_use::CommandUseDto, entities::russian_roulette::RussianRoulette,
     },
     extensions::{
         log_ext::LogExt,
-        serenity::{context_ext::ContextExt, Context},
+        serenity::{Context, context_ext::ContextExt},
     },
 };
+use anyhow::Result;
+use chrono::{DateTime, Utc};
+use log::info;
+use poise::serenity_prelude::Mentionable;
 
 async fn after(ctx: Context<'_>) -> Result<()> {
     let now = chrono::Utc::now();

@@ -19,7 +19,10 @@ pub async fn handler(ctx: &Context, data: &DependencyContainer, message: &Messag
 }
 
 async fn react(message: &Message, ctx: &Context, emojis: &str) -> Result<()> {
-    for emoji in emojis.split_whitespace().flat_map(|token| token.graphemes(true)) {
+    for emoji in emojis
+        .split_whitespace()
+        .flat_map(|token| token.graphemes(true))
+    {
         let reaction = ReactionType::Unicode(emoji.to_owned());
 
         message.react(ctx, reaction).await.ok();

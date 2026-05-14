@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use poise::serenity_prelude::{Context, InviteCreateEvent, Mentionable};
 
 pub async fn handler(ctx: &Context, event: &InviteCreateEvent) -> Result<()> {
