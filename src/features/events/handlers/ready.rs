@@ -1,6 +1,5 @@
 use anyhow::Result;
 use futures::future::join_all;
-use log::warn;
 use poise::serenity_prelude::{Context, CreateMessage, UserId};
 
 use crate::{
@@ -8,16 +7,23 @@ use crate::{
     extensions::std_ext::collapse_errors,
 };
 
-pub async fn handler(ctx: &Context, container: &DependencyContainer, username: &str) -> Result<()> {
-    let allowed_ids = &container.allowed_ids;
-
+pub async fn handler(
+    _ctx: &Context,
+    _container: &DependencyContainer,
+    username: &str,
+) -> Result<()> {
     let message = format!("Estamos totalmente dentro! {}", username);
 
-    warn!("{}", message);
+    log::info!("{}", message);
 
-    let tasks = allowed_ids
-        .iter()
-        .map(|u| send_greetings(ctx, *u, &message));
+    Ok(())
+}
+
+#[allow(dead_code)]
+async fn dm_greetings(ctx: &Context, container: &DependencyContainer, message: &str) -> Result<()> {
+    let allowed_ids = &container.allowed_ids;
+
+    let tasks = allowed_ids.iter().map(|u| send_greetings(ctx, *u, message));
 
     let tasks_results = join_all(tasks).await;
 
