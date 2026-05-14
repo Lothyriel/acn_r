@@ -12,6 +12,8 @@ pub fn init() -> Result<()> {
 
     env_logger::builder()
         .filter_level(LevelFilter::Info)
+        .filter_module("tracing::span", LevelFilter::Warn)
+        .filter_module("serenity", LevelFilter::Warn)
         .target(Target::Stdout)
         .try_init()?;
 

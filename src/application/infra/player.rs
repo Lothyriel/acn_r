@@ -421,7 +421,7 @@ pub async fn track_start(client: LavalinkClient, _session_id: String, event: &Tr
 
 #[hook]
 pub async fn stats(_client: LavalinkClient, _session_id: String, event: &Stats) {
-    log::info!("{:?}", event);
+    log::debug!("{:?}", event);
 }
 
 async fn track_start_handler(client: LavalinkClient, event: &TrackStart) -> Result<()> {
