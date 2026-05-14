@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use futures::TryStreamExt;
 use mongodb::{
-    bson::{doc, from_document, Document},
+    bson::{deserialize_from_document, doc, Document},
     Collection,
 };
 use poise::async_trait;
@@ -22,13 +22,13 @@ impl<T: DeserializeOwned + Send + Sync> CollectionExt<T> for Collection<T> {
             doc! { "$sample": { "size": size } },
         ];
 
-        let cursor = self.aggregate(pipeline, None).await?;
+        let cursor = self.aggregate(pipeline).await?;
 
         let documents: Vec<_> = cursor.try_collect().await?;
 
         let entities = documents
             .into_iter()
-            .map(|d| from_document(d).map_err(|e| anyhow!(e)));
+            .map(|d| deserialize_from_document(d).map_err(|e| anyhow!(e)));
 
         collapse_errors(entities)
     }

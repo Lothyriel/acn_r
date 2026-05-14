@@ -1,23 +1,23 @@
 [package]
 name = "acn"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio = { version = "1.23", features = ["full"] }
+tokio = { version = "1.52", features = ["full"] }
 dotenv = "0.15.0"
-chrono = { version = "0.4.23", features = ["serde"] }
-log = "0.4.17"
-env_logger = "0.10.0"
-anyhow = "1.0.68"
+chrono = { version = "0.4", features = ["serde"] }
+log = "0.4"
+env_logger = "0.11.0"
+anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.91"
-mongodb = { version = "2.5.0", features = ["bson-chrono-0_4"] }
-futures = "0.3.28"
-poise = { version = "0.6.1", features = ["cache"] }
-songbird = "0.4.1"
-rand = "0.8.5"
-lavalink-rs = { version = "0.12.0", features = ["serenity", "songbird"] }
-reqwest = { version = "0.11.26", default-features = false }
+serde_json = "1.0"
+mongodb = { version = "3.6", features = ["bson-3"] }
+futures = "0.3"
+poise = { version = "0.6", features = ["cache"] }
+songbird = "0.6"
+rand = "0.10"
+lavalink-rs = { version = "0.15", features = ["serenity", "songbird"] }
+reqwest = { version = "0.13", default-features = false }

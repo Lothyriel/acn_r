@@ -1,8 +1,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use poise::serenity_prelude::Mentionable;
-use rand::Rng;
-
 use crate::{
     application::models::{
         dto::command_use::CommandUseDto, entities::russian_roulette::RussianRoulette,
@@ -39,7 +37,7 @@ async fn after(ctx: Context<'_>) -> Result<()> {
 }
 
 async fn attempt_russian_roulette(ctx: Context<'_>, now: DateTime<Utc>) -> Result<()> {
-    let random_number: f32 = rand::thread_rng().gen();
+    let random_number: f32 = rand::random();
 
     let shot = random_number < 0.01;
 

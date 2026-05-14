@@ -16,7 +16,7 @@ impl StatsRepository {
     }
 
     pub async fn add_russian_roulette(&self, attempt: RussianRoulette) -> Result<()> {
-        self.russian_roulette.insert_one(attempt, None).await?;
+        self.russian_roulette.insert_one(attempt).await?;
 
         Ok(())
     }

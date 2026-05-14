@@ -34,7 +34,7 @@ impl CommandRepository {
             args: command_use_dto.args,
         };
 
-        self.commands_use.insert_one(command_use, None).await?;
+        self.commands_use.insert_one(command_use).await?;
 
         let add = UserActivityDto {
             guild_info: command_use_dto.guild_info,
@@ -59,7 +59,7 @@ impl CommandRepository {
             error: error.to_owned(),
         };
 
-        self.commands_errors.insert_one(command_error, None).await?;
+        self.commands_errors.insert_one(command_error).await?;
 
         Ok(())
     }

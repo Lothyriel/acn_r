@@ -1,5 +1,5 @@
 use anyhow::Result;
-use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
+use mongodb::{bson::doc, Collection, Database};
 
 use crate::application::{
     models::{
@@ -33,24 +33,28 @@ impl UserRepository {
     pub async fn get_last_signature(&self, user_id: u64) -> Result<Option<Signature>> {
         let filter = doc! {"user_id": user_id as i64};
 
-        let options = FindOneOptions::builder().sort(doc! { "date": -1 }).build();
-
-        let user = self.signatures.find_one(filter, options).await?;
+        let user = self
+            .signatures
+            .find_one(filter)
+            .sort(doc! { "date": -1 })
+            .await?;
 
         Ok(user)
     }
 
     pub async fn add_signature(&self, signature: Signature) -> Result<()> {
-        self.signatures.insert_one(signature, None).await?;
+        self.signatures.insert_one(signature).await?;
 
         Ok(())
     }
 
     pub async fn get_last_name(&self, user_id: u64) -> Result<Option<String>> {
         let filter = doc! {"user_id": user_id as i64};
-        let options = FindOneOptions::builder().sort(doc! { "date": -1 }).build();
-
-        let possible_last_change = self.nickname_changes.find_one(filter, options).await?;
+        let possible_last_change = self
+            .nickname_changes
+            .find_one(filter)
+            .sort(doc! { "date": -1 })
+            .await?;
 
         Ok(possible_last_change.map(|n| n.nickname))
     }
@@ -83,7 +87,7 @@ impl UserRepository {
             id: user_activity.user_id,
         };
 
-        self.users.insert_one(user, None).await?;
+        self.users.insert_one(user).await?;
         Ok(())
     }
 
@@ -101,7 +105,7 @@ impl UserRepository {
             date: update_dto.date,
         };
 
-        self.nickname_changes.insert_one(nick, None).await?;
+        self.nickname_changes.insert_one(nick).await?;
 
         Ok(())
     }
@@ -112,6 +116,6 @@ impl UserRepository {
 
     async fn get_user(&self, id: u64) -> Result<Option<User>> {
         let doc = doc! {"id": id as i64};
-        Ok(self.users.find_one(doc, None).await?)
+        Ok(self.users.find_one(doc).await?)
     }
 }

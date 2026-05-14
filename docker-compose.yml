@@ -1,15 +1,13 @@
 services:
   mongodb:
-    image: mongo
+    image: docker.io/library/mongo:8.3.2
     restart: unless-stopped
     ports:
       - 27017:27017
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ""
-      MONGO_INITDB_ROOT_PASSWORD: ""
 
   lavalink:
-    image: ghcr.io/lavalink-devs/lavalink
+    image: ghcr.io/lavalink-devs/lavalink:4.2.2
     restart: unless-stopped
     mem_limit: 1024m
     ports:
@@ -18,5 +16,5 @@ services:
       SERVER_PORT: 2333
       LAVALINK_SERVER_PASSWORD: ""
       LAVALINK_SERVER_SOURCES_YOUTUBE: false
-      LAVALINK_PLUGINS_0_DEPENDENCY: "dev.lavalink.youtube:youtube-plugin:1.7.1"
+      LAVALINK_PLUGINS_0_DEPENDENCY: "dev.lavalink.youtube:youtube-plugin:1.18.1"
       LAVALINK_PLUGINS_0_SNAPSHOT: false

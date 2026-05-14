@@ -4,6 +4,8 @@ use lavalink_rs::{
     client::LavalinkClient,
     hook,
     model::events::{Stats, TrackStart},
+    model::player::ConnectionInfo as LavalinkConnectionInfo,
+    model::track::TrackLoadType,
     player_context::{PlayerContext, TrackInQueue},
     prelude::{SearchEngines, TrackLoadData},
 };
@@ -55,7 +57,7 @@ impl AudioPlayer {
 
         let mut queue = queue_ref.get_queue().await?;
 
-        queue.make_contiguous().shuffle(&mut rand::thread_rng());
+        queue.make_contiguous().shuffle(&mut rand::rng());
 
         queue_ref.replace(queue)?;
 
@@ -160,6 +162,15 @@ impl AudioPlayer {
             .join_gateway(self.guild_id, channel_id)
             .await?;
 
+        let mut connection_info = LavalinkConnectionInfo {
+            endpoint: connection_info.endpoint,
+            token: connection_info.token,
+            session_id: connection_info.session_id,
+            channel_id: Some(channel_id.into()),
+        };
+
+        connection_info.fix();
+
         self.lavalink
             .create_player_context_with_data::<(ChannelId, std::sync::Arc<Http>)>(
                 self.guild_id,
@@ -187,7 +198,7 @@ impl AudioPlayer {
 
                 match guard.current_connection() {
                     Some(current_connection) => {
-                        current_connection.channel_id.map(|c| c.0.get()) != Some(channel.get())
+                        current_connection.channel_id.0.get() != channel.get()
                     }
                     None => true,
                 }
@@ -226,23 +237,58 @@ impl AudioPlayer {
     async fn queue_music(&self, ctx: Context<'_>, query: String) -> Result<()> {
         let player_ctx = self.get_player_ctx()?;
 
-        let query = SearchEngines::YouTube.to_query(&query)?;
+        let original_query = query;
+        let query = SearchEngines::YouTube.to_query(&original_query)?;
 
         let loaded_tracks = self.lavalink.load_tracks(self.guild_id, &query).await?;
 
-        let track_data = loaded_tracks
-            .data
-            .ok_or_else(|| anyhow!("Failed to get data about this track"))?;
+        let tracks: Vec<TrackInQueue> = match loaded_tracks.load_type {
+            TrackLoadType::Track => match loaded_tracks.data {
+                Some(TrackLoadData::Track(track)) => vec![track.into()],
+                _ => bail!("Lavalink returned an invalid track response"),
+            },
+            TrackLoadType::Search => match loaded_tracks.data {
+                Some(TrackLoadData::Search(search_results)) => {
+                    let first_track = match search_results.into_iter().next() {
+                        Some(track) => track,
+                        None => {
+                            ctx.say(format!("No search results found for `{}`.", original_query))
+                                .await?;
+                            return Ok(());
+                        }
+                    };
 
-        let tracks: Vec<TrackInQueue> = match &track_data {
-            TrackLoadData::Track(t) => vec![t.clone().into()],
-            TrackLoadData::Search(s) => vec![s[0].clone().into()],
-            TrackLoadData::Playlist(p) => p.tracks.iter().map(|x| x.clone().into()).collect(),
-            TrackLoadData::Error(e) => bail!("Error getting track data | {:?}", e),
+                    vec![first_track.into()]
+                }
+                _ => bail!("Lavalink returned an invalid search response"),
+            },
+            TrackLoadType::Playlist => match loaded_tracks.data {
+                Some(TrackLoadData::Playlist(playlist)) => {
+                    if playlist.tracks.is_empty() {
+                        ctx.say(format!("The playlist for `{}` is empty.", original_query))
+                            .await?;
+                        return Ok(());
+                    }
+
+                    playlist.tracks.into_iter().map(Into::into).collect()
+                }
+                _ => bail!("Lavalink returned an invalid playlist response"),
+            },
+            TrackLoadType::Empty => {
+                ctx.say(format!("No tracks found for `{}`.", original_query))
+                    .await?;
+                return Ok(());
+            }
+            TrackLoadType::Error => match loaded_tracks.data {
+                Some(TrackLoadData::Error(error)) => {
+                    bail!("Couldn't load that track: {}", error.message)
+                }
+                _ => bail!("Lavalink returned an unknown track loading error"),
+            },
         };
 
-        let msg = match track_data {
-            TrackLoadData::Playlist(p) => format!("Added {} tracks to the queue", p.tracks.len()),
+        let msg = match tracks.len() {
+            count if count > 1 => format!("Added {} tracks to the queue", count),
             _ => {
                 let track = &tracks[0].track;
                 format!(

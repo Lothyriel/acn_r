@@ -16,7 +16,7 @@ impl JukeboxRepository {
     }
 
     pub async fn add_jukebox_use(&self, jukebox_use: JukeboxUse) -> Result<()> {
-        self.jukebox_use.insert_one(jukebox_use, None).await?;
+        self.jukebox_use.insert_one(jukebox_use).await?;
 
         Ok(())
     }

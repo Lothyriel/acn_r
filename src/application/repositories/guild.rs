@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use mongodb::{bson::doc, options::FindOneOptions, Collection, Database};
+use mongodb::{bson::doc, Collection, Database};
 
 use crate::application::models::entities::{guild::Guild, guild_name::GuildNameChange};
 
@@ -26,7 +26,7 @@ impl GuildRepository {
         }
 
         let guild = Guild { id };
-        self.guilds.insert_one(guild, None).await?;
+        self.guilds.insert_one(guild).await?;
 
         Ok(())
     }
@@ -37,7 +37,7 @@ impl GuildRepository {
 
     async fn get_guild(&self, guild_id: u64) -> Result<Option<Guild>> {
         let filter = doc! {"id": guild_id as i64};
-        Ok(self.guilds.find_one(filter, None).await?)
+        Ok(self.guilds.find_one(filter).await?)
     }
 
     async fn update_name(&self, id: u64, name: &str, date: DateTime<Utc>) -> Result<()> {
@@ -53,16 +53,18 @@ impl GuildRepository {
             date,
         };
 
-        self.guild_name_changes.insert_one(new_name, None).await?;
+        self.guild_name_changes.insert_one(new_name).await?;
 
         Ok(())
     }
 
     async fn get_last_name(&self, guild_id: u64) -> Result<Option<String>> {
         let filter = doc! {"guild_id": guild_id as i64};
-        let options = FindOneOptions::builder().sort(doc! { "date": -1 }).build();
-
-        let possible_last_change = self.guild_name_changes.find_one(filter, options).await?;
+        let possible_last_change = self
+            .guild_name_changes
+            .find_one(filter)
+            .sort(doc! { "date": -1 })
+            .await?;
 
         Ok(possible_last_change.map(|n| n.name))
     }
