@@ -9,7 +9,7 @@ use crate::extensions::{
 pub async fn play(
     ctx: Context<'_>,
     #[rest]
-    #[description = "A song URL or YouTube search query"]
+    #[description = "A song URL, YouTube search query, or Spotify link"]
     query: String,
 ) -> CommandResult {
     let player = ctx.get_player().await?;

@@ -23,6 +23,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "unicode-segmentation",
+ "url",
 ]
 
 [[package]]

@@ -293,7 +293,11 @@ impl AudioPlayer {
         let player_ctx = self.get_player_ctx()?;
 
         let original_query = query;
-        let query = SearchEngines::YouTube.to_query(&original_query)?;
+        let query = if is_url(&original_query) {
+            original_query.clone()
+        } else {
+            SearchEngines::YouTube.to_query(&original_query)?
+        };
 
         let loaded_tracks = self.lavalink.load_tracks(self.guild_id, &query).await?;
 
@@ -412,6 +416,14 @@ impl AudioPlayer {
             .get_player_context(self.guild_id)
             .ok_or_else(|| anyhow!("Error getting player context"))
     }
+}
+
+fn is_url(query: &str) -> bool {
+    let parsed = url::Url::parse(query);
+    matches!(
+        parsed.as_ref().ok().map(|u| u.scheme()),
+        Some("http" | "https")
+    )
 }
 
 #[hook]
