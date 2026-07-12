@@ -5,13 +5,14 @@ use lavalink_rs::{
 };
 use poise::serenity_prelude::{ClientBuilder, Context, GatewayIntents};
 use songbird::SerenityInit;
+use std::sync::Arc;
 
 use crate::{
     application::{
         dependency_configuration::DependencyContainer,
         infra::{appsettings::AppSettings, env, player},
     },
-    extensions::serenity::Command,
+    extensions::serenity::{Command, context_ext::get_songbird_client},
     features::commands::*,
 };
 
@@ -64,9 +65,12 @@ fn get_framework(settings: AppSettings) -> poise::Framework<DependencyContainer,
 async fn get_lavalink_client(ctx: &Context) -> Result<LavalinkClient> {
     let events = Events {
         track_start: Some(player::track_start),
+        track_end: Some(player::track_end),
         stats: Some(player::stats),
         ..Default::default()
     };
+
+    let songbird = get_songbird_client(ctx).await?;
 
     let node_local = NodeBuilder {
         hostname: env::get("LAVALINK_ADDRESS").unwrap_or_else(|_| "localhost".to_owned()) + ":2333",
@@ -75,10 +79,11 @@ async fn get_lavalink_client(ctx: &Context) -> Result<LavalinkClient> {
         ..Default::default()
     };
 
-    let client = LavalinkClient::new(
+    let client = LavalinkClient::new_with_data(
         events,
         vec![node_local],
         NodeDistributionStrategy::round_robin(),
+        Arc::new(player::LavalinkRuntime::new(songbird)),
     )
     .await;
 

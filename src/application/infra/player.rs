@@ -3,7 +3,7 @@ use futures::StreamExt;
 use lavalink_rs::{
     client::LavalinkClient,
     hook,
-    model::events::{Stats, TrackStart},
+    model::events::{Stats, TrackEnd, TrackStart},
     model::player::ConnectionInfo as LavalinkConnectionInfo,
     model::track::TrackLoadType,
     player_context::{PlayerContext, TrackInQueue},
@@ -13,7 +13,15 @@ use poise::serenity_prelude::{ChannelId, GuildId, Http, MessageBuilder, UserId};
 use rand::seq::SliceRandom;
 use serde_json::json;
 use songbird::Songbird;
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
+    time::Duration,
+};
+use tokio::sync::{Mutex, watch};
 
 use crate::{
     application::{
@@ -32,6 +40,79 @@ pub struct AudioPlayer {
     jukebox_repository: JukeboxRepository,
     songbird: Arc<Songbird>,
     lavalink: LavalinkClient,
+}
+
+const IDLE_DISCONNECT_TIMEOUT: Duration = Duration::from_secs(60);
+
+fn is_idle(active_track: bool, queue_count: usize) -> bool {
+    !active_track && queue_count == 0
+}
+
+pub struct LavalinkRuntime {
+    pub songbird: Arc<Songbird>,
+    idle_disconnect: IdleDisconnect,
+}
+
+impl LavalinkRuntime {
+    pub fn new(songbird: Arc<Songbird>) -> Self {
+        Self {
+            songbird,
+            idle_disconnect: IdleDisconnect::default(),
+        }
+    }
+}
+
+#[derive(Default)]
+struct IdleDisconnect {
+    next_generation: AtomicU64,
+    timers: Mutex<HashMap<GuildId, IdleTimer>>,
+}
+
+struct IdleTimer {
+    generation: u64,
+    cancel: watch::Sender<()>,
+}
+
+impl IdleDisconnect {
+    async fn schedule(&self, guild_id: GuildId) -> (u64, watch::Receiver<()>) {
+        let generation = self.next_generation.fetch_add(1, Ordering::Relaxed);
+        let (cancel, receiver) = watch::channel(());
+        let previous = self
+            .timers
+            .lock()
+            .await
+            .insert(guild_id, IdleTimer { generation, cancel });
+
+        if let Some(previous) = previous {
+            let _ = previous.cancel.send(());
+        }
+
+        (generation, receiver)
+    }
+
+    async fn cancel(&self, guild_id: GuildId) {
+        if let Some(timer) = self.timers.lock().await.remove(&guild_id) {
+            let _ = timer.cancel.send(());
+        }
+    }
+
+    async fn is_current(&self, guild_id: GuildId, generation: u64) -> bool {
+        self.timers
+            .lock()
+            .await
+            .get(&guild_id)
+            .is_some_and(|timer| timer.generation == generation)
+    }
+
+    async fn clear_if_current(&self, guild_id: GuildId, generation: u64) {
+        let mut timers = self.timers.lock().await;
+        if timers
+            .get(&guild_id)
+            .is_some_and(|timer| timer.generation == generation)
+        {
+            timers.remove(&guild_id);
+        }
+    }
 }
 
 impl AudioPlayer {
@@ -275,6 +356,7 @@ impl AudioPlayer {
         let now_playing = player_ctx.get_player().await?.track;
 
         let result = if now_playing.is_some() {
+            self.cancel_idle_disconnect().await?;
             player_ctx.stop_now().await?;
             let queue = player_ctx.get_queue();
             queue.clear()?;
@@ -346,6 +428,8 @@ impl AudioPlayer {
             },
         };
 
+        self.cancel_idle_disconnect().await?;
+
         let requester_id = ctx.author().id.get();
 
         for track in &mut tracks {
@@ -411,6 +495,13 @@ impl AudioPlayer {
         Ok(())
     }
 
+    async fn cancel_idle_disconnect(&self) -> Result<()> {
+        let runtime = self.lavalink.data::<LavalinkRuntime>()?;
+        runtime.idle_disconnect.cancel(self.guild_id).await;
+
+        Ok(())
+    }
+
     fn get_player_ctx(&self) -> Result<PlayerContext> {
         self.lavalink
             .get_player_context(self.guild_id)
@@ -432,11 +523,22 @@ pub async fn track_start(client: LavalinkClient, _session_id: String, event: &Tr
 }
 
 #[hook]
+pub async fn track_end(client: LavalinkClient, _session_id: String, event: &TrackEnd) {
+    track_end_handler(client, event).await.log();
+}
+
+#[hook]
 pub async fn stats(_client: LavalinkClient, _session_id: String, event: &Stats) {
     log::debug!("{:?}", event);
 }
 
-async fn track_start_handler(_client: LavalinkClient, event: &TrackStart) -> Result<()> {
+async fn track_start_handler(client: LavalinkClient, event: &TrackStart) -> Result<()> {
+    let runtime = client.data::<LavalinkRuntime>()?;
+    runtime
+        .idle_disconnect
+        .cancel(GuildId::new(event.guild_id.0))
+        .await;
+
     let msg = {
         let track = &event.track;
 
@@ -464,4 +566,108 @@ async fn track_start_handler(_client: LavalinkClient, event: &TrackStart) -> Res
     log::info!("{msg}");
 
     Ok(())
+}
+
+async fn track_end_handler(client: LavalinkClient, event: &TrackEnd) -> Result<()> {
+    let runtime = client.data::<LavalinkRuntime>()?;
+    let guild_id = GuildId::new(event.guild_id.0);
+    let lavalink_guild_id = event.guild_id;
+    let (generation, mut cancellation) = runtime.idle_disconnect.schedule(guild_id).await;
+
+    tokio::spawn(async move {
+        tokio::select! {
+            _ = tokio::time::sleep(IDLE_DISCONNECT_TIMEOUT) => {}
+            _ = cancellation.changed() => return,
+        }
+
+        if !runtime
+            .idle_disconnect
+            .is_current(guild_id, generation)
+            .await
+        {
+            return;
+        }
+
+        let Some(player_ctx) = client.get_player_context(lavalink_guild_id) else {
+            runtime
+                .idle_disconnect
+                .clear_if_current(guild_id, generation)
+                .await;
+            return;
+        };
+
+        let result: Result<bool> = async {
+            let player = player_ctx.get_player().await?;
+            let queue_count = player_ctx.get_queue().get_count().await?;
+
+            if !is_idle(player.track.is_some(), queue_count) {
+                return Ok(false);
+            }
+
+            if !runtime
+                .idle_disconnect
+                .is_current(guild_id, generation)
+                .await
+            {
+                return Ok(false);
+            }
+
+            player_ctx.get_queue().clear()?;
+            client.delete_player(lavalink_guild_id).await?;
+            runtime.songbird.remove(guild_id).await?;
+
+            Ok(true)
+        }
+        .await;
+
+        runtime
+            .idle_disconnect
+            .clear_if_current(guild_id, generation)
+            .await;
+
+        match result {
+            Ok(true) => log::info!("Guild {} | Disconnected after idle playback", guild_id),
+            Ok(false) => {}
+            Err(error) => log::error!("Guild {} | Idle disconnect failed: {}", guild_id, error),
+        }
+    });
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn idle_requires_no_active_track_and_no_queued_tracks() {
+        assert!(is_idle(false, 0));
+        assert!(!is_idle(true, 0));
+        assert!(!is_idle(false, 1));
+    }
+
+    #[tokio::test]
+    async fn scheduling_a_new_timer_cancels_the_previous_timer() {
+        let idle_disconnect = IdleDisconnect::default();
+        let guild_id = GuildId::new(1);
+
+        let (old_generation, mut old_cancellation) = idle_disconnect.schedule(guild_id).await;
+        let (new_generation, _new_cancellation) = idle_disconnect.schedule(guild_id).await;
+
+        assert!(!idle_disconnect.is_current(guild_id, old_generation).await);
+        assert!(idle_disconnect.is_current(guild_id, new_generation).await);
+        assert!(old_cancellation.changed().await.is_ok());
+    }
+
+    #[tokio::test]
+    async fn cancelling_a_timer_invalidates_its_generation() {
+        let idle_disconnect = IdleDisconnect::default();
+        let guild_id = GuildId::new(1);
+
+        let (generation, mut cancellation) = idle_disconnect.schedule(guild_id).await;
+        idle_disconnect.cancel(guild_id).await;
+
+        assert!(!idle_disconnect.is_current(guild_id, generation).await);
+        assert!(cancellation.changed().await.is_ok());
+    }
 }
